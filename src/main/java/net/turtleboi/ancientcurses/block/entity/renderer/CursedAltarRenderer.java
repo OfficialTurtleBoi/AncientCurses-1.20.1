@@ -62,27 +62,60 @@ public class CursedAltarRenderer implements BlockEntityRenderer<CursedAltarBlock
         this.bookModel.render(pPoseStack, vertexConsumer, pPackedLight, pPackedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
         pPoseStack.popPose();
 
-        ItemStack hoveringItem = pBlockEntity.getHoveringItem();
-        if (!hoveringItem.isEmpty()) {
-            System.out.println("Rendering hovering item: " + hoveringItem.getItem());
-            pPoseStack.pushPose();
+        ItemStack gemItem = pBlockEntity.getGemInSlot(0);
+        if (!gemItem.isEmpty()) {
+            ItemStack gem1 = pBlockEntity.getGemInSlot(0);
+            ItemStack gem2 = pBlockEntity.getGemInSlot(1);
+            ItemStack gem3 = pBlockEntity.getGemInSlot(2);
 
-            // Adjust the height and rotation for the hovering item
-            float hoverHeight = 1.25F + Mth.sin(f1 * 0.1F) * 0.05F;
-            float spinSpeed = (f1 % 360) * (float) Math.PI / 180.0F;
-            pPoseStack.translate(0.5F, hoverHeight, 0.5F); // Position item above altar
-            pPoseStack.mulPose(Axis.YP.rotation(spinSpeed)); // Spin the item
+            float hoverHeight = 1.25F + Mth.sin(f1 * 0.1F) * 0.05F; // Same hover height for all gems
+            float orbitRadius = 0.5F; // The radius for the circular orbit
 
-            double orbitRadius = 0.5F;
-            pPoseStack.translate(orbitRadius * Math.cos(f1 * 0.05), 0.0, orbitRadius * Math.sin(f1 * 0.05));
+// Render gem1 in slot 0
+            if (!gem1.isEmpty()) {
+                pPoseStack.pushPose();
+                pPoseStack.translate(0.5F, hoverHeight, 0.5F); // Center the item above the altar
+                float spinSpeed1 = (f1 % 360) * (float) Math.PI / 180.0F; // Spin for gem1
+                pPoseStack.mulPose(Axis.YP.rotation(spinSpeed1)); // Apply spinning rotation
 
-            // Scale the item slightly
-            pPoseStack.scale(1.0F, 1.0F, 1.0F);
+                // Orbit gem1 at a specific angle (0 degrees)
+                pPoseStack.translate(orbitRadius * Math.cos(f1 * 0.05), 0.0, orbitRadius * Math.sin(f1 * 0.05));
 
-            // Render the item
-            this.itemRenderer.renderStatic(hoveringItem, ItemDisplayContext.GROUND, pPackedLight, pPackedOverlay, pPoseStack, pBuffer, pBlockEntity.getLevel(), 0);
+                // Render gem1
+                this.itemRenderer.renderStatic(gem1, ItemDisplayContext.GROUND, pPackedLight, pPackedOverlay, pPoseStack, pBuffer, pBlockEntity.getLevel(), 0);
+                pPoseStack.popPose();
+            }
 
-            pPoseStack.popPose();
+// Render gem2 in slot 1
+            if (!gem2.isEmpty()) {
+                pPoseStack.pushPose();
+                pPoseStack.translate(0.5F, hoverHeight, 0.5F); // Center the item above the altar
+                float spinSpeed2 = (f1 + 120 % 360 + 120) * (float) Math.PI / 180.0F; // Offset the spin for gem2 (120 degrees apart)
+                pPoseStack.mulPose(Axis.YP.rotation(spinSpeed2));
+
+                // Orbit gem2 at a different angle (120 degrees)
+                pPoseStack.translate(orbitRadius * Math.cos(f1 * 0.05 + Math.PI * 2 / 3), 0.0, orbitRadius * Math.sin(f1 * 0.05 + Math.PI * 2 / 3));
+
+                // Render gem2
+                this.itemRenderer.renderStatic(gem2, ItemDisplayContext.GROUND, pPackedLight, pPackedOverlay, pPoseStack, pBuffer, pBlockEntity.getLevel(), 0);
+                pPoseStack.popPose();
+            }
+
+// Render gem3 in slot 2
+            if (!gem3.isEmpty()) {
+                pPoseStack.pushPose();
+                pPoseStack.translate(0.5F, hoverHeight, 0.5F); // Center the item above the altar
+                float spinSpeed3 = (f1 + 240 % 360 + 240) * (float) Math.PI / 180.0F; // Offset the spin for gem3 (240 degrees apart)
+                pPoseStack.mulPose(Axis.YP.rotation(spinSpeed3));
+
+                // Orbit gem3 at another angle (240 degrees)
+                pPoseStack.translate(orbitRadius * Math.cos(f1 * 0.05 + 2 * Math.PI * 2 / 3), 0.0, orbitRadius * Math.sin(f1 * 0.05 + 2 * Math.PI * 2 / 3));
+
+                // Render gem3
+                this.itemRenderer.renderStatic(gem3, ItemDisplayContext.GROUND, pPackedLight, pPackedOverlay, pPoseStack, pBuffer, pBlockEntity.getLevel(), 0);
+                pPoseStack.popPose();
+            }
+
         }
     }
 }

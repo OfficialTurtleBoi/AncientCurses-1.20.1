@@ -97,32 +97,44 @@ public class CursedAltarBlock extends BaseEntityBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        if (!level.isClientSide()) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (!level.isClientSide) {
             ItemStack heldItem = player.getItemInHand(hand);
-
             BlockEntity blockEntity = level.getBlockEntity(pos);
+
             if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
-                if (heldItem.is(Items.DIAMOND) || heldItem.is(Items.EMERALD) || heldItem.is(Items.AMETHYST_SHARD)) {
-                    if (altarEntity.getHoveringItem().isEmpty()) {
-                        // Place the item on the altar
-                        altarEntity.setHoveringItem(heldItem.copy()); // Store a copy of the item
-                        heldItem.shrink(1); // Remove one item from the player's hand
-                        return InteractionResult.SUCCESS;
+                // Check if player is holding shift to remove gems in reverse order
+                if (player.isShiftKeyDown()) {
+                    // Remove the last gem added (reverse order, starting from the last slot)
+                    for (int i = 2; i >= 0; i--) {
+                        ItemStack gem = altarEntity.getGemInSlot(i);
+                        if (!gem.isEmpty()) {
+                            ItemStack gemCopy = gem.copy();  // Copy the gem to avoid modifying the slot's item
+                            player.getInventory().add(gemCopy); // Add the gem to the player's inventory
+                            altarEntity.setGemInSlot(i, ItemStack.EMPTY); // Clear the slot
+                            altarEntity.setChanged(); // Mark the block entity as changed
+                            return InteractionResult.SUCCESS;
+                        }
                     }
                 } else {
-                    // Return the hovering item to the player if one is on the altar
-                    if (!altarEntity.getHoveringItem().isEmpty() && player.isShiftKeyDown()) {
-                        player.addItem(altarEntity.getHoveringItem());
-                        altarEntity.setHoveringItem(ItemStack.EMPTY); // Clear the altar's hovering item
-                        return InteractionResult.SUCCESS;
+                    // Try to place the gem in an empty slot if it's a valid gem
+                    if (heldItem.is(Items.DIAMOND) || heldItem.is(Items.EMERALD) || heldItem.is(Items.AMETHYST_SHARD)) {
+                        for (int i = 0; i < 3; i++) {
+                            if (altarEntity.getGemInSlot(i).isEmpty()) {
+                                altarEntity.setGemInSlot(i, heldItem.split(1)); // Place 1 item in the slot
+                                altarEntity.setChanged(); // Mark the block entity as changed
+                                return InteractionResult.SUCCESS;
+                            }
+                        }
                     }
                 }
             }
         }
-
-        return InteractionResult.PASS; // Allow other interactions to happen
+        return InteractionResult.PASS;
     }
+
+
+
 
 
     @Nullable

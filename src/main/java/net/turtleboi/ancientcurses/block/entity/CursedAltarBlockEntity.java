@@ -38,6 +38,19 @@ public class CursedAltarBlockEntity extends BlockEntity {
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
             }
         }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return 1;
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            if (stack.getCount() > 1) {
+                stack.setCount(1);
+            }
+            return super.insertItem(slot, stack, simulate);
+        }
     };
 
     private static final int GEM_SLOT1 = 0;
@@ -104,16 +117,31 @@ public class CursedAltarBlockEntity extends BlockEntity {
         pBlockEntity.flip += pBlockEntity.flipA;
     }
 
-    public ItemStack getHoveringItem() {
-        return hoveringItem;
+    public ItemStack getGemInSlot(int slot) {
+        return itemStackHandler.getStackInSlot(slot);
     }
 
-    public void setHoveringItem(ItemStack stack) {
-        this.hoveringItem = stack;
-        this.setChanged();
-        if (this.level != null) {
-            level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
+    public void setGemInSlot(int slot, ItemStack stack) {
+        itemStackHandler.setStackInSlot(slot, stack);
+    }
+
+    @Override
+    public void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.put("gems", itemStackHandler.serializeNBT());
+    }
+
+    @Override
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        if (tag.contains("gems")) {
+            itemStackHandler.deserializeNBT(tag.getCompound("gems"));
         }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        load(tag);
     }
 
     @Nullable
