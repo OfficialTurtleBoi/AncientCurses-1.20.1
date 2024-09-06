@@ -6,6 +6,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -24,6 +25,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
+import net.turtleboi.ancientcurses.util.ModTags;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -105,20 +107,12 @@ public class CursedAltarBlock extends BaseEntityBlock {
             if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
                 // Check if player is holding shift to remove gems in reverse order
                 if (player.isShiftKeyDown()) {
-                    // Remove the last gem added (reverse order, starting from the last slot)
-                    for (int i = 2; i >= 0; i--) {
-                        ItemStack gem = altarEntity.getGemInSlot(i);
-                        if (!gem.isEmpty()) {
-                            ItemStack gemCopy = gem.copy();  // Copy the gem to avoid modifying the slot's item
-                            player.getInventory().add(gemCopy); // Add the gem to the player's inventory
-                            altarEntity.setGemInSlot(i, ItemStack.EMPTY); // Clear the slot
-                            altarEntity.setChanged(); // Mark the block entity as changed
-                            return InteractionResult.SUCCESS;
-                        }
-                    }
+                    // Eject all gems currently in the altar
+                    ejectItemsTowardPlayer(altarEntity, level, pos, player);
+                    return InteractionResult.SUCCESS;
                 } else {
                     // Try to place the gem in an empty slot if it's a valid gem
-                    if (heldItem.is(Items.DIAMOND) || heldItem.is(Items.EMERALD) || heldItem.is(Items.AMETHYST_SHARD)) {
+                    if (isPreciousGem(heldItem)) {
                         for (int i = 0; i < 3; i++) {
                             if (altarEntity.getGemInSlot(i).isEmpty()) {
                                 altarEntity.setGemInSlot(i, heldItem.split(1)); // Place 1 item in the slot
@@ -133,9 +127,34 @@ public class CursedAltarBlock extends BaseEntityBlock {
         return InteractionResult.PASS;
     }
 
+    private boolean isPreciousGem(ItemStack itemStack){
+        return itemStack.is(ModTags.Items.PRECIOUS_GEMS);
+    }
 
+    private void ejectItemsTowardPlayer(CursedAltarBlockEntity altarEntity, Level level, BlockPos pos, Player player) {
+        // Eject all gems in the altar
+        for (int i = 0; i < 3; i++) {
+            ItemStack gem = altarEntity.getGemInSlot(i);
+            if (!gem.isEmpty()) {
+                // Spawn the item entity above the altar
+                ItemEntity itemEntity = new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1.5, pos.getZ() + 0.5, gem.copy());
 
+                // Calculate velocity toward the player
+                double dX = player.getX() - pos.getX();
+                double dY = (player.getY() + player.getEyeHeight()) - (pos.getY() + 1.5); // Eye height for better accuracy
+                double dZ = player.getZ() - pos.getZ();
+                double velocityFactor = 0.1; // Tweak this value for desired speed
+                itemEntity.setDeltaMovement(dX * velocityFactor, dY * velocityFactor, dZ * velocityFactor);
 
+                // Add the item to the level
+                level.addFreshEntity(itemEntity);
+
+                // Clear the slot in the altar
+                altarEntity.setGemInSlot(i, ItemStack.EMPTY);
+            }
+        }
+        altarEntity.setChanged(); // Mark block entity as changed
+    }
 
     @Nullable
     @Override

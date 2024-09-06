@@ -23,7 +23,22 @@ public class ModItems {
     public static final RegistryObject<Item> FINE_GEM = ITEMS.register("fine_gem",
             () -> new Item(new Item.Properties()));
 
-    public static final RegistryObject<Item> PERFECT_GEM = ITEMS.register("perfect_gem",
+    public static final RegistryObject<Item> PERFECT_DIAMOND = ITEMS.register("perfect_diamond",
+            () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> PERFECT_EMERALD = ITEMS.register("perfect_emerald",
+            () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> PERFECT_AMETHYST = ITEMS.register("perfect_amethyst",
+            () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> PERFECT_TOPAZ = ITEMS.register("perfect_topaz",
+            () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> PERFECT_SAPPHIRE = ITEMS.register("perfect_sapphire",
+            () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> PERFECT_RUBY = ITEMS.register("perfect_ruby",
             () -> new Item(new Item.Properties()));
 
     public static final RegistryObject<Item> DEPRECOPHOBIA_MUSIC_DISC = ITEMS.register("deprecophobia_music_disc",

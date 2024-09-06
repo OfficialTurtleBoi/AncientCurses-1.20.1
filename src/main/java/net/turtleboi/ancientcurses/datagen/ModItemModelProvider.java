@@ -19,7 +19,12 @@ public class ModItemModelProvider extends ItemModelProvider {
     protected void registerModels() {
         simpleItem(ModItems.GOLDEN_AMULET);
         simpleItem(ModItems.DEPRECOPHOBIA_MUSIC_DISC);
-
+        simpleItem(ModItems.PERFECT_AMETHYST);
+        simpleItem(ModItems.PERFECT_DIAMOND);
+        simpleItem(ModItems.PERFECT_EMERALD);
+        simpleItem(ModItems.PERFECT_RUBY);
+        simpleItem(ModItems.PERFECT_SAPPHIRE);
+        simpleItem(ModItems.PERFECT_TOPAZ);
     }
 
     private ItemModelBuilder simpleItem(RegistryObject<Item> item) {

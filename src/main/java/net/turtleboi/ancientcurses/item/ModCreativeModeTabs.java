@@ -21,7 +21,12 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.GOLDEN_AMULET.get());
                         pOutput.accept(ModItems.DEPRECOPHOBIA_MUSIC_DISC.get());
                         pOutput.accept(ModBlocks.CURSED_ALTAR.get());
-
+                        pOutput.accept(ModItems.PERFECT_AMETHYST.get());
+                        pOutput.accept(ModItems.PERFECT_DIAMOND.get());
+                        pOutput.accept(ModItems.PERFECT_EMERALD.get());
+                        pOutput.accept(ModItems.PERFECT_RUBY.get());
+                        pOutput.accept(ModItems.PERFECT_SAPPHIRE.get());
+                        pOutput.accept(ModItems.PERFECT_TOPAZ.get());
                     })
                     .build());
 

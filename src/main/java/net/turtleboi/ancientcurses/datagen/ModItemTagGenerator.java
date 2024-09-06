@@ -8,6 +8,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.util.ModTags;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
@@ -22,5 +23,23 @@ public class ModItemTagGenerator extends ItemTagsProvider {
     protected void addTags(HolderLookup.Provider pProvider) {
         this.tag(ItemTags.MUSIC_DISCS)
                 .add(ModItems.DEPRECOPHOBIA_MUSIC_DISC.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.PERFECT_AMETHYST.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.PERFECT_DIAMOND.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.PERFECT_EMERALD.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.PERFECT_RUBY.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.PERFECT_SAPPHIRE.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.PERFECT_TOPAZ.get());
     }
 }

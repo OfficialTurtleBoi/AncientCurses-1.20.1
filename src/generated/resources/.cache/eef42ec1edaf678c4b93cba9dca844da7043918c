@@ -1,3 +1,9 @@
-// 1.20.1	2024-09-05T16:34:33.6030439	Item Models: ancientcurses
+// 1.20.1	2024-09-06T16:41:31.4625531	Item Models: ancientcurses
 09b94b118cb70b05fee0c5fcbd49ed3d7ebc7075 assets/ancientcurses/models/item/deprecophobia_music_disc.json
 03c539e54576913add8837f492c7c7f3dc42e994 assets/ancientcurses/models/item/golden_amulet.json
+ad131cfe2dbcf0bf554168cf180c4519a7289e99 assets/ancientcurses/models/item/perfect_amethyst.json
+a7660ac71bb0c9aba59acddaf29a2538fd912448 assets/ancientcurses/models/item/perfect_diamond.json
+920de205e9fe6befd029c659ac51f59f4a0ea4bb assets/ancientcurses/models/item/perfect_emerald.json
+79866320ad9f7a7a379454b0e56033c180cd4504 assets/ancientcurses/models/item/perfect_ruby.json
+7bec58013e8f2f562e34aa4a1bce144d361f2452 assets/ancientcurses/models/item/perfect_sapphire.json
+fd32767e0bcd9defaa8e7da92dc542c14e761d32 assets/ancientcurses/models/item/perfect_topaz.json
