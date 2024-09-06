@@ -10,7 +10,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
-import net.turtleboi.ancientcurses.block.blockentity.CursedAltar;
+import net.turtleboi.ancientcurses.block.blockentity.CursedAltarBlock;
 import net.turtleboi.ancientcurses.item.ModItems;
 
 import java.util.function.Supplier;
@@ -20,7 +20,7 @@ public class ModBlocks {
             DeferredRegister.create(ForgeRegistries.BLOCKS, AncientCurses.MOD_ID);
 
     public static final RegistryObject<Block> CURSED_ALTAR = registerBlock("cursed_altar",
-            () -> new CursedAltar(BlockBehaviour.Properties.copy(Blocks.ENCHANTING_TABLE).noOcclusion()));
+            () -> new CursedAltarBlock(BlockBehaviour.Properties.copy(Blocks.OBSIDIAN).noOcclusion()));
 
     private static <T extends Block> RegistryObject<T> registerBlock(String name, Supplier<T> block) {
         RegistryObject<T> toReturn = BLOCKS.register(name, block);

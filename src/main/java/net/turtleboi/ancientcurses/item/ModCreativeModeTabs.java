@@ -8,6 +8,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
+import net.turtleboi.ancientcurses.block.ModBlocks;
 
 public class ModCreativeModeTabs {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
@@ -19,6 +20,7 @@ public class ModCreativeModeTabs {
                     .displayItems((pParameters, pOutput) -> {
                         pOutput.accept(ModItems.GOLDEN_AMULET.get());
                         pOutput.accept(ModItems.DEPRECOPHOBIA_MUSIC_DISC.get());
+                        pOutput.accept(ModBlocks.CURSED_ALTAR.get());
 
                     })
                     .build());

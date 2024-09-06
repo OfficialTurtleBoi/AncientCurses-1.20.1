@@ -3,6 +3,7 @@ package net.turtleboi.ancientcurses.datagen;
 import net.minecraft.data.PackOutput;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
+import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
@@ -15,7 +16,8 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
-        blockWithItem(ModBlocks.CURSED_ALTAR);
+        simpleBlockWithItem(ModBlocks.CURSED_ALTAR.get(),
+                new ModelFile.UncheckedModelFile(modLoc("block/cursed_altar")));
     }
 
     private void blockWithItem(RegistryObject<Block> blockRegistryObject) {
