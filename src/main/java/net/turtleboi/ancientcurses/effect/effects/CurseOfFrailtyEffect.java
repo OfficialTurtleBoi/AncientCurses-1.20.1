@@ -15,6 +15,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.ChunkRenderTypeSet;
+import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 
 import java.util.Objects;
@@ -53,7 +54,13 @@ public class CurseOfFrailtyEffect extends MobEffect {
                     AttributeModifier.Operation.MULTIPLY_BASE);
 
             if (pAmplifier >= 1) {
-
+                double hitChanceReduction = getHitChanceReduction(pAmplifier);
+                AttributeModifierUtil.applyTransientModifier(
+                        player,
+                        ModAttributes.HIT_CHANCE.get(),
+                        "COFHitChance",
+                        hitChanceReduction,
+                        AttributeModifier.Operation.ADDITION);
             }
 
             tickCounter++;
@@ -72,6 +79,7 @@ public class CurseOfFrailtyEffect extends MobEffect {
         if (pLivingEntity instanceof Player player) {
             AttributeModifierUtil.removeModifier(player, Attributes.MAX_HEALTH, "COFMaxHealth");
             AttributeModifierUtil.removeModifier(player, Attributes.ATTACK_DAMAGE, "COFAttackDamage");
+            AttributeModifierUtil.removeModifier(player, ModAttributes.HIT_CHANCE.get(), "COFHitChance");
             setHealthUpdated(player, false);
         }
     }
@@ -113,6 +121,14 @@ public class CurseOfFrailtyEffect extends MobEffect {
             case 1: return -0.33;
             case 2: return -0.50;
             default: return 0;
+        }
+    }
+
+    private double getHitChanceReduction(int pAmplifier) {
+        switch (pAmplifier) {
+            case 1: return -0.33;
+            case 2: return -0.66;
+            default: return 1;
         }
     }
 

@@ -9,6 +9,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 import java.util.Random;
 
@@ -133,10 +134,13 @@ public class CurseOfSlothEffect extends MobEffect {
     }
 
     private void limitInventoryToToolbar(Player player) {
-        for (int i = 9; i < player.getInventory().items.size(); i++) {
-            if (!player.getInventory().items.get(i).isEmpty()) {
-                player.drop(player.getInventory().items.get(i), true);
+        for (int i = player.getInventory().items.size() - 1; i >= 9; i--) {
+            ItemStack stack = player.getInventory().items.get(i);
+            if (!stack.isEmpty()) {
+                player.drop(stack, true);
+                player.getInventory().items.set(i, ItemStack.EMPTY); // Clear the slot
             }
         }
     }
+
 }

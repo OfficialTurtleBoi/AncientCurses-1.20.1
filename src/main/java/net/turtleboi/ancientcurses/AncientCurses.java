@@ -16,6 +16,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModCreativeModeTabs;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.sound.ModSounds;
@@ -39,6 +40,8 @@ public class AncientCurses {
         ModSounds.register(modEventBus);
 
         ModBlockEntities.register(modEventBus);
+
+        ModAttributes.REGISTRY.register(modEventBus);
 
         modEventBus.addListener(this::commonSetup);
 
