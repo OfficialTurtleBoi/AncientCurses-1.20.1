@@ -2,8 +2,17 @@
   "creativetab.ancientcurses_tab": "Ancient Curses",
   "sounds.ancientcurses.deprecophobia": "Deprecophobia music plays",
 
+  "effect.ancientcurses.curse_of_sloth": "Curse of Sloth",
+  "effect.ancientcurses.curse_of_frailty": "Curse of Frailty",
+
   "block.ancientcurses.cursed_altar": "Cursed Altar",
 
   "item.ancientcurses.deprecophobia_music_disc": "Music Disc",
-  "item.ancientcurses.deprecophobia_music_disc.desc": "KindaGlumm - Deprecophobia"
+  "item.ancientcurses.deprecophobia_music_disc.desc": "KindaGlumm - Deprecophobia",
+  "item.ancientcurses.perfect_amethyst": "Perfect Amethyst",
+  "item.ancientcurses.perfect_diamond": "Perfect Diamond",
+  "item.ancientcurses.perfect_emerald": "Perfect Emerald",
+  "item.ancientcurses.perfect_ruby": "Perfect Ruby",
+  "item.ancientcurses.perfect_sapphire": "Perfect Sapphire",
+  "item.ancientcurses.perfect_topaz": "Perfect Topaz"
 }
