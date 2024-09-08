@@ -21,6 +21,8 @@ public class ModAttributes {
 
     public static final RegistryObject<Attribute> ITEM_DESTROY_CHANCE =
             create("item_destroy_chance", 0D, 0D);
+    public static final RegistryObject<Attribute> SILVERFISH_SPAWN_CHANCE =
+            create("silverfish_spawn_chance", 0D, 0D);
 
     private static RegistryObject<Attribute> create(
             String name, double defaultValue, double minValue) {

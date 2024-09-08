@@ -1,32 +1,39 @@
 package net.turtleboi.ancientcurses.event;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Silverfish;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.CurseOfGluttonyEffect;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModItems;
-import net.turtleboi.ancientcurses.util.ItemValueMap;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID)
 public class ModEvents {
@@ -91,43 +98,58 @@ public class ModEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void EntityItemPickupEvent(EntityItemPickupEvent event){
-        if (event.getEntity() instanceof Player) {
-            ItemEntity itemEntity = event.getItem();
-            ItemStack itemStack = event.getItem().getItem();
-            Player player = event.getEntity();
-            Level level = player.level();
-            MobEffectInstance greedCurse = player.getEffect(ModEffects.CURSE_OF_GREED.get());
-            if (greedCurse != null) {
-                int amplifier = greedCurse.getAmplifier();
-                if (amplifier >= 0) {
-                    player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 0, false, true));
-                    player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 40, 0, false, true));
-                }
-            }
+        Player player = event.getEntity();
+        ItemEntity itemEntity = event.getItem();
+        AttributeInstance ItemDestroyChanceAttribute = player.getAttribute(ModAttributes.ITEM_DESTROY_CHANCE.get());
 
-            int itemValue = ItemValueMap.getItemValue(itemStack, level);
-            player.displayClientMessage(
-                    Component.literal("Picked up " + itemStack.getHoverName().getString() + " with a value of: " + itemValue)
-                            .withStyle(ChatFormatting.GOLD),
-                    true
-            );
+        if (ItemDestroyChanceAttribute!=null) {
 
-            AttributeInstance ItemDestroyChanceAttribute = player.getAttribute(ModAttributes.ITEM_DESTROY_CHANCE.get());
+            double randomValue = player.getRandom().nextDouble();
+            double itemDestroyChance = ItemDestroyChanceAttribute.getValue();
+            if (itemDestroyChance != 0) {
 
-            if (ItemDestroyChanceAttribute != null) {
-
-                double randomValue = player.getRandom().nextDouble();
-                double itemDestroyChance = ItemDestroyChanceAttribute.getValue();
-                if (itemDestroyChance != 0) {
-
-                    if (randomValue > itemDestroyChance) {
-                        event.setCanceled(true);
-                        itemEntity.remove(Entity.RemovalReason.DISCARDED);
-                        player.getInventory().add(new ItemStack(ModItems.ROT_CLUMP.get()));
-                        player.displayClientMessage(Component.literal("How unlucky...").withStyle(ChatFormatting.RED), true);
-                    }
+                if (randomValue < itemDestroyChance) {
+                    event.setCanceled(true);
+                    itemEntity.remove(Entity.RemovalReason.DISCARDED);
+                    player.getInventory().add(new ItemStack(ModItems.ROT_CLUMP.get()));
+                    player.displayClientMessage(Component.literal("How unlucky...").withStyle(ChatFormatting.RED), true);
                 }
             }
         }
+    }
+
+    public static final TagKey<Block> StoneForge = BlockTags.create(new ResourceLocation("forge", "stone"));
+    public static final TagKey<Block> CobblestoneForge = BlockTags.create(new ResourceLocation("forge", "cobblestone"));
+    public static final TagKey<Block> OreForge = BlockTags.create(new ResourceLocation("forge", "ore"));
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void BreakEvent(BlockEvent.BreakEvent event){
+        Player player = event.getPlayer();
+        Level level = player.level();
+        BlockPos bpos = event.getPos();
+
+        AttributeInstance SilverFishSpawnChanceAttribute = player.getAttribute(ModAttributes.SILVERFISH_SPAWN_CHANCE.get());
+        Block brokenBlock = level.getBlockState(bpos).getBlock(); // Get the block that was broken
+
+        if (SilverFishSpawnChanceAttribute!=null&&isStoneTypeBlock(brokenBlock)) {
+
+            double randomValue = player.getRandom().nextDouble();
+            double silverfishspawnchance = SilverFishSpawnChanceAttribute.getValue();
+            if (randomValue < silverfishspawnchance) {
+
+
+                Silverfish silverfish = new Silverfish(EntityType.SILVERFISH, level);
+                silverfish.setPos(bpos.getX()+0.5, bpos.getY(), bpos.getZ()+0.5);
+
+                level.addFreshEntity(silverfish);
+                silverfish.spawnAnim();
+            }
+
+        }
+    }
+    private static boolean isStoneTypeBlock(Block block) {
+
+        return block.defaultBlockState().is(OreForge)||
+                block.defaultBlockState().is(CobblestoneForge)||
+                block.defaultBlockState().is(StoneForge);
     }
 }
