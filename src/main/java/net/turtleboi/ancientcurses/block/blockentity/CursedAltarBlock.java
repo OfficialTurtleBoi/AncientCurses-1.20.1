@@ -108,18 +108,15 @@ public class CursedAltarBlock extends BaseEntityBlock {
             BlockEntity blockEntity = level.getBlockEntity(pos);
 
             if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
-                // Check if player is holding shift to remove gems in reverse order
                 if (player.isShiftKeyDown()) {
-                    // Eject all gems currently in the altar
                     ejectItemsTowardPlayer(altarEntity, level, pos, player);
                     return InteractionResult.SUCCESS;
                 } else {
-                    // Try to place the gem in an empty slot if it's a valid gem
                     if (isPreciousGem(heldItem)) {
                         for (int i = 0; i < 3; i++) {
                             if (altarEntity.getGemInSlot(i).isEmpty()) {
-                                altarEntity.setGemInSlot(i, heldItem.split(1)); // Place 1 item in the slot
-                                altarEntity.setChanged(); // Mark the block entity as changed
+                                altarEntity.setGemInSlot(i, heldItem.split(1));
+                                altarEntity.setChanged();
                                 return InteractionResult.SUCCESS;
                             }
                         }
@@ -135,28 +132,22 @@ public class CursedAltarBlock extends BaseEntityBlock {
     }
 
     private void ejectItemsTowardPlayer(CursedAltarBlockEntity altarEntity, Level level, BlockPos pos, Player player) {
-        // Eject all gems in the altar
         for (int i = 0; i < 3; i++) {
             ItemStack gem = altarEntity.getGemInSlot(i);
             if (!gem.isEmpty()) {
-                // Spawn the item entity above the altar
                 ItemEntity itemEntity = new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1.5, pos.getZ() + 0.5, gem.copy());
-
-                // Calculate velocity toward the player
                 double dX = player.getX() - pos.getX();
-                double dY = (player.getY() + player.getEyeHeight()) - (pos.getY() + 1.5); // Eye height for better accuracy
+                double dY = (player.getY() + player.getEyeHeight()) - (pos.getY() + 1.5);
                 double dZ = player.getZ() - pos.getZ();
-                double velocityFactor = 0.1; // Tweak this value for desired speed
+                double velocityFactor = 0.1;
                 itemEntity.setDeltaMovement(dX * velocityFactor, dY * velocityFactor, dZ * velocityFactor);
 
-                // Add the item to the level
                 level.addFreshEntity(itemEntity);
 
-                // Clear the slot in the altar
                 altarEntity.setGemInSlot(i, ItemStack.EMPTY);
             }
         }
-        altarEntity.setChanged(); // Mark block entity as changed
+        altarEntity.setChanged();
     }
 
     @Nullable

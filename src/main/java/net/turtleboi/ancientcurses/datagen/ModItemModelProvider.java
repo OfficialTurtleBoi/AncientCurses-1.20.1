@@ -25,6 +25,7 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.PERFECT_RUBY);
         simpleItem(ModItems.PERFECT_SAPPHIRE);
         simpleItem(ModItems.PERFECT_TOPAZ);
+        simpleItem(ModItems.ROT_CLUMP);
     }
 
     private ItemModelBuilder simpleItem(RegistryObject<Item> item) {

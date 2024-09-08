@@ -8,6 +8,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.effect.effects.CurseOfFrailtyEffect;
+import net.turtleboi.ancientcurses.effect.effects.CurseOfGluttonyEffect;
 import net.turtleboi.ancientcurses.effect.effects.CurseOfGreedEffect;
 import net.turtleboi.ancientcurses.effect.effects.CurseOfSlothEffect;
 
@@ -20,6 +21,9 @@ public class ModEffects {
 
     public static final RegistryObject<MobEffect> CURSE_OF_FRAILTY = MOB_EFFECTS.register("curse_of_frailty",
             () -> new CurseOfFrailtyEffect(MobEffectCategory.HARMFUL, 4928256));
+
+    public static final RegistryObject<MobEffect> CURSE_OF_GLUTTONY = MOB_EFFECTS.register("curse_of_gluttony",
+            () -> new CurseOfGluttonyEffect(MobEffectCategory.HARMFUL, 4928256));
 
     public static final RegistryObject<MobEffect> CURSE_OF_GREED = MOB_EFFECTS.register("curse_of_greed",
             () -> new CurseOfGreedEffect(MobEffectCategory.HARMFUL, 4928256));

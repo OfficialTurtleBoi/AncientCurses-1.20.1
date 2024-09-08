@@ -28,7 +28,6 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public float oRot;
     public float tRot;
     private static final RandomSource RANDOM = RandomSource.create();
-    private ItemStack hoveringItem = ItemStack.EMPTY;
 
     private final ItemStackHandler itemStackHandler = new ItemStackHandler(3){
         @Override
@@ -52,10 +51,6 @@ public class CursedAltarBlockEntity extends BlockEntity {
             return super.insertItem(slot, stack, simulate);
         }
     };
-
-    private static final int GEM_SLOT1 = 0;
-    private static final int GEM_SLOT2 = 1;
-    private static final int GEM_SLOT3 = 2;
 
     public CursedAltarBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(ModBlockEntities.CURSED_ALTAR_BE.get(), pPos, pBlockState);

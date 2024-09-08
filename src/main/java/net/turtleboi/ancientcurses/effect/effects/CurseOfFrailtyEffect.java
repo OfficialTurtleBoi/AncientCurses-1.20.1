@@ -63,11 +63,13 @@ public class CurseOfFrailtyEffect extends MobEffect {
                         AttributeModifier.Operation.ADDITION);
             }
 
-            tickCounter++;
-            int randomTicks = 5 + random.nextInt(16);
-            if (tickCounter >= randomTicks) {
-                reduceDurability(player);
-                tickCounter = 0;
+            if (pAmplifier >= 2) {
+                tickCounter++;
+                int randomTicks = 5 + random.nextInt(16);
+                if (tickCounter >= randomTicks) {
+                    reduceDurability(player);
+                    tickCounter = 0;
+                }
             }
         }
         super.applyEffectTick(pLivingEntity, pAmplifier);
@@ -89,13 +91,10 @@ public class CurseOfFrailtyEffect extends MobEffect {
         return true;
     }
 
-    private double getHealthReduction(int pAmplifier) {
-        switch (pAmplifier) {
-            case 0: return -4.0;
-            case 1: return -8.0;
-            case 2: return -16.0;
-            default: return 0;
-        }
+    public double getHealthReduction(int pAmplifier) {
+        double[] healthReductionValues = {-4.0, -8.0, -16.0};
+        int index = Math.min(pAmplifier, healthReductionValues.length - 1);
+        return healthReductionValues[index];
     }
 
     private void updatePlayerHealth(Player player) {
@@ -115,21 +114,16 @@ public class CurseOfFrailtyEffect extends MobEffect {
         data.putBoolean(healthUpdateTag.toString(), updated);
     }
 
-    private double getAttackDamageReduction(int pAmplifier) {
-        switch (pAmplifier) {
-            case 0: return -0.25;
-            case 1: return -0.33;
-            case 2: return -0.50;
-            default: return 0;
-        }
+    public double getAttackDamageReduction(int pAmplifier) {
+        double[] attackDamageReuctionValues = {-0.25, -0.33, -0.50};
+        int index = Math.min(pAmplifier, attackDamageReuctionValues.length - 1);
+        return attackDamageReuctionValues[index];
     }
 
-    private double getHitChanceReduction(int pAmplifier) {
-        switch (pAmplifier) {
-            case 1: return -0.33;
-            case 2: return -0.66;
-            default: return 1;
-        }
+    public double getHitChanceReduction(int pAmplifier) {
+        double[] hitChanceReductionValues = {0.0, -0.33, -0.66};
+        int index = Math.min(pAmplifier, hitChanceReductionValues.length - 1);
+        return hitChanceReductionValues[index];
     }
 
     private void reduceDurability(Player player) {

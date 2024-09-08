@@ -33,12 +33,12 @@ public class CurseOfSlothEffect extends MobEffect {
                     movementMultiplier,
                     AttributeModifier.Operation.MULTIPLY_BASE);
 
-            double miningMultiplier = getMiningAttackSpeedMultiplier(pAmplifier);
+            double swingSpeedMultiplier = getSwingSpeedMultiplier(pAmplifier);
             AttributeModifierUtil.applyTransientModifier(
                     player,
                     Attributes.ATTACK_SPEED,
                     "COSSwingSpeed",
-                    miningMultiplier,
+                    swingSpeedMultiplier,
                     AttributeModifier.Operation.MULTIPLY_BASE);
 
             if (pAmplifier >= 1) {
@@ -50,7 +50,7 @@ public class CurseOfSlothEffect extends MobEffect {
                 }
             }
 
-            if (pAmplifier == 2) {
+            if (pAmplifier >= 2) {
                 limitInventoryToToolbar(player);
             }
         }
@@ -81,7 +81,7 @@ public class CurseOfSlothEffect extends MobEffect {
         }
     }
 
-    private double getMiningAttackSpeedMultiplier(int pAmplifier) {
+    private double getSwingSpeedMultiplier(int pAmplifier) {
         switch (pAmplifier) {
             case 0: return -0.25;
             case 1: return -0.40;
