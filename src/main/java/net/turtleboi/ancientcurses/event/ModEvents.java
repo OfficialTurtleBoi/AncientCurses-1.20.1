@@ -5,6 +5,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -25,6 +26,7 @@ import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.CurseOfGluttonyEffect;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.util.ItemValueMap;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID)
 public class ModEvents {
@@ -89,21 +91,41 @@ public class ModEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void EntityItemPickupEvent(EntityItemPickupEvent event){
-        Player player = event.getEntity();
-        ItemEntity itemEntity = event.getItem();
-        AttributeInstance ItemDestroyChanceAttribute = player.getAttribute(ModAttributes.ITEM_DESTROY_CHANCE.get());
+        if (event.getEntity() instanceof Player) {
+            ItemEntity itemEntity = event.getItem();
+            ItemStack itemStack = event.getItem().getItem();
+            Player player = event.getEntity();
+            Level level = player.level();
+            MobEffectInstance greedCurse = player.getEffect(ModEffects.CURSE_OF_GREED.get());
+            if (greedCurse != null) {
+                int amplifier = greedCurse.getAmplifier();
+                if (amplifier >= 0) {
+                    player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 0, false, true));
+                    player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 40, 0, false, true));
+                }
+            }
 
-        if (ItemDestroyChanceAttribute!=null) {
+            int itemValue = ItemValueMap.getItemValue(itemStack, level);
+            player.displayClientMessage(
+                    Component.literal("Picked up " + itemStack.getHoverName().getString() + " with a value of: " + itemValue)
+                            .withStyle(ChatFormatting.GOLD),
+                    true
+            );
 
-            double randomValue = player.getRandom().nextDouble();
-            double itemDestroyChance = ItemDestroyChanceAttribute.getValue();
-            if (itemDestroyChance != 0) {
+            AttributeInstance ItemDestroyChanceAttribute = player.getAttribute(ModAttributes.ITEM_DESTROY_CHANCE.get());
 
-                if (randomValue > itemDestroyChance) {
-                    event.setCanceled(true);
-                    itemEntity.remove(Entity.RemovalReason.DISCARDED);
-                    player.getInventory().add(new ItemStack(ModItems.ROT_CLUMP.get()));
-                    player.displayClientMessage(Component.literal("How unlucky...").withStyle(ChatFormatting.RED), true);
+            if (ItemDestroyChanceAttribute != null) {
+
+                double randomValue = player.getRandom().nextDouble();
+                double itemDestroyChance = ItemDestroyChanceAttribute.getValue();
+                if (itemDestroyChance != 0) {
+
+                    if (randomValue > itemDestroyChance) {
+                        event.setCanceled(true);
+                        itemEntity.remove(Entity.RemovalReason.DISCARDED);
+                        player.getInventory().add(new ItemStack(ModItems.ROT_CLUMP.get()));
+                        player.displayClientMessage(Component.literal("How unlucky...").withStyle(ChatFormatting.RED), true);
+                    }
                 }
             }
         }

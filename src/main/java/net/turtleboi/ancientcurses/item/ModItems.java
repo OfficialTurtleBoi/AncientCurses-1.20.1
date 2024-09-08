@@ -1,5 +1,6 @@
 package net.turtleboi.ancientcurses.item;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.RecordItem;
@@ -11,6 +12,8 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 
 public class ModItems {
+    public static final Rarity LEGENDARY = Rarity.create("LEGENDARY", ChatFormatting.GOLD);
+
     public static final DeferredRegister<Item> ITEMS =
             DeferredRegister.create(ForgeRegistries.ITEMS, AncientCurses.MOD_ID);
 
