@@ -37,4 +37,9 @@ public class CurseOfEnvyEffect extends MobEffect {
         int index = Math.min(pAmplifier, silverfishSpawnChanceValues.length - 1);
         return silverfishSpawnChanceValues[index];
     }
+    public static double getattackhealingpercentage(int pAmplifier) {
+        double[] silverfishSpawnChanceValues = {0, 1, 1.5};
+        int index = Math.min(pAmplifier, silverfishSpawnChanceValues.length - 1);
+        return silverfishSpawnChanceValues[index];
+    }
 }

@@ -254,7 +254,12 @@ public class ModEvents {
             if (envyCurse != null) {
                 double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envyCurse.getAmplifier());
                 double randomValue = player.getRandom().nextDouble();
-                if (randomValue < itemDropOnUseChance) {
+
+                if (envyCurse.getAmplifier()>=1){
+                    float healing = (float) (event.getAmount()*CurseOfEnvyEffect.getattackhealingpercentage(envyCurse.getAmplifier()));
+                    mobCause.heal(healing);
+                }
+                if (randomValue < itemDropOnUseChance&&envyCurse.getAmplifier()>=2) {
                     List<EquipmentSlot> equippedItems = new ArrayList<>();
 
                     for (EquipmentSlot slot : EquipmentSlot.values()) {
@@ -270,6 +275,7 @@ public class ModEvents {
                         if (mobItem.isEmpty()) {
                             player.setItemSlot(slot, ItemStack.EMPTY);
                             mobCause.setItemSlot(slot, playerItem.copy());
+                            mobCause.setGuaranteedDrop(slot);
                         }
                     }
                 }
