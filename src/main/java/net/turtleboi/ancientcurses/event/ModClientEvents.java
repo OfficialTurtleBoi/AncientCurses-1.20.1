@@ -2,16 +2,21 @@ package net.turtleboi.ancientcurses.event;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.util.ItemValueMap;
 
 import java.util.Random;
 
@@ -25,6 +30,17 @@ public class ModClientEvents {
                 event.setCanceled(true);
                 renderCustomHungerBar(event.getGuiGraphics(), player);
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onItemTooltip(ItemTooltipEvent event) {
+        ItemStack itemStack = event.getItemStack();
+        Level level = event.getEntity() != null ? event.getEntity().level() : null;
+
+        if (level != null) {
+            int itemValue = ItemValueMap.getItemValue(itemStack, level);
+            event.getToolTip().add(Component.literal("Item Value: " + itemValue));
         }
     }
 

@@ -18,19 +18,14 @@ public class CurseOfNatureEffect extends MobEffect {
     @Override
     public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
         if (!pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
-            double hitChanceReduction = getSilverFishSpawnChance(pAmplifier);
-            AttributeModifierUtil.applyTransientModifier(
-                    player,
-                    ModAttributes.SILVERFISH_SPAWN_CHANCE.get(),
-                    "COGSilverFishSpawnChance",
-                    hitChanceReduction,
-                    AttributeModifier.Operation.ADDITION);
-            if (player.level().isDay() && !player.level().isClientSide&&pAmplifier>=2) {
-                float f = player.getLightLevelDependentMagicValue();
-                BlockPos blockpos = BlockPos.containing(player.getX(), player.getEyeY(), player.getZ());
-                boolean flag = player.isInWaterRainOrBubble() || player.isInPowderSnow || player.wasInPowderSnow;
-                if (f > 0.5F && player.getRandom().nextFloat() * 30.0F < (f - 0.4F) * 2.0F && !flag && player.level().canSeeSky(blockpos)) {
-                    player.setSecondsOnFire(6);
+            if (pAmplifier >= 2) {
+                if (player.level().isDay() && !player.level().isClientSide) {
+                    float lightLevel = player.level().getMaxLocalRawBrightness(player.blockPosition());
+                    BlockPos blockpos = BlockPos.containing(player.getX(), player.getEyeY(), player.getZ());
+                    boolean isWet = player.isInWaterRainOrBubble() || player.isInPowderSnow || player.wasInPowderSnow;
+                    if (lightLevel > 0.5F && player.getRandom().nextFloat() * 30.0F < (lightLevel - 0.4F) * 2.0F && !isWet && player.level().canSeeSky(blockpos)) {
+                        player.setSecondsOnFire(6);
+                    }
                 }
             }
         }
@@ -41,7 +36,7 @@ public class CurseOfNatureEffect extends MobEffect {
     public void removeAttributeModifiers(LivingEntity pLivingEntity, AttributeMap pAttributeMap, int pAmplifier) {
         super.removeAttributeModifiers(pLivingEntity, pAttributeMap, pAmplifier);
         if (pLivingEntity instanceof Player player) {
-            AttributeModifierUtil.removeModifier(player, ModAttributes.SILVERFISH_SPAWN_CHANCE.get(), "COGSilverFishSpawnChance");
+
         }
     }
 
@@ -50,9 +45,9 @@ public class CurseOfNatureEffect extends MobEffect {
         return true;
     }
 
-    public double getSilverFishSpawnChance(int pAmplifier) {
-        double[] silverfishspawnchancevalues = {0, 0.3, 0.6};
-        int index = Math.min(pAmplifier, silverfishspawnchancevalues.length - 1);
-        return silverfishspawnchancevalues[index];
+    public static double getSilverFishSpawnChance(int pAmplifier) {
+        double[] silverfishSpawnChanceValues = {0.25, 0.33, 0.5};
+        int index = Math.min(pAmplifier, silverfishSpawnChanceValues.length - 1);
+        return silverfishSpawnChanceValues[index];
     }
 }
