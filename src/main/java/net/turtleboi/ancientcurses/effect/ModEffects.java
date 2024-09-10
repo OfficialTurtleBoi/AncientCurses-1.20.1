@@ -24,10 +24,15 @@ public class ModEffects {
 
     public static final RegistryObject<MobEffect> CURSE_OF_GREED = MOB_EFFECTS.register("curse_of_greed",
             () -> new CurseOfGreedEffect(MobEffectCategory.HARMFUL, 4928256));
+
     public static final RegistryObject<MobEffect> CURSE_OF_NATURE = MOB_EFFECTS.register("curse_of_nature",
             () -> new CurseOfNatureEffect(MobEffectCategory.HARMFUL, 4928256));
+
     public static final RegistryObject<MobEffect> CURSE_OF_ENVY = MOB_EFFECTS.register("curse_of_envy",
             () -> new CurseOfEnvyEffect(MobEffectCategory.HARMFUL, 4928256));
+
+    public static final RegistryObject<MobEffect> CURSE_OF_WRATH = MOB_EFFECTS.register("curse_of_wrath",
+            () -> new CurseOfWrathEffect(MobEffectCategory.HARMFUL, 4928256));
 
 
     public static void register(IEventBus eventBus) {

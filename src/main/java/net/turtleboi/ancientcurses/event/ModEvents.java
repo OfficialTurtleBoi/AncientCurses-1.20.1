@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -16,16 +17,21 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.EnderMan;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Silverfish;
+import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
+import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -34,6 +40,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.turtleboi.ancientcurses.AncientCurses;
+import net.turtleboi.ancientcurses.ai.FollowPlayerGoal;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.CurseOfEnvyEffect;
 import net.turtleboi.ancientcurses.effect.effects.CurseOfGluttonyEffect;
@@ -43,16 +50,95 @@ import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
+import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
+
+import java.util.Random;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID)
 public class ModEvents {
+    private static final Random random = new Random();
+    private static int tickCounter = random.nextInt(11) + 10;
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onLivingUpdate(PlayerEvent event) {
-        Player player = (Player) event.getEntity();
+    public static void onLivingUpdate(LivingEvent.LivingTickEvent event) {
+        LivingEntity entity = event.getEntity();
+        Level level = entity.level();
 
+        if (entity instanceof Mob mob && !level.isClientSide) {
+            for (Player player : level.players()) {
+                MobEffectInstance wrathCurse = player.getEffect(ModEffects.CURSE_OF_WRATH.get());
+                if (wrathCurse != null && player.distanceTo(entity) <= 25) {
+                    int amplifier = wrathCurse.getAmplifier();
 
+                    if (amplifier >= 1 ) {
+                        if (mob instanceof Animal animal) {
+                            animal.getLookControl().setLookAt(player, 30.0F, 30.0F);
+                            if (animal.goalSelector.getRunningGoals().noneMatch(goal -> goal.getGoal() instanceof FollowMobGoal)) {
+                                animal.goalSelector.addGoal(1, new FollowPlayerGoal(animal, player, 1.25D, 25.0D));
+                            }
+                            if (animal.distanceTo(player) < 1.75) {
+                                if (tickCounter <= 0) {
+                                    player.hurt(level.damageSources().mobAttack(animal), 1.0F);
+                                }
+                            }
+                        }
+                        if (mob instanceof NeutralMob neutralMob) {
+                            if (neutralMob instanceof Monster && !(neutralMob instanceof Piglin) || neutralMob instanceof EnderMan) {
+                                return;
+                            } else if (neutralMob.getTarget() != player){
+                                 neutralMob.setTarget(player);
+                            }
+                        }
+                        if (mob instanceof TamableAnimal tameableAnimal) {
+                            if (!tameableAnimal.isTame()) {
+                                if (tameableAnimal.getTarget() != player){
+                                    tameableAnimal.setTarget(player);
+                                }
+                            } else if (tameableAnimal.isTame()){
+                                if (tameableAnimal.getTarget() == player){
+                                    tameableAnimal.setTarget(null);
+                                }
+                            }
+                        }
+                        if (mob instanceof Piglin piglin && !piglin.isAggressive()) {
+                            if (piglin.getTarget() != player){
+                                piglin.setTarget(player);
+                            }
+                        }
+                        if (mob instanceof IronGolem golem) {
+                            if (!golem.isPlayerCreated()) {
+                                if (golem.getTarget() != player){
+                                    golem.setTarget(player);
+                                }
+                            } else if (golem.isPlayerCreated()){
+                                if (golem.getTarget() == player){
+                                    golem.setTarget(null);
+                                }
+                            }
+                        }
+                        if (player instanceof ServerPlayer serverPlayer) {
+                            if (tickCounter <= 0) {
+                                ModNetworking.sendToPlayer(new SendParticlesS2C(
+                                        ParticleTypes.ANGRY_VILLAGER,
+                                        mob.getX(),
+                                        mob.getEyeY() + 0.25,
+                                        mob.getZ(),
+                                        0.1,
+                                        0.25,
+                                        0.1,
+                                        3,
+                                        1
+                                ), serverPlayer);
+                                tickCounter = random.nextInt(11) + 10;
+                            } else {
+                                tickCounter--;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -60,9 +146,9 @@ public class ModEvents {
         DamageSource source = event.getSource();
         if (source.getEntity() instanceof Player player) {
             //ENVY CURSE EFFECT
-            MobEffectInstance envycurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
-            if (envycurse!=null) {
-                double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envycurse.getAmplifier());
+            MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
+            if (envyCurse!=null) {
+                double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envyCurse.getAmplifier());
                 double randomValue2 = player.getRandom().nextDouble();
                 if (randomValue2 < itemDropOnUseChance) {
                     EquipmentSlot slot = EquipmentSlot.MAINHAND;
@@ -99,6 +185,10 @@ public class ModEvents {
                     //player.sendSystemMessage(Component.literal("Missed!")); //debug code
                 }
             }
+            //MobEffectInstance wrathCurse = player.getEffect(ModEffects.CURSE_OF_WRATH.get());
+            //if (wrathCurse!=null) {
+            //    player.sendSystemMessage(Component.literal("Target health: " + event.getEntity().getHealth() + "/" + event.getEntity().getMaxHealth())); //debug code
+            //}
         }
     }
 
@@ -120,7 +210,6 @@ public class ModEvents {
             }
         }
     }
-
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void EntityItemPickupEvent(EntityItemPickupEvent event){
@@ -232,7 +321,6 @@ public class ModEvents {
         }
     }
 
-
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void RightClickItemuseOnBlock(PlayerInteractEvent.RightClickBlock event){
         Player player = event.getEntity();
@@ -289,7 +377,17 @@ public class ModEvents {
                         float healing = event.getAmount() * healingPercentage;
                         mob.heal(healing);
                         if (player instanceof ServerPlayer serverPlayer) {
-                            ModNetworking.sendToPlayer(new SendParticlesS2C(mob.getX(), mob.getEyeY() + 0.5, mob.getZ()), serverPlayer);
+                            ModNetworking.sendToPlayer(new SendParticlesS2C(
+                                    ModParticles.HEAL_PARTICLES.get(),
+                                    mob.getX(),
+                                    mob.getEyeY() + 0.5,
+                                    mob.getZ(),
+                                    0.1,
+                                    0.25,
+                                    0.1,
+                                    10,
+                                    1
+                            ), serverPlayer);
                         }
                     }
 
@@ -327,5 +425,76 @@ public class ModEvents {
         return block.defaultBlockState().is(OreForge)||
                 block.defaultBlockState().is(CobblestoneForge)||
                 block.defaultBlockState().is(StoneForge);
+    }
+
+    @SubscribeEvent
+    public static void onMobSpawn(MobSpawnEvent.FinalizeSpawn event) {
+        LivingEntity entity = event.getEntity();
+        Level level = entity.level();
+
+        if (entity instanceof Mob mob && level instanceof ServerLevel) {
+            for (Player player : level.players()) {
+                MobEffectInstance wrathCurse = player.getEffect(ModEffects.CURSE_OF_WRATH.get());
+                if (wrathCurse != null && player.distanceTo(entity) <= 25) {
+                    int amplifier = wrathCurse.getAmplifier();
+
+                    double healthBoost = 1.5;
+                    double damageBoost = 1.5;
+                    if (amplifier == 1) {
+                        healthBoost = 2.0;
+                        damageBoost = 2.0;
+                    } else if (amplifier >= 2) {
+                        healthBoost = 3.0;
+                        damageBoost = 3.0;
+                    }
+
+                    if (mob.getAttribute(Attributes.MAX_HEALTH) != null) {
+                        mob.getAttribute(Attributes.MAX_HEALTH).setBaseValue(mob.getMaxHealth() * healthBoost);
+                        mob.setHealth(mob.getMaxHealth());
+                    }
+
+                    if (mob.getAttribute(Attributes.ATTACK_DAMAGE) != null) {
+                        mob.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(mob.getAttribute(Attributes.ATTACK_DAMAGE).getValue() * damageBoost);
+                    }
+
+
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingDeath(LivingDeathEvent event) {
+        LivingEntity entity = event.getEntity();
+        Level level = entity.level();
+        Entity source = event.getSource().getEntity();
+
+        if (source instanceof Player player) {
+            MobEffectInstance wrathCurse = player.getEffect(ModEffects.CURSE_OF_WRATH.get());
+            if (wrathCurse != null && wrathCurse.getAmplifier() >= 2) {
+                double explosionRadius = 4.0;
+
+                level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                        SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0F,
+                        (1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.2F) * 0.7F);
+
+                if (player instanceof ServerPlayer serverPlayer) {
+                    ModNetworking.sendToPlayer(new SendParticlesS2C(
+                            ParticleTypes.EXPLOSION,
+                            entity.getX(),
+                            entity.getY() + 1,
+                            entity.getZ(),
+                            3,
+                            3,
+                            3,
+                            4,
+                            explosionRadius
+                    ), serverPlayer);
+                }
+                if (player.distanceTo(entity) <= explosionRadius) {
+                    player.hurt(new DamageSource(level.damageSources().indirectMagic(player, player).typeHolder()), player.distanceTo(entity) * 2);
+                }
+            }
+        }
     }
 }
