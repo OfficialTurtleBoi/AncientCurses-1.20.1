@@ -25,7 +25,7 @@ import java.util.Random;
 public class CurseOfFrailtyEffect extends MobEffect {
     private static final Random random = new Random();
     private int tickCounter = 0;
-    private static final ResourceLocation healthUpdateTag = new ResourceLocation("ancientcurses", "health_updated");
+    private static final ResourceLocation COFhealthUpdateTag = new ResourceLocation("ancientcurses", "cof_healthupdated");
     public CurseOfFrailtyEffect(MobEffectCategory pCategory, int pColor) {
         super(pCategory, pColor);
     }
@@ -106,12 +106,12 @@ public class CurseOfFrailtyEffect extends MobEffect {
 
     private boolean isHealthUpdated(Player player) {
         CompoundTag data = player.getPersistentData();
-        return data.getBoolean(healthUpdateTag.toString());
+        return data.getBoolean(COFhealthUpdateTag.toString());
     }
 
     private void setHealthUpdated(Player player, boolean updated) {
         CompoundTag data = player.getPersistentData();
-        data.putBoolean(healthUpdateTag.toString(), updated);
+        data.putBoolean(COFhealthUpdateTag.toString(), updated);
     }
 
     public double getAttackDamageReduction(int pAmplifier) {

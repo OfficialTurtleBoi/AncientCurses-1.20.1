@@ -9,6 +9,7 @@ import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -16,6 +17,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.particle.ModParticles;
+import net.turtleboi.ancientcurses.particle.custom.HealParticles;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 
 import java.util.Random;
@@ -34,13 +37,20 @@ public class ModClientEvents {
     }
 
     @SubscribeEvent
+    public static void registerParticleFactories(RegisterParticleProvidersEvent event){
+        event.registerSpriteSet(ModParticles.HEAL_PARTICLES.get(),
+                HealParticles.Provider::new);
+    }
+
+    @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) {
         ItemStack itemStack = event.getItemStack();
         Level level = event.getEntity() != null ? event.getEntity().level() : null;
 
         if (level != null) {
             int itemValue = ItemValueMap.getItemValue(itemStack, level);
-            event.getToolTip().add(Component.literal("Item Value: " + itemValue));
+            int itemStackValue = itemValue * itemStack.getCount();
+            event.getToolTip().add(Component.literal("Item Value: " + itemStackValue));
         }
     }
 

@@ -33,13 +33,13 @@ public class CurseOfEnvyEffect extends MobEffect {
     }
 
     public static double getItemDropOnUseChance(int pAmplifier) {
-        double[] silverfishSpawnChanceValues = {0.2, 0.3, 0.4};
-        int index = Math.min(pAmplifier, silverfishSpawnChanceValues.length - 1);
-        return silverfishSpawnChanceValues[index];
+        double[] dropChanceValues = {0.2, 0.3, 0.4};
+        int index = Math.min(pAmplifier, dropChanceValues.length - 1);
+        return dropChanceValues[index];
     }
-    public static double getattackhealingpercentage(int pAmplifier) {
-        double[] silverfishSpawnChanceValues = {0, 1, 1.5};
-        int index = Math.min(pAmplifier, silverfishSpawnChanceValues.length - 1);
-        return silverfishSpawnChanceValues[index];
+    public static float getHealPercentage(int pAmplifier) {
+        float[] healPercentValues = {0.0F, 1.0F, 1.5F};
+        int index = Math.min(pAmplifier, healPercentValues.length - 1);
+        return healPercentValues[index];
     }
 }

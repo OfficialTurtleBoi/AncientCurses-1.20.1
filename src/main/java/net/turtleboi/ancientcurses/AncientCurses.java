@@ -19,10 +19,11 @@ import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModCreativeModeTabs;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import org.slf4j.Logger;
 
-// The value here should match an entry in the META-INF/mods.toml file
 @Mod(AncientCurses.MOD_ID)
 public class AncientCurses {
     public static final String MOD_ID = "ancientcurses";
@@ -40,6 +41,7 @@ public class AncientCurses {
         ModSounds.register(modEventBus);
 
         ModBlockEntities.register(modEventBus);
+        ModParticles.register(modEventBus);
 
         ModAttributes.REGISTRY.register(modEventBus);
 
@@ -50,7 +52,7 @@ public class AncientCurses {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-
+        ModNetworking.register();
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {

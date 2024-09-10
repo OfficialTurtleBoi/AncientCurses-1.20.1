@@ -5,9 +5,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -39,11 +41,9 @@ import net.turtleboi.ancientcurses.effect.effects.CurseOfGreedEffect;
 import net.turtleboi.ancientcurses.effect.effects.CurseOfNatureEffect;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID)
 public class ModEvents {
@@ -126,52 +126,82 @@ public class ModEvents {
     public static void EntityItemPickupEvent(EntityItemPickupEvent event){
         if (event.getEntity() instanceof Player) {
             ItemEntity itemEntity = event.getItem();
-            ItemStack itemStack = event.getItem().getItem();
+            ItemStack itemStack = itemEntity.getItem();
             Player player = event.getEntity();
             Level level = player.level();
             MobEffectInstance greedCurse = player.getEffect(ModEffects.CURSE_OF_GREED.get());
             if (greedCurse != null) {
+                CurseOfGreedEffect.resetInventoryValue(player);
                 int amplifier = greedCurse.getAmplifier();
                 if (amplifier >= 0) {
-                    player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 0, false, true));
-                    player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 40, 0, false, true));
+                    int itemValue = ItemValueMap.getItemValue(itemStack, player.level());
+                    int stackSize = itemStack.getCount();
+                    int valueBasedAmplifier = Math.min(((itemValue * stackSize) / 100) - 1, 4);
+                    player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60 * (1 + valueBasedAmplifier), valueBasedAmplifier, false, true));
+                    player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60 * (1 + valueBasedAmplifier), valueBasedAmplifier, false, true));
                 }
 
                 if (amplifier >= 1) {
-                    double randomValue = player.getRandom().nextDouble();
                     double itemDestroyChance = CurseOfGreedEffect.getItemDestroyChance(amplifier);
                     if (itemDestroyChance != 0) {
-                        if (randomValue > itemDestroyChance) {
-                            event.setCanceled(true);
+                        int stackSize = itemStack.getCount();
+                        for (int i = 0; i < stackSize; i++) {
+                            double randomValue = player.getRandom().nextDouble();
+                            if (randomValue <= itemDestroyChance) {
+                                itemStack.shrink(1);
+                                double x = player.getX();
+                                double y = player.getY() + player.getBbHeight() / 2.0;
+                                double z = player.getZ();
+                                for (int j = 0; j < 10; j++) {
+                                    level.addParticle(ParticleTypes.CLOUD,
+                                            x + (player.getRandom().nextDouble() - 0.5),
+                                            y + (player.getRandom().nextDouble() - 0.5),
+                                            z + (player.getRandom().nextDouble() - 0.5),
+                                            0.0, 0.1, 0.0);
+                                }
+                                level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                                        SoundEvents.FIRE_EXTINGUISH, SoundSource.AMBIENT, 1.0F, 1.0F);
+                                player.getInventory().add(new ItemStack(ModItems.ROT_CLUMP.get()));
+                                player.displayClientMessage(Component.literal("How unlucky...").withStyle(ChatFormatting.RED), true);
+                            }
+                        }
+
+                        if (itemStack.isEmpty()) {
                             itemEntity.remove(Entity.RemovalReason.DISCARDED);
-                            player.getInventory().add(new ItemStack(ModItems.ROT_CLUMP.get()));
-                            player.displayClientMessage(Component.literal("How unlucky...").withStyle(ChatFormatting.RED), true);
                         }
                     }
                 }
             }
 
-            int itemValue = ItemValueMap.getItemValue(itemStack, level);
-            player.displayClientMessage(Component.literal(
-                    "Picked up " + itemStack.getHoverName().getString() + " with a value of: " + itemValue).withStyle(ChatFormatting.GOLD), true //debug code
-            );
+            //int itemValue = ItemValueMap.getItemValue(itemStack, level);
+            //player.displayClientMessage(Component.literal(
+            //        "Picked up " + itemStack.getHoverName().getString() + " with a value of: " + itemValue).withStyle(ChatFormatting.GOLD), true //debug code
+            //);
         }
+    }
+
+    @SubscribeEvent
+    public static void onItemCrafted(PlayerEvent.ItemCraftedEvent event) {
+        Player player = event.getEntity();
+        CurseOfGreedEffect.resetInventoryValue(player);
+    }
+
+    @SubscribeEvent
+    public static void onItemSmelted(PlayerEvent.ItemSmeltedEvent event) {
+        Player player = event.getEntity();
+        CurseOfGreedEffect.resetInventoryValue(player);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void BreakEvent(BlockEvent.BreakEvent event) {
-
-
-
-
         Player player = event.getPlayer();
         Level level = player.level();
         BlockPos blockPos = event.getPos();
 
         //ENVY CURSE EFFECT
-        MobEffectInstance envycurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
-        if (envycurse!=null) {
-            double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envycurse.getAmplifier());
+        MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
+        if (envyCurse!=null) {
+            double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envyCurse.getAmplifier());
             double randomValue2 = player.getRandom().nextDouble();
             if (randomValue2 < itemDropOnUseChance) {
                 EquipmentSlot slot = EquipmentSlot.MAINHAND;
@@ -205,37 +235,35 @@ public class ModEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void RightClickItemuseOnBlock(PlayerInteractEvent.RightClickBlock event){
-
-            Player player = event.getEntity();
-            //ENVY CURSE EFFECT
-            MobEffectInstance envycurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
-            if (envycurse!=null) {
-                double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envycurse.getAmplifier());
-                double randomValue2 = player.getRandom().nextDouble();
-                if (randomValue2 < itemDropOnUseChance) {
-                    InteractionHand hand = event.getHand();
-                    EquipmentSlot slot = hand == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND;
-
-                    ItemStack DiscardItem = player.getItemBySlot(slot);
-
-                    if (DiscardItem != ItemStack.EMPTY && !player.level().isClientSide) {
-                        player.drop(DiscardItem, false);
-                        player.setItemSlot(slot, ItemStack.EMPTY);
-                    }
+        Player player = event.getEntity();
+        MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
+        if (envyCurse!=null) {
+            double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envyCurse.getAmplifier());
+            double randomValue2 = player.getRandom().nextDouble();
+            if (randomValue2 < itemDropOnUseChance) {
+                InteractionHand hand = event.getHand();
+                EquipmentSlot slot = hand == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND;
+                ItemStack DiscardItem = player.getItemBySlot(slot);
+                if (DiscardItem != ItemStack.EMPTY && !player.level().isClientSide) {
+                    player.drop(DiscardItem, false);
+                    player.setItemSlot(slot, ItemStack.EMPTY);
                 }
             }
+        }
     }
+
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void RightClickItemuse(LivingEntityUseItemEvent event){
-        if (event.getEntity() instanceof Player player&&event instanceof LivingEntityUseItemEvent.Start) {            //ENVY CURSE EFFECT
-            MobEffectInstance envycurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
-            if (envycurse != null) {
-                double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envycurse.getAmplifier());
+    public static void onItemRightClick(LivingEntityUseItemEvent event){
+        if (event.getEntity() instanceof Player player&&event instanceof LivingEntityUseItemEvent.Start) {
+            MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
+            if (envyCurse != null) {
+                double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envyCurse.getAmplifier());
                 double randomValue2 = player.getRandom().nextDouble();
 
                 if (randomValue2 < itemDropOnUseChance) {
                     InteractionHand hand = event.getEntity().getUsedItemHand();
-                    EquipmentSlot slot = hand == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND;                    ItemStack DiscardItem = player.getItemBySlot(slot);
+                    EquipmentSlot slot = hand == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND;
+                    ItemStack DiscardItem = player.getItemBySlot(slot);
 
                     if (DiscardItem != ItemStack.EMPTY && !player.level().isClientSide) {
                         player.drop(DiscardItem, false);
@@ -245,46 +273,51 @@ public class ModEvents {
             }
         }
     }
+
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void PlayerDamageEvent(LivingDamageEvent event) {
-        Entity entityCause = event.getSource().getEntity();
-
-        if (event.getEntity() instanceof Player player && entityCause instanceof Mob mobCause && !player.level().isClientSide) {
-            MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
-            if (envyCurse != null) {
-                double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envyCurse.getAmplifier());
-                double randomValue = player.getRandom().nextDouble();
-
-                if (envyCurse.getAmplifier()>=1){
-                    float healing = (float) (event.getAmount()*CurseOfEnvyEffect.getattackhealingpercentage(envyCurse.getAmplifier()));
-                    mobCause.heal(healing);
-                }
-                if (randomValue < itemDropOnUseChance&&envyCurse.getAmplifier()>=2) {
-                    List<EquipmentSlot> equippedItems = new ArrayList<>();
-
-                    for (EquipmentSlot slot : EquipmentSlot.values()) {
-                        equippedItems.add(slot);
-
-
+    public static void onPlayerDamagedByMob(LivingDamageEvent event) {
+        Entity attacker = event.getSource().getEntity();
+        Entity target = event.getEntity();
+        if (attacker instanceof Mob mob && target instanceof Player player) {
+            Level level = mob.level();
+            if (!level.isClientSide) {
+                MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
+                if (envyCurse != null) {
+                    int amplifier = envyCurse.getAmplifier();
+                    if (amplifier >= 1) {
+                        float healingPercentage = CurseOfEnvyEffect.getHealPercentage(amplifier);
+                        float healing = event.getAmount() * healingPercentage;
+                        mob.heal(healing);
+                        if (player instanceof ServerPlayer serverPlayer) {
+                            ModNetworking.sendToPlayer(new SendParticlesS2C(mob.getX(), mob.getEyeY() + 0.5, mob.getZ()), serverPlayer);
+                        }
                     }
-                    EquipmentSlot slot = equippedItems.get(player.getRandom().nextInt(equippedItems.size()));
-                    ItemStack playerItem = player.getItemBySlot(slot);
 
-                    if (!playerItem.isEmpty()) {
-                        ItemStack mobItem = mobCause.getItemBySlot(slot);
-                        if (mobItem.isEmpty()) {
-                            player.setItemSlot(slot, ItemStack.EMPTY);
-                            mobCause.setItemSlot(slot, playerItem.copy());
-                            mobCause.setGuaranteedDrop(slot);
+                    if (amplifier >= 2) {
+                        double itemDropChance = CurseOfEnvyEffect.getItemDropOnUseChance(amplifier);
+                        double randomValue = player.getRandom().nextDouble();
+                        if (randomValue < itemDropChance) {
+                            EquipmentSlot[] slots = EquipmentSlot.values();
+                            EquipmentSlot slot = slots[player.getRandom().nextInt(slots.length)];
+
+                            ItemStack playerItem = player.getItemBySlot(slot);
+                            if (!playerItem.isEmpty()) {
+                                ItemStack mobItem = mob.getItemBySlot(slot);
+                                if (mobItem.isEmpty()) {
+                                    player.setItemSlot(slot, ItemStack.EMPTY);
+                                    mob.setItemSlot(slot, playerItem.copy());
+                                    mob.setGuaranteedDrop(slot);
+
+                                    level.playSound(null, mob.getX(), mob.getY(), mob.getZ(),
+                                            SoundEvents.ITEM_PICKUP, SoundSource.HOSTILE, 1.0F, 1.0F);
+                                }
+                            }
                         }
                     }
                 }
             }
+        }
     }
-
-
-
-}
 
     public static final TagKey<Block> StoneForge = BlockTags.create(new ResourceLocation("forge", "stone"));
     public static final TagKey<Block> CobblestoneForge = BlockTags.create(new ResourceLocation("forge", "cobblestone"));
@@ -295,27 +328,4 @@ public class ModEvents {
                 block.defaultBlockState().is(CobblestoneForge)||
                 block.defaultBlockState().is(StoneForge);
     }
-
-
-
-
-
-    public static Pair<ItemStack, EquipmentSlot> getRandomEquippedItem(Player player) {
-        List<Pair<ItemStack, EquipmentSlot>> equippedItems = new ArrayList<>();
-
-        for (EquipmentSlot slot : EquipmentSlot.values()) {
-            ItemStack item = player.getItemBySlot(slot);
-            if (!item.isEmpty()) {
-                equippedItems.add(Pair.of(item, slot));
-            }
-        }
-
-        if (equippedItems.isEmpty()) {
-            return Pair.of(ItemStack.EMPTY, null);
-        }
-
-        RandomSource random = player.getRandom();
-        return equippedItems.get(random.nextInt(equippedItems.size()));
-    }
-
 }

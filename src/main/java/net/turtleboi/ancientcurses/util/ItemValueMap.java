@@ -8,7 +8,7 @@ import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
-import net.turtleboi.ancientcurses.item.ModItems;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -26,16 +26,10 @@ public class ItemValueMap {
         ITEM_VALUE_MAP.put(Items.LAPIS_LAZULI, 25);
         ITEM_VALUE_MAP.put(Items.DIAMOND, 50);
         ITEM_VALUE_MAP.put(Items.EMERALD, 75);
-        ITEM_VALUE_MAP.put(Items.NETHERITE_INGOT, 100);
-        ITEM_VALUE_MAP.put(Items.NETHERITE_SHOVEL, 150);
-        ITEM_VALUE_MAP.put(Items.NETHERITE_PICKAXE, 250);
-        ITEM_VALUE_MAP.put(Items.NETHERITE_AXE, 250);
-        ITEM_VALUE_MAP.put(Items.NETHERITE_HOE, 200);
-        ITEM_VALUE_MAP.put(Items.NETHERITE_SWORD, 200);
-        ITEM_VALUE_MAP.put(Items.NETHERITE_HELMET, 350);
-        ITEM_VALUE_MAP.put(Items.NETHERITE_CHESTPLATE, 500);
-        ITEM_VALUE_MAP.put(Items.NETHERITE_LEGGINGS, 450);
-        ITEM_VALUE_MAP.put(Items.NETHERITE_BOOTS, 300);
+        ITEM_VALUE_MAP.put(Items.ANCIENT_DEBRIS, 33);
+        ITEM_VALUE_MAP.put(Items.NETHERITE_SCRAP, 33);
+        ITEM_VALUE_MAP.put(Items.NETHERITE_INGOT, 264);
+        ITEM_VALUE_MAP.put(Items.NETHERITE_BLOCK, 2376);
         ITEM_VALUE_MAP.put(Items.TURTLE_HELMET, 44);
         ITEM_VALUE_MAP.put(Items.CHAINMAIL_HELMET, 100);
         ITEM_VALUE_MAP.put(Items.CHAINMAIL_CHESTPLATE, 200);
@@ -58,7 +52,6 @@ public class ItemValueMap {
         Item item = itemStack.getItem();
         if (ITEM_VALUE_MAP.containsKey(item)) {
             int predefinedValue = ITEM_VALUE_MAP.get(item);
-
             return predefinedValue + calculateEnchantmentValue(itemStack);
         }
         int recipeValue = calculateValueFromRecipe(itemStack, level);
@@ -106,10 +99,10 @@ public class ItemValueMap {
                 for (Ingredient ingredient : recipe.getIngredients()) {
                     ItemStack[] matchingStacks = ingredient.getItems();
                     if (matchingStacks.length > 0) {
-                        totalValue += getItemValue(matchingStacks[0], level); // Sum of ingredient values
+                        totalValue += getItemValue(matchingStacks[0], level);
                     }
                 }
-                totalValue = (totalValue / Math.max(resultCount, 1)) + getBaseValue(itemStack); // Add rarity value
+                totalValue = (totalValue / Math.max(resultCount, 1)) + getBaseValue(itemStack);
             }
         }
         return totalValue;
@@ -117,22 +110,24 @@ public class ItemValueMap {
 
     private static int calculateSmithingRecipeValue(ItemStack itemStack, Level level, RecipeManager recipeManager) {
         int totalValue = 0;
+
         for (SmithingRecipe recipe : recipeManager.getAllRecipesFor(RecipeType.SMITHING)) {
             if (ItemStack.isSameItem(recipe.getResultItem(level.registryAccess()), itemStack)) {
-                ItemStack base = findIngredientStack(recipe, recipe::isBaseIngredient);
-                ItemStack addition = findIngredientStack(recipe, recipe::isAdditionIngredient);
-                totalValue += getItemValue(base, level) + getItemValue(addition, level) + getBaseValue(itemStack);
+                ItemStack base = findMatchingItem(recipe::isBaseIngredient);
+                ItemStack addition = findMatchingItem(recipe::isAdditionIngredient);
+                int baseValue = getItemValue(base, level);
+                int additionValue = getItemValue(addition, level);
+                totalValue += baseValue + additionValue + getBaseValue(itemStack);
             }
         }
         return totalValue;
     }
 
-    private static ItemStack findIngredientStack(SmithingRecipe recipe, Predicate<ItemStack> predicate) {
-        for (ItemStack ingredientStack : recipe.getIngredients().stream()
-                .flatMap(ingredient -> Arrays.stream(ingredient.getItems()))
-                .toArray(ItemStack[]::new)) {
-            if (predicate.test(ingredientStack)) {
-                return ingredientStack;
+    private static ItemStack findMatchingItem(Predicate<ItemStack> predicate){
+        for (Item item : ForgeRegistries.ITEMS) {
+            ItemStack stack = new ItemStack(item);
+            if (predicate.test(stack)) {
+                return stack;
             }
         }
         return ItemStack.EMPTY;
