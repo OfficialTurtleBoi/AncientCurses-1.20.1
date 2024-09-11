@@ -37,6 +37,18 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> CURSE_OF_SHADOWS = MOB_EFFECTS.register("curse_of_shadows",
             () -> new CurseOfShadowsEffect(MobEffectCategory.HARMFUL, 4928256));
 
+    public static final RegistryObject<MobEffect> CURSE_OF_PRIDE = MOB_EFFECTS.register("curse_of_pride",
+            () -> new CurseOfPrideEffect(MobEffectCategory.HARMFUL, 4928256));
+
+    public static final RegistryObject<MobEffect> CURSE_OF_DISCORD = MOB_EFFECTS.register("curse_of_discord",
+            () -> new CurseOfDiscordEffect(MobEffectCategory.HARMFUL, 4928256));
+
+    public static final RegistryObject<MobEffect> CURSE_OF_PESTILENCE = MOB_EFFECTS.register("curse_of_pestilence",
+            () -> new CurseOfPestilenceEffect(MobEffectCategory.HARMFUL, 4928256));
+
+    public static final RegistryObject<MobEffect> CURSE_OF_LUST = MOB_EFFECTS.register("curse_of_lust",
+            () -> new CurseOfLust(MobEffectCategory.HARMFUL, 4928256));
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

@@ -13,6 +13,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
@@ -27,6 +28,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Silverfish;
 import net.minecraft.world.entity.monster.piglin.Piglin;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
@@ -45,10 +47,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.ai.FollowPlayerGoal;
 import net.turtleboi.ancientcurses.effect.ModEffects;
-import net.turtleboi.ancientcurses.effect.effects.CurseOfEnvyEffect;
-import net.turtleboi.ancientcurses.effect.effects.CurseOfGluttonyEffect;
-import net.turtleboi.ancientcurses.effect.effects.CurseOfGreedEffect;
-import net.turtleboi.ancientcurses.effect.effects.CurseOfNatureEffect;
+import net.turtleboi.ancientcurses.effect.effects.*;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.network.ModNetworking;
@@ -56,6 +55,7 @@ import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
 import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 
+import java.util.List;
 import java.util.Random;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID)
@@ -140,6 +140,29 @@ public class ModEvents {
                         }
                     }
                 }
+                if (mob instanceof Monster monster) {
+                    MobEffectInstance lustCurse = monster.getEffect(ModEffects.CURSE_OF_LUST.get());
+                    if (lustCurse != null) {
+                        if (player instanceof ServerPlayer serverPlayer) {
+                            if (tickCounter <= 0) {
+                                ModNetworking.sendToPlayer(new SendParticlesS2C(
+                                        ParticleTypes.HEART,
+                                        mob.getX(),
+                                        mob.getEyeY() + 0.25,
+                                        mob.getZ(),
+                                        0.1,
+                                        0.25,
+                                        0.1,
+                                        3,
+                                        1
+                                ), serverPlayer);
+                                tickCounter = random.nextInt(11) + 10;
+                            } else {
+                                tickCounter--;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -192,6 +215,16 @@ public class ModEvents {
             //if (wrathCurse!=null) {
             //    player.sendSystemMessage(Component.literal("Target health: " + event.getEntity().getHealth() + "/" + event.getEntity().getMaxHealth())); //debug code
             //}
+
+            MobEffectInstance lustCurse = player.getEffect(ModEffects.CURSE_OF_LUST.get());
+            if (lustCurse != null) {
+                int amplifier = lustCurse.getAmplifier();
+                float damage = event.getAmount();
+                float reflectDamage = damage * (0.1F + 0.1F * amplifier);
+                reflectDamage = Math.max(1.0F, reflectDamage);
+
+                player.hurt(new DamageSource(player.level().damageSources().generic().typeHolder()), reflectDamage);
+            }
         }
     }
 
@@ -343,6 +376,18 @@ public class ModEvents {
         }
     }
 
+    @SubscribeEvent
+    public static void onPlayerInteract(PlayerInteractEvent.EntityInteract event) {
+        Player player = event.getEntity();
+        if (event.getTarget() instanceof Villager) {
+            MobEffectInstance prideCurse = player.getEffect(ModEffects.CURSE_OF_PRIDE.get());
+            if (prideCurse != null) {
+                event.setCanceled(true);
+                player.displayClientMessage(Component.literal("You're better than them!"), true);
+            }
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onItemRightClick(LivingEntityUseItemEvent event){
         if (event.getEntity() instanceof Player player&&event instanceof LivingEntityUseItemEvent.Start) {
@@ -421,6 +466,20 @@ public class ModEvents {
                                             SoundEvents.ITEM_PICKUP, SoundSource.HOSTILE, 1.0F, 1.0F);
                                 }
                             }
+                        }
+                    }
+                }
+
+                MobEffectInstance discordCurse = player.getEffect(ModEffects.CURSE_OF_DISCORD.get());
+                if (discordCurse != null) {
+                    int amplifier = discordCurse.getAmplifier();
+                    if (!player.level().isClientSide) {
+                        CurseOfDiscordEffect.randomTeleport(player);
+                        if (amplifier >= 1) {
+                            CurseOfDiscordEffect.spawnEndermite(player);
+                        }
+                        if (amplifier >= 2) {
+                            CurseOfDiscordEffect.scrambleControls(player, 100);
                         }
                     }
                 }
@@ -516,7 +575,7 @@ public class ModEvents {
                     ), serverPlayer);
                 }
                 if (player.distanceTo(entity) <= explosionRadius) {
-                    player.hurt(new DamageSource(level.damageSources().indirectMagic(player, player).typeHolder()), player.distanceTo(entity) * 2);
+                    player.hurt(new DamageSource(level.damageSources().generic().typeHolder()), player.distanceTo(entity) * 2);
                 }
             }
         }
@@ -530,6 +589,71 @@ public class ModEvents {
             event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM);
         }
     }
+
+    @SubscribeEvent
+    public static void onLivingFall(LivingFallEvent event) {
+        LivingEntity entity = event.getEntity();
+        if (entity instanceof Player player) {
+            MobEffectInstance prideCurse = player.getEffect(ModEffects.CURSE_OF_PRIDE.get());
+            if (prideCurse != null) {
+                int amplifier = prideCurse.getAmplifier();
+                if (event.getDistance() > 1.5F) {
+                    event.setDamageMultiplier(1.5F + (0.5F * amplifier));
+                } else {
+                    event.setDamageMultiplier(1.0F);
+                }
+                if (amplifier == 1) {
+                    player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 0));
+                } else if (amplifier > 1){
+                    player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, amplifier + 1));
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingHeal(LivingHealEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            MobEffectInstance prideCurse = player.getEffect(ModEffects.CURSE_OF_PRIDE.get());
+            if (prideCurse != null) {
+                event.setAmount(0.0F);
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onMobEffected(MobEffectEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            MobEffectInstance prideCurse = player.getEffect(ModEffects.CURSE_OF_PRIDE.get());
+            if (prideCurse != null && prideCurse.getAmplifier() >= 1) {
+                MobEffectInstance addedEffect = event.getEffectInstance();
+                if (addedEffect != null && addedEffect.getEffect().getCategory() == MobEffectCategory.BENEFICIAL) {
+                    player.removeEffect(addedEffect.getEffect());
+                    event.setCanceled(true);
+                    player.displayClientMessage(Component.literal("Help is for the weak!"), true);
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerEquip(LivingEquipmentChangeEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            MobEffectInstance prideCurse = player.getEffect(ModEffects.CURSE_OF_PRIDE.get());
+            if (prideCurse != null && prideCurse.getAmplifier() >= 2) {
+                EquipmentSlot slot = event.getSlot();
+                ItemStack newStack = event.getTo();
+                if (slot.getType() == EquipmentSlot.Type.ARMOR || slot == EquipmentSlot.MAINHAND || slot == EquipmentSlot.OFFHAND) {
+                    if (!player.getInventory().add(newStack)) {
+                        player.drop(newStack, false);
+                    }
+                    event.setCanceled(true);
+                }
+            }
+        }
+    }
+
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -548,6 +672,47 @@ public class ModEvents {
                         phantom.setPos(spawnPos.getX(), spawnPos.getY(), spawnPos.getZ());
                         level.addFreshEntity(phantom);
                     }
+                }
+            }
+        }
+
+        MobEffectInstance prideCurse = player.getEffect(ModEffects.CURSE_OF_PRIDE.get());
+        if (prideCurse != null) {
+            if (player.isSprinting()) {
+                player.setSprinting(false);
+                if (prideCurse.getAmplifier() >= 1) {
+                    player.hurt(player.level().damageSources().generic(), 1.0F);
+                    player.displayClientMessage(Component.literal("Running is for the pathetic!"), true);
+                }
+
+                if (prideCurse.getAmplifier() >= 2) {
+                    ItemStack mainHand = player.getMainHandItem();
+                    ItemStack offHand = player.getOffhandItem();
+                    if (!mainHand.isEmpty()) {
+                        if (!player.getInventory().add(mainHand)) {
+                            player.drop(mainHand, false);
+                        }
+                        player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                    }
+
+                    if (!offHand.isEmpty()) {
+                        if (!player.getInventory().add(offHand)) {
+                            player.drop(offHand, false);
+                        }
+                        player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+                    }
+                }
+            }
+        }
+
+        MobEffectInstance lustCurse = player.getEffect(ModEffects.CURSE_OF_LUST.get());
+        if (lustCurse != null) {
+            int amplifier = lustCurse.getAmplifier();
+            double aggroDistanceMultiplier = 2.0 + amplifier;
+            List<Monster> nearbyMonsters = level.getEntitiesOfClass(Monster.class, player.getBoundingBox().inflate(aggroDistanceMultiplier * 16));
+            for (Monster monster : nearbyMonsters) {
+                if (monster.getTarget() == null) {
+                    monster.setTarget(player);
                 }
             }
         }
