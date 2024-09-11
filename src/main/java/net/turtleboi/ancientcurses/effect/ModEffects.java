@@ -34,6 +34,8 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> CURSE_OF_WRATH = MOB_EFFECTS.register("curse_of_wrath",
             () -> new CurseOfWrathEffect(MobEffectCategory.HARMFUL, 4928256));
 
+    public static final RegistryObject<MobEffect> CURSE_OF_SHADOWS = MOB_EFFECTS.register("curse_of_shadows",
+            () -> new CurseOfShadowsEffect(MobEffectCategory.HARMFUL, 4928256));
 
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);

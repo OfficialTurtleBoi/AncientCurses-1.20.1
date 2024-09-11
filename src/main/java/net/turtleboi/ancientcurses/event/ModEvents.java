@@ -24,6 +24,7 @@ import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Silverfish;
 import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.player.Player;
@@ -31,10 +32,12 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -363,12 +366,20 @@ public class ModEvents {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onPlayerDamagedByMob(LivingDamageEvent event) {
+    public static void onPlayerAttacked(LivingDamageEvent event) {
         Entity attacker = event.getSource().getEntity();
         Entity target = event.getEntity();
         if (attacker instanceof Mob mob && target instanceof Player player) {
             Level level = mob.level();
             if (!level.isClientSide) {
+                MobEffectInstance shadowCurse = player.getEffect(ModEffects.CURSE_OF_SHADOWS.get());
+                if (shadowCurse != null) {
+                    MobEffectInstance invisibilityEffect = mob.getEffect(MobEffects.INVISIBILITY);
+                    if (invisibilityEffect != null) {
+                        mob.removeEffect(MobEffects.INVISIBILITY);
+                    }
+                }
+
                 MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
                 if (envyCurse != null) {
                     int amplifier = envyCurse.getAmplifier();
@@ -461,6 +472,19 @@ public class ModEvents {
                 }
             }
         }
+
+        if (entity instanceof Monster && !level.isClientSide) {
+            for (Player player : level.players()) {
+                MobEffectInstance wrathCurse = player.getEffect(ModEffects.CURSE_OF_SHADOWS.get());
+                if (wrathCurse != null) {
+                    int amplifier = wrathCurse.getAmplifier();
+                    double spawnRateMultiplier = 1.0 + (0.5 * amplifier);
+                    if (level.random.nextFloat() < spawnRateMultiplier) {
+                        event.setCanceled(false);
+                    }
+                }
+            }
+        }
     }
 
     @SubscribeEvent
@@ -497,4 +521,36 @@ public class ModEvents {
             }
         }
     }
+
+    @SubscribeEvent
+    public static void onPlayerSleep(PlayerSleepInBedEvent event) {
+        Player player = event.getEntity();
+        if (player.hasEffect(ModEffects.CURSE_OF_SHADOWS.get())) {
+            player.displayClientMessage(Component.literal("It's too dark to sleep...").withStyle(ChatFormatting.RED), true);
+            event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        Player player = event.player;
+        Level level = player.level();
+
+        MobEffectInstance shadowCurse = player.getEffect(ModEffects.CURSE_OF_SHADOWS.get());
+        if (shadowCurse != null && shadowCurse.getAmplifier() >= 1 && !level.isClientSide) {
+            int amplifier = shadowCurse.getAmplifier();
+
+            if (player.tickCount % (24000 / (amplifier + 1)) == 0) {
+                if (level.random.nextFloat() < 0.25) {
+                    BlockPos spawnPos = player.blockPosition().above(15);
+                    Phantom phantom = EntityType.PHANTOM.create(level);
+                    if (phantom != null) {
+                        phantom.setPos(spawnPos.getX(), spawnPos.getY(), spawnPos.getZ());
+                        level.addFreshEntity(phantom);
+                    }
+                }
+            }
+        }
+    }
+
 }
