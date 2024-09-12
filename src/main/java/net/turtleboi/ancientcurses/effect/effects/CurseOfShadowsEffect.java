@@ -25,7 +25,7 @@ public class CurseOfShadowsEffect extends MobEffect {
     @Override
     public void applyEffectTick(LivingEntity entity, int amplifier) {
         if (entity instanceof Player player) {
-            player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 100, amplifier));
+            player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 100, amplifier, false, false, false));
             Level level = player.level();
 
             if (player.level().random.nextFloat() < 0.02) {

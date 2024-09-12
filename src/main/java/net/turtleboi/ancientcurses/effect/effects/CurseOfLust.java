@@ -1,8 +1,6 @@
 package net.turtleboi.ancientcurses.effect.effects;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -10,7 +8,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -24,14 +21,12 @@ import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
-import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
 import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 
 import java.util.List;
 import java.util.UUID;
 
 public class CurseOfLust extends MobEffect {
-    private static final String curseGiverKey = "curseoflustgiveruuid";
     public CurseOfLust(MobEffectCategory pCategory, int pColor) {
         super(pCategory, pColor);
     }
@@ -54,15 +49,15 @@ public class CurseOfLust extends MobEffect {
                             applyBerserkEffect(player);
                         }
                         setLustTimer(player,getLustTimer(player) - 1);
-                        player.sendSystemMessage(Component.literal("Lust timer: " + getLustTimer(player)));
+                        //player.sendSystemMessage(Component.literal("Lust timer: " + getLustTimer(player)));
                     } else if (getLustTimer(player) == 0) {
                         resetLustCooldown(player, pAmplifier);
                     } else {
-                        triggerLustEffect(player, pAmplifier);
+                        triggerLustEffect(player);
                     }
                 } else {
                     setLustCooldown(player,getLustCooldown(player) - 1);
-                    player.displayClientMessage(Component.literal("Lust cooldown: " + getLustCooldown(player)), true);
+                    //player.displayClientMessage(Component.literal("Lust cooldown: " + getLustCooldown(player)), true);
                 }
 
                 if (player instanceof ServerPlayer serverPlayer) {
@@ -133,7 +128,7 @@ public class CurseOfLust extends MobEffect {
         return player.getPersistentData().getInt("lustCooldown");
     }
 
-    private static void setLustTimer(Player player, int timer) {
+    public static void setLustTimer(Player player, int timer) {
         player.getPersistentData().putInt("lustTimer", timer);
     }
 
@@ -141,15 +136,11 @@ public class CurseOfLust extends MobEffect {
         return player.getPersistentData().getInt("lustTimer");
     }
 
-    public static boolean isLusted(Player player){
-        return player.getPersistentData().getBoolean("isLusted");
-    }
-
     public static boolean hasLustTarget(Player player){
         return player.getPersistentData().getBoolean("hasLustTarget");
     }
 
-    private void triggerLustEffect(Player player, int pAmplifier) {
+    private void triggerLustEffect(Player player) {
         Mob targetMob = getLustTarget(player);
         if (targetMob != null) {
             forcePOVControl(player);
@@ -162,7 +153,6 @@ public class CurseOfLust extends MobEffect {
         int maxLustTime = getMaxLustTime(pAmplifier);
         setLustTimer(player, 0);
         setLustTimer(player, getLustTime(pAmplifier));
-        player.getPersistentData().putBoolean("isLusted", false);
         clearLustTarget(player);
         AttributeModifierUtil.removeModifier(player, Attributes.MOVEMENT_SPEED, "COLStun");
         setLustCooldown(player, minLustTime + player.getRandom().nextInt(maxLustTime - minLustTime + 1));
@@ -173,25 +163,37 @@ public class CurseOfLust extends MobEffect {
             return getLustTarget(player);
         }
         List<Mob> nearbyMobs = player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(25.0D));
-
         if (!nearbyMobs.isEmpty()) {
-            Mob target = null;
+            Mob nearestMob = null;
+            double nearestDistance = Double.MAX_VALUE;
             if (pAmplifier >= 2) {
                 List<Monster> nearbyMonsters = player.level().getEntitiesOfClass(Monster.class, player.getBoundingBox().inflate(25.0D));
-                if (!nearbyMonsters.isEmpty()) {
-                    target = nearbyMonsters.get(player.level().random.nextInt(nearbyMonsters.size()));
+                for (Monster monster : nearbyMonsters) {
+                    double distanceToMonster = player.distanceToSqr(monster);
+                    if (distanceToMonster < nearestDistance) {
+                        nearestDistance = distanceToMonster;
+                        nearestMob = monster;
+                    }
                 }
             }
-            if (target == null) {
-                target = nearbyMobs.get(player.level().random.nextInt(nearbyMobs.size()));
+            if (nearestMob == null) {
+                for (Mob mob : nearbyMobs) {
+                    double distanceToMob = player.distanceToSqr(mob);
+                    if (distanceToMob < nearestDistance) {
+                        nearestDistance = distanceToMob;
+                        nearestMob = mob;
+                    }
+                }
             }
-            player.getPersistentData().putBoolean("hasLustTarget", true);
-            player.getPersistentData().putUUID("lustTarget", target.getUUID());
-
-            return target;
+            if (nearestMob != null) {
+                player.getPersistentData().putBoolean("hasLustTarget", true);
+                player.getPersistentData().putUUID("lustTarget", nearestMob.getUUID());
+                return nearestMob;
+            }
         }
         return null;
     }
+
 
     private Mob getLustTarget(Player player) {
         if (player.getPersistentData().hasUUID("lustTarget")) {
@@ -207,8 +209,9 @@ public class CurseOfLust extends MobEffect {
         return null;
     }
 
-    private static void clearLustTarget(Player player) {
+    public static void clearLustTarget(Player player) {
         player.getPersistentData().remove("lustTarget");
+        player.getPersistentData().putBoolean("isLusted", false);
         player.getPersistentData().putBoolean("hasLustTarget", false);
     }
 
@@ -223,7 +226,7 @@ public class CurseOfLust extends MobEffect {
         if (getLustTarget(player) instanceof Monster berserkMob) {
             berserkMob.addEffect(new MobEffectInstance(ModEffects.CURSE_OF_LUST.get(), 600, 0));
             CompoundTag data = berserkMob.getPersistentData();
-            data.putUUID(curseGiverKey, player.getUUID());
+            data.putUUID("curseoflustgiveruuid", player.getUUID());
         }
     }
 
@@ -250,13 +253,17 @@ public class CurseOfLust extends MobEffect {
     }
 
     private static void targetCurseGiver(Mob monster) {
-        CompoundTag data = monster.getPersistentData();
-        if (data.contains(curseGiverKey)) {
-            UUID curseGiverUUID = data.getUUID(curseGiverKey);
+        if (monster.getPersistentData().contains("curseoflustgiveruuid")) {
+            UUID curseGiverUUID = monster.getPersistentData().getUUID("curseoflustgiveruuid");
             Player targetPlayer = monster.level().getPlayerByUUID(curseGiverUUID);
             if (targetPlayer != null) {
                 monster.setTarget(targetPlayer);
             }
         }
+    }
+
+    public static void removeTarget(Mob monster) {
+        monster.getPersistentData().remove("curseoflustgiveruuid");
+        monster.setTarget(null);
     }
 }

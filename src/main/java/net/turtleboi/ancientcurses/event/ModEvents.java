@@ -51,13 +51,13 @@ import net.turtleboi.ancientcurses.effect.effects.*;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
 import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID)
 public class ModEvents {
@@ -163,6 +163,14 @@ public class ModEvents {
                             }
                         }
                     }
+                }
+            }
+
+            if (mob.getPersistentData().contains("curseoflustgiveruuid")) {
+                UUID curseGiverUUID = mob.getPersistentData().getUUID("curseoflustgiveruuid");
+                Player curseGiver = mob.level().getPlayerByUUID(curseGiverUUID);
+                if (curseGiver == null || curseGiver.isDeadOrDying()) {
+                    CurseOfLust.removeTarget(mob);
                 }
             }
         }
@@ -471,24 +479,27 @@ public class ModEvents {
                     }
                 }
 
-                MobEffectInstance discordCurse = player.getEffect(ModEffects.CURSE_OF_DISCORD.get());
-                if (discordCurse != null) {
-                    int amplifier = discordCurse.getAmplifier();
+                MobEffectInstance endCurse = player.getEffect(ModEffects.CURSE_OF_ENDING.get());
+                if (endCurse != null) {
+                    int pAmplifier = endCurse.getAmplifier();
                     if (!player.level().isClientSide) {
-                        CurseOfDiscordEffect.randomTeleport(player);
-                        if (amplifier >= 1) {
-                            CurseOfDiscordEffect.spawnEndermite(player);
+                        double teleportChance = CurseOfEnding.getTeleportChance(pAmplifier);
+                        if (player.getRandom().nextDouble() < teleportChance) {
+                            CurseOfEnding.randomTeleport(player, endCurse.getAmplifier());
+                            if (pAmplifier >= 1) {
+                                CurseOfEnding.giveConfusion(player, 100);
+                            }
                         }
-                        if (amplifier >= 2) {
-                            CurseOfDiscordEffect.scrambleControls(player, 100);
+
+                        if (CurseOfEnding.isVoid(player)){
+                            event.setCanceled(true);
                         }
                     }
                 }
 
                 MobEffectInstance lustCurse = player.getEffect(ModEffects.CURSE_OF_LUST.get());
-                if (lustCurse != null && CurseOfLust.isLusted(player)) {
-                    int pAmplifier = lustCurse.getAmplifier();
-                    CurseOfLust.resetLustCooldown(player, pAmplifier);
+                if (lustCurse != null && CurseOfLust.hasLustTarget(player)) {
+                    CurseOfLust.resetLustCooldown(player, lustCurse.getAmplifier());
                 }
             }
         }
@@ -591,6 +602,15 @@ public class ModEvents {
                 }
                 if (player.distanceTo(entity) <= explosionRadius) {
                     player.hurt(new DamageSource(level.damageSources().generic().typeHolder()), player.distanceTo(entity) * 2);
+                }
+            }
+        }
+
+        if (entity instanceof Player player) {
+            List<Mob> nearbyMobs = level.getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(64.0D));
+            for (Mob mob : nearbyMobs) {
+                if (mob.getTarget() == player) {
+                    CurseOfLust.removeTarget(mob);
                 }
             }
         }
@@ -731,5 +751,4 @@ public class ModEvents {
             }
         }
     }
-
 }

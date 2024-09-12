@@ -40,8 +40,8 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> CURSE_OF_PRIDE = MOB_EFFECTS.register("curse_of_pride",
             () -> new CurseOfPrideEffect(MobEffectCategory.HARMFUL, 4928256));
 
-    public static final RegistryObject<MobEffect> CURSE_OF_DISCORD = MOB_EFFECTS.register("curse_of_discord",
-            () -> new CurseOfDiscordEffect(MobEffectCategory.HARMFUL, 4928256));
+    public static final RegistryObject<MobEffect> CURSE_OF_ENDING = MOB_EFFECTS.register("curse_of_ending",
+            () -> new CurseOfEnding(MobEffectCategory.HARMFUL, 4928256));
 
     public static final RegistryObject<MobEffect> CURSE_OF_PESTILENCE = MOB_EFFECTS.register("curse_of_pestilence",
             () -> new CurseOfPestilenceEffect(MobEffectCategory.HARMFUL, 4928256));
