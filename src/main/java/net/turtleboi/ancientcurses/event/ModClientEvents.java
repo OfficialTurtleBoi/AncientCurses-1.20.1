@@ -1,10 +1,14 @@
 package net.turtleboi.ancientcurses.event;
 
 import com.mojang.blaze3d.shaders.FogShape;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
@@ -19,7 +23,9 @@ import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.turtleboi.ancientcurses.AncientCurses;
+import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.effect.effects.CurseOfLust;
 import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.particle.custom.HealParticles;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
@@ -30,11 +36,17 @@ import java.util.Random;
 public class ModClientEvents {
     @SubscribeEvent
     public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
-        if (event.getOverlay() == VanillaGuiOverlay.FOOD_LEVEL.type()) {
-            Player player = Minecraft.getInstance().player;
-            if (player != null && player.hasEffect(ModEffects.CURSE_OF_GLUTTONY.get())) {
-                event.setCanceled(true);
-                renderCustomHungerBar(event.getGuiGraphics(), player);
+        Player player = Minecraft.getInstance().player;
+        if (player != null){
+            if (event.getOverlay() == VanillaGuiOverlay.FOOD_LEVEL.type()) {
+                if (player.hasEffect(ModEffects.CURSE_OF_GLUTTONY.get())) {
+                    event.setCanceled(true);
+                    renderCustomHungerBar(event.getGuiGraphics(), player);
+                }
+            }
+
+            if (player.hasEffect(ModEffects.CURSE_OF_LUST.get())) {
+                renderPinkOverlay(event.getGuiGraphics(), player);
             }
         }
     }
@@ -85,6 +97,25 @@ public class ModClientEvents {
             } else if (i * 2 + 1 == foodLevel) {
                 guiGraphics.blit(HUNGER_ICONS, x, y, 9, 0, 9, 9,27, 9);
             }
+        }
+    }
+
+    private static void renderPinkOverlay(GuiGraphics guiGraphics, Player player) {
+        //System.out.println(Component.literal(String.valueOf(PlayerClientData.isLusted()))); //debug code
+        if (PlayerClientData.isLusted()) {
+            //System.out.println(Component.literal("Pink screen!")); //debug code
+            RenderSystem.disableDepthTest();
+            RenderSystem.depthMask(false);
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.setShaderColor(1.0F, 1F, 1F, 1F);
+            Minecraft minecraft = Minecraft.getInstance();
+            int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+            int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+            guiGraphics.fill(0, 0, screenWidth, screenHeight, FastColor.ARGB32.color(8, 255, 20, 147));
+            RenderSystem.disableBlend();
+            RenderSystem.depthMask(true);
+            RenderSystem.enableDepthTest();
         }
     }
 }

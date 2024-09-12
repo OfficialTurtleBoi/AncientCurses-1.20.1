@@ -15,7 +15,6 @@ import net.minecraft.world.entity.monster.Endermite;
 import net.minecraft.world.entity.player.Player;
 
 public class CurseOfDiscordEffect extends MobEffect {
-    private static int teleportCooldown = 0;
     public CurseOfDiscordEffect(MobEffectCategory pCategory, int pColor) {
         super(pCategory, pColor);
     }
@@ -24,6 +23,7 @@ public class CurseOfDiscordEffect extends MobEffect {
     public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
         if (!pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
             if (!player.level().isClientSide) {
+                int teleportCooldown = getTeleportCooldown(player);
                 if (pAmplifier >= 1 && teleportCooldown <= 0) {
                     randomTeleport(player);
                     spawnEndermite(player);
@@ -35,8 +35,10 @@ public class CurseOfDiscordEffect extends MobEffect {
                         scrambleControls(player, 100);
                     }
                     teleportCooldown = minTeleportTime + player.getRandom().nextInt(maxTeleportTime - minTeleportTime + 1);
+                    setTeleportCooldown(player, teleportCooldown);
                 } else {
                     teleportCooldown--;
+                    setTeleportCooldown(player, teleportCooldown);
                 }
             }
         }
@@ -47,7 +49,7 @@ public class CurseOfDiscordEffect extends MobEffect {
     public void removeAttributeModifiers(LivingEntity pLivingEntity, AttributeMap pAttributeMap, int pAmplifier) {
         super.removeAttributeModifiers(pLivingEntity, pAttributeMap, pAmplifier);
         if (pLivingEntity instanceof Player player) {
-
+            resetTeleportCooldown(player);
         }
     }
 
@@ -66,6 +68,18 @@ public class CurseOfDiscordEffect extends MobEffect {
         int[] maxTeleportTimeValues = {2400, 1200, 600};
         int index = Math.min(pAmplifier, maxTeleportTimeValues.length - 1);
         return maxTeleportTimeValues[index];
+    }
+
+    private void setTeleportCooldown(Player player, int cooldown) {
+        player.getPersistentData().putInt("teleportCooldown", cooldown);
+    }
+
+    private int getTeleportCooldown(Player player) {
+        return player.getPersistentData().getInt("teleportCooldown");
+    }
+
+    private void resetTeleportCooldown(Player player){
+        player.getPersistentData().remove("teleportCooldown");
     }
 
     public static void randomTeleport(Player player) {

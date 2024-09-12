@@ -51,6 +51,7 @@ import net.turtleboi.ancientcurses.effect.effects.*;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
 import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
@@ -483,6 +484,12 @@ public class ModEvents {
                         }
                     }
                 }
+
+                MobEffectInstance lustCurse = player.getEffect(ModEffects.CURSE_OF_LUST.get());
+                if (lustCurse != null && CurseOfLust.isLusted(player)) {
+                    int pAmplifier = lustCurse.getAmplifier();
+                    CurseOfLust.resetLustCooldown(player, pAmplifier);
+                }
             }
         }
     }
@@ -534,12 +541,20 @@ public class ModEvents {
 
         if (entity instanceof Monster && !level.isClientSide) {
             for (Player player : level.players()) {
-                MobEffectInstance wrathCurse = player.getEffect(ModEffects.CURSE_OF_SHADOWS.get());
-                if (wrathCurse != null) {
-                    int amplifier = wrathCurse.getAmplifier();
-                    double spawnRateMultiplier = 1.0 + (0.5 * amplifier);
-                    if (level.random.nextFloat() < spawnRateMultiplier) {
-                        event.setCanceled(false);
+                MobEffectInstance shadowCurse = player.getEffect(ModEffects.CURSE_OF_SHADOWS.get());
+                if (shadowCurse != null) {
+                    int amplifier = shadowCurse.getAmplifier();
+                    if (player.distanceToSqr(entity) < 2500) {
+                        double spawnRateMultiplier = 1.0 + (0.5 * amplifier);
+                        if (level.random.nextFloat() < spawnRateMultiplier) {
+                            BlockPos spawnPos = new BlockPos((int) (entity.getX() + level.random.nextInt(6) - 3),
+                                    (int) entity.getY(), (int) (entity.getZ() + level.random.nextInt(6) - 3));
+                            Monster newMob = (Monster) entity.getType().create(level);
+                            if (newMob != null) {
+                                newMob.setPos(spawnPos.getX(), spawnPos.getY(), spawnPos.getZ());
+                                level.addFreshEntity(newMob);
+                            }
+                        }
                     }
                 }
             }
@@ -653,7 +668,6 @@ public class ModEvents {
             }
         }
     }
-
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
