@@ -1,7 +1,6 @@
 package net.turtleboi.ancientcurses.effect.effects;
 
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -15,11 +14,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
+import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Endermite;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.VoidPacketS2C;
 
@@ -35,8 +34,7 @@ public class CurseOfEnding extends MobEffect {
         if (!pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
             if (!player.level().isClientSide) {
                 int teleportCooldown = getTeleportCooldown(player);
-                double teleportChance = getTeleportChance(pAmplifier);
-                if (pAmplifier >= 1 && teleportCooldown <= 0 && player.getRandom().nextDouble() < teleportChance) {
+                if (pAmplifier >= 1 && teleportCooldown <= 0) {
                     randomTeleport(player, pAmplifier);
                     giveConfusion(player, 100);
 
@@ -110,7 +108,7 @@ public class CurseOfEnding extends MobEffect {
     }
 
     public static double getTeleportChance(int pAmplifier){
-        double[] teleportChanceValues = {0.25, 0.40, 0.66};
+        double[] teleportChanceValues = {0.25, 0.33, 0.5};
         int index = Math.min(pAmplifier, teleportChanceValues.length - 1);
         return teleportChanceValues[index];
     }
@@ -208,7 +206,7 @@ public class CurseOfEnding extends MobEffect {
     }
 
     private static int getMaxEndermite(int pAmplifier){
-        int[] maxEndermiteValues = {2, 4, 7};
+        int[] maxEndermiteValues = {2, 4, 8};
         int index = Math.min(pAmplifier, maxEndermiteValues.length - 1);
         return maxEndermiteValues[index];
     }
@@ -221,19 +219,34 @@ public class CurseOfEnding extends MobEffect {
 
     public static void spawnEndermiteSwarm(Player player, int pAmplifier) {
         ServerLevel serverLevel = (ServerLevel) player.level();
+        int endermiteCounter = 0;
         spawnSingleEndermite(player, serverLevel);
+        endermiteCounter++;
+
         if (pAmplifier >= 2){
             spawnSingleEndermite(player, serverLevel);
+            endermiteCounter++;
         }
+
         int maxExtraMites = getMaxEndermite(pAmplifier);
         double spawnChance = getEndermiteChance(pAmplifier);
         for (int i = 1; i < maxExtraMites; i++) {
             if (player.getRandom().nextDouble() < spawnChance) {
                 spawnSingleEndermite(player, serverLevel);
+                endermiteCounter++;
                 spawnChance *= 0.66;
             } else {
                 break;
             }
+            if (endermiteCounter >= 4 && canSpawnEnderman(player, serverLevel)) {
+                if (canSpawnEnderman(player, serverLevel)) {
+                    spawnEnderman(player, serverLevel);
+                }
+                endermiteCounter = 0;  // Reset counter after spawning Enderman
+            }
+        }
+        if (endermiteCounter >= 4 && canSpawnEnderman(player, serverLevel)) {
+            spawnEnderman(player, serverLevel);
         }
     }
 
@@ -242,6 +255,30 @@ public class CurseOfEnding extends MobEffect {
         if (endermite != null) {
             endermite.moveTo(player.xo, player.yo, player.zo, player.getYRot(), player.getXRot());
             serverLevel.addFreshEntity(endermite);
+        }
+    }
+
+    private static boolean canSpawnEnderman(Player player, ServerLevel serverLevel) {
+        int nearbyEndermenCount = serverLevel.getEntitiesOfClass(EnderMan.class, player.getBoundingBox().inflate(18.0D)).size();
+        return nearbyEndermenCount < 3;
+    }
+
+    private static void spawnEnderman(Player player, ServerLevel serverLevel) {
+        EnderMan enderman = EntityType.ENDERMAN.create(serverLevel);
+        if (enderman != null) {
+            enderman.moveTo(player.xo, player.yo, player.zo, player.getYRot(), player.getXRot());
+            enderman.setTarget(player);
+            enderman.setAggressive(true);
+            serverLevel.addFreshEntity(enderman);
+            serverLevel.playSound(
+                    null,
+                    enderman.getX(),
+                    enderman.getY(),
+                    enderman.getZ(),
+                    SoundEvents.ENDERMAN_STARE,
+                    SoundSource.HOSTILE,
+                    1.0F,
+                    1.0F);
         }
     }
 

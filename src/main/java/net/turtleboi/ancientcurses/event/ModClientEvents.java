@@ -162,14 +162,13 @@ public class ModClientEvents {
         int totalLifetime = PlayerClientData.getTotalVoidTime();
         int currentLifetime = PlayerClientData.getVoidTimer();
 
-        // Check if totalLifetime is valid
         if (totalLifetime <= 0 || currentLifetime <= 0 || currentLifetime > totalLifetime) {
-            System.out.println("Invalid lifetime values, skipping rendering.");
+            //System.out.println("Invalid lifetime values, skipping rendering."); //debug code
             return;
         }
 
         float beamLife = (float) (totalLifetime - currentLifetime) / totalLifetime;
-        float beamIntensity = beamLife * 2; // Keep intensity proportional to lifetime
+        float beamIntensity = beamLife * 2;
 
         RandomSource randomsource = RandomSource.create(432L);
         VertexConsumer vertexconsumer = bufferSource.getBuffer(ModRenderTypes.getPlayerBeam());
@@ -177,19 +176,12 @@ public class ModClientEvents {
         poseStack.pushPose();
         poseStack.translate(0.0F, player.getBbHeight() / 2.0F, 0.0F);
 
-        // Adjust the number of beams and their properties
         float beamSpawnRate = 10.0F;
-        int beamCount = Math.min(20, (int) ((totalLifetime - currentLifetime) / beamSpawnRate)); // Number of beams to render
+        int beamCount = Math.min(20, (int) ((totalLifetime - currentLifetime) / beamSpawnRate));
 
         long gameTime = player.level().getGameTime();
 
         for (int i = 0; i < beamCount; ++i) {
-            // Modify rotations and scales based on beamLife
-            //float rotation = randomsource.nextFloat() * 360.0F + beamLife * 90.0F;
-            //poseStack.mulPose(Axis.XP.rotationDegrees(rotation));
-            //poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
-            //poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
-
             float randomRotationX = randomsource.nextFloat() * 360.0F;
             float randomRotationY = randomsource.nextFloat() * 360.0F;
             float randomRotationZ = randomsource.nextFloat() * 360.0F;
@@ -205,14 +197,11 @@ public class ModClientEvents {
             float baseBeamWidth = 0.1F;
             float maxBeamWidth = 2.0F;
 
-
             float beamLength = baseBeamLength + (maxBeamLength - baseBeamLength) * beamLife + randomsource.nextFloat() * 0.5F;
             float beamWidth = baseBeamWidth + (maxBeamWidth - baseBeamWidth) * beamLife + randomsource.nextFloat() * 0.2F;
 
             Matrix4f matrix4f = poseStack.last().pose();
-            int alpha = Mth.clamp((int) (64 + (191 * beamIntensity)), 0, 255); // Use beamLife for alpha to control fading out
-
-            // Render the beam segments
+            int alpha = Mth.clamp((int) (64 + (191 * beamIntensity)), 0, 255);
             vertex01(vertexconsumer, matrix4f, alpha);
             vertex2(vertexconsumer, matrix4f, beamLength, beamWidth);
             vertex3(vertexconsumer, matrix4f, beamLength, beamWidth);
@@ -223,8 +212,6 @@ public class ModClientEvents {
             vertex4(vertexconsumer, matrix4f, beamLength, beamWidth);
             vertex2(vertexconsumer, matrix4f, beamLength, beamWidth);
         }
-
-        // Restore the matrix state
         poseStack.popPose();
     }
 
