@@ -3,7 +3,8 @@ package net.turtleboi.ancientcurses.client;
 public class PlayerClientData {
     public static boolean isLusted = false;
     public static boolean isVoid = false;
-    public static long voidStartTime = 0;
+    public static int voidTimer = 0;
+    public static int voidTotalTime = 0;
 
     public static boolean isLusted() {
         return isLusted;
@@ -21,11 +22,19 @@ public class PlayerClientData {
         isVoid = voided;
     }
 
-    public static void setVoidStartTime(long startTime) {
-        voidStartTime = startTime;
+    public static void setVoidTimer(int time) {
+        voidTimer = time;
     }
 
-    public static Long getVoidStartTime(){
-        return voidStartTime;
+    public static Integer getVoidTimer(){
+        return voidTimer;
+    }
+
+    public static void setTotalVoidTime(int totalTime) {
+        voidTotalTime = totalTime;
+    }
+
+    public static Integer getTotalVoidTime(){
+        return voidTotalTime;
     }
 }

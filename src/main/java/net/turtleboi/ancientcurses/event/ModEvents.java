@@ -492,7 +492,7 @@ public class ModEvents {
                         }
 
                         if (CurseOfEnding.isVoid(player)){
-                            event.setCanceled(true);
+                            event.setAmount(1);
                         }
                     }
                 }

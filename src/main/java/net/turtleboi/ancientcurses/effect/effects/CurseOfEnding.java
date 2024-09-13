@@ -49,31 +49,47 @@ public class CurseOfEnding extends MobEffect {
                     setTeleportCooldown(player, teleportCooldown);
                 }
 
-                if (pAmplifier >= 2 && getVoidCooldown(player) <= 0) {
-                    if (getVoidTimer(player) > 0) {
+                int voidTimer = getVoidTimer(player);
+                int voidCooldown = getVoidCooldown(player);
+                if (pAmplifier >= 2 && voidCooldown <= 0) {
+                    if (voidTimer > 0) {
                         MobEffectInstance levitationEffect = player.getEffect(MobEffects.LEVITATION);
                         if (levitationEffect == null){
-                            giveLevitation(player, getVoidTimer(player));
+                            giveLevitation(player, voidTimer);
                         }
                         attractEntities(player);
-                        setVoidTimer(player,getVoidTimer(player) - 1);
-                        player.sendSystemMessage(Component.literal("Void timer: " + getVoidTimer(player)));
-                    } else if (getVoidTimer(player) == 0) {
+                        setVoidTimer(player,voidTimer - 1);
+                        //player.sendSystemMessage(Component.literal("Void timer: " + getVoidTimer(player))); //debug code
+                    } else if (voidTimer == 0) {
                         resetVoid(player);
                     } else {
                         startVoidEffect(player);
                     }
                 } else {
-                    setVoidCooldown(player,getVoidCooldown(player) - 1);
-                    player.displayClientMessage(Component.literal("Void cooldown: " + getVoidCooldown(player)), true);
+                    setVoidCooldown(player,voidCooldown - 1);
+                    //player.displayClientMessage(Component.literal("Void cooldown: " + getVoidCooldown(player)), true); //debug code
                 }
 
                 if (player instanceof ServerPlayer serverPlayer) {
-                    ModNetworking.sendToPlayer(
-                            new VoidPacketS2C(
-                                    CurseOfEnding.isVoid(player),
-                                    player.getPersistentData().getLong("voidStartTime")
-                            ), serverPlayer);
+                    if (isVoid(player)) {
+                        ModNetworking.sendToPlayer(
+                                new VoidPacketS2C(
+                                        true,
+                                        getVoidTimer(player),
+                                        getTotalVoidLifetime(player)
+                                ),
+                                serverPlayer
+                        );
+                    } else {
+                        ModNetworking.sendToPlayer(
+                                new VoidPacketS2C(
+                                        false,
+                                        0,
+                                        0
+                                ),
+                                serverPlayer
+                        );
+                    }
                 }
             }
         }
@@ -133,12 +149,20 @@ public class CurseOfEnding extends MobEffect {
 
     private void resetVoidCooldown(Player player){
         player.getPersistentData().remove("voidCooldown");
-        setVoidCooldown(player, 600);
+        setVoidCooldown(player, 300 + player.getRandom().nextInt(600 - 300 + 1));
+    }
+
+    public static int getTotalVoidLifetime(Player player) {
+        return player.getPersistentData().getInt("totalVoidLifetime");
     }
 
     private void setVoidTimer(Player player, int timer) {
         player.getPersistentData().putInt("voidTimer", timer);
+        if (!player.getPersistentData().contains("totalVoidLifetime") || player.getPersistentData().getInt("totalVoidLifetime") == 0) {
+            player.getPersistentData().putInt("totalVoidLifetime", timer);
+        }
     }
+
 
     private static int getVoidTimer(Player player) {
         return player.getPersistentData().getInt("voidTimer");
@@ -150,19 +174,19 @@ public class CurseOfEnding extends MobEffect {
 
     private void resetVoidTimer(Player player){
         player.getPersistentData().remove("voidTimer");
-        setVoidTimer(player, 100);
+        setVoidTimer(player, 100 + player.getRandom().nextInt(200 - 100 + 1));
     }
 
     private void startVoidEffect(Player player) {
-        player.getPersistentData().putLong("voidStartTime", player.level().getGameTime());
-        setVoidTimer(player, 100);
+        int totalVoidDuration = 100 + player.getRandom().nextInt(200 - 100 + 1);
+        player.getPersistentData().putInt("totalVoidLifetime", totalVoidDuration);
+        setVoidTimer(player, totalVoidDuration);
     }
 
     private void resetVoid(Player player) {
         resetVoidCooldown(player);
         resetVoidTimer(player);
-        player.getPersistentData().remove("voidStartTime");
-        player.displayClientMessage(Component.literal("The void effect has ended."), true);
+        player.getPersistentData().remove("totalVoidLifetime");
     }
 
     public static void randomTeleport(Player player, int pAmplifier) {

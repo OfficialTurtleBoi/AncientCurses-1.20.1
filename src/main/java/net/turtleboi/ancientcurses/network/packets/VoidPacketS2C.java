@@ -10,21 +10,25 @@ import java.util.function.Supplier;
 
 public class VoidPacketS2C {
     private final boolean isVoid;
-    private final long voidStartTime;
+    private final int voidTimer;
+    private final int voidTotalTime;
 
-    public VoidPacketS2C(boolean isVoid, long voidStartTime) {
+    public VoidPacketS2C(boolean isVoid, int voidTimer, int voidTotalTime) {
         this.isVoid = isVoid;
-        this.voidStartTime = voidStartTime;
+        this.voidTimer = voidTimer;
+        this.voidTotalTime = voidTotalTime;
     }
 
     public VoidPacketS2C(FriendlyByteBuf buf) {
         this.isVoid = buf.readBoolean();
-        this.voidStartTime = buf.readLong();
+        this.voidTimer = buf.readInt();
+        this.voidTotalTime = buf.readInt();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeBoolean(isVoid);
-        buf.writeLong(voidStartTime);
+        buf.writeInt(voidTimer);
+        buf.writeInt(voidTotalTime);
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
@@ -33,7 +37,8 @@ public class VoidPacketS2C {
             Player player = Minecraft.getInstance().player;
             if (player != null) {
                 PlayerClientData.setVoid(isVoid);
-                PlayerClientData.setVoidStartTime(voidStartTime);
+                PlayerClientData.setVoidTimer(voidTimer);
+                PlayerClientData.setTotalVoidTime(voidTotalTime);
             }
         });
         context.setPacketHandled(true);
