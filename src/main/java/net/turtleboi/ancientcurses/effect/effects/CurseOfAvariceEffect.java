@@ -14,10 +14,10 @@ import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 
-public class CurseOfGreedEffect extends MobEffect {
+public class CurseOfAvariceEffect extends MobEffect {
     private static final ResourceLocation COGrhealthUpdateTag = new ResourceLocation("ancientcurses", "cogr_healthupdated");
     private static final ResourceLocation COGrlastInventoryValueTag = new ResourceLocation("ancientcurses", "cogr_last_inventory_value");
-    public CurseOfGreedEffect(MobEffectCategory pCategory, int pColor) {
+    public CurseOfAvariceEffect(MobEffectCategory pCategory, int pColor) {
         super(pCategory, pColor);
     }
 

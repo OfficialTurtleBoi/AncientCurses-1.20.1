@@ -2,8 +2,18 @@
   "creativetab.ancientcurses_tab": "Ancient Curses",
   "sounds.ancientcurses.deprecophobia": "Deprecophobia music plays",
 
-  "effect.ancientcurses.curse_of_sloth": "Curse of Sloth",
+  "effect.ancientcurses.curse_of_ending": "Curse of Ending",
+  "effect.ancientcurses.curse_of_envy": "Curse of Envy",
   "effect.ancientcurses.curse_of_frailty": "Curse of Frailty",
+  "effect.ancientcurses.curse_of_gluttony": "Curse of Gluttony",
+  "effect.ancientcurses.curse_of_avarice": "Curse of Avarice",
+  "effect.ancientcurses.curse_of_obsession": "Curse of Obsession",
+  "effect.ancientcurses.curse_of_nature": "Curse of Nature",
+  "effect.ancientcurses.curse_of_pestilence": "Curse of Pestilence",
+  "effect.ancientcurses.curse_of_pride": "Curse of Pride",
+  "effect.ancientcurses.curse_of_shadows": "Curse of Shadows",
+  "effect.ancientcurses.curse_of_sloth": "Curse of Sloth",
+  "effect.ancientcurses.curse_of_wrath": "Curse of Wrath",
 
   "block.ancientcurses.cursed_altar": "Cursed Altar",
 

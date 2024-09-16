@@ -2,7 +2,6 @@ package net.turtleboi.ancientcurses.effect.effects;
 
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
@@ -26,8 +25,8 @@ import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 import java.util.List;
 import java.util.UUID;
 
-public class CurseOfLust extends MobEffect {
-    public CurseOfLust(MobEffectCategory pCategory, int pColor) {
+public class CurseOfObessionEffect extends MobEffect {
+    public CurseOfObessionEffect(MobEffectCategory pCategory, int pColor) {
         super(pCategory, pColor);
     }
 
@@ -61,7 +60,7 @@ public class CurseOfLust extends MobEffect {
                 }
 
                 if (player instanceof ServerPlayer serverPlayer) {
-                    ModNetworking.sendToPlayer(new LustedPacketS2C(CurseOfLust.hasLustTarget(player)), serverPlayer);
+                    ModNetworking.sendToPlayer(new LustedPacketS2C(CurseOfObessionEffect.hasLustTarget(player)), serverPlayer);
                 }
             }
 
@@ -224,7 +223,7 @@ public class CurseOfLust extends MobEffect {
 
     private void applyBerserkEffect(Player player) {
         if (getLustTarget(player) instanceof Monster berserkMob) {
-            berserkMob.addEffect(new MobEffectInstance(ModEffects.CURSE_OF_LUST.get(), 600, 0));
+            berserkMob.addEffect(new MobEffectInstance(ModEffects.CURSE_OF_OBESSSION.get(), 600, 0));
             CompoundTag data = berserkMob.getPersistentData();
             data.putUUID("curseoflustgiveruuid", player.getUUID());
         }

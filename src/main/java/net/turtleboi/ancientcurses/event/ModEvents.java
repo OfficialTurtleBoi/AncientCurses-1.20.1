@@ -34,6 +34,7 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
@@ -46,6 +47,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.ai.FollowPlayerGoal;
+import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.*;
 import net.turtleboi.ancientcurses.init.ModAttributes;
@@ -53,6 +55,9 @@ import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
 import net.turtleboi.ancientcurses.particle.ModParticles;
+import net.turtleboi.ancientcurses.trials.EliminationTrial;
+import net.turtleboi.ancientcurses.trials.PlayerTrialData;
+import net.turtleboi.ancientcurses.trials.Trial;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 
 import java.util.List;
@@ -142,7 +147,7 @@ public class ModEvents {
                     }
                 }
                 if (mob instanceof Monster monster) {
-                    MobEffectInstance lustCurse = monster.getEffect(ModEffects.CURSE_OF_LUST.get());
+                    MobEffectInstance lustCurse = monster.getEffect(ModEffects.CURSE_OF_OBESSSION.get());
                     if (lustCurse != null) {
                         if (player instanceof ServerPlayer serverPlayer) {
                             if (tickCounter <= 0) {
@@ -170,7 +175,7 @@ public class ModEvents {
                 UUID curseGiverUUID = mob.getPersistentData().getUUID("curseoflustgiveruuid");
                 Player curseGiver = mob.level().getPlayerByUUID(curseGiverUUID);
                 if (curseGiver == null || curseGiver.isDeadOrDying()) {
-                    CurseOfLust.removeTarget(mob);
+                    CurseOfObessionEffect.removeTarget(mob);
                 }
             }
         }
@@ -225,7 +230,7 @@ public class ModEvents {
             //    player.sendSystemMessage(Component.literal("Target health: " + event.getEntity().getHealth() + "/" + event.getEntity().getMaxHealth())); //debug code
             //}
 
-            MobEffectInstance lustCurse = player.getEffect(ModEffects.CURSE_OF_LUST.get());
+            MobEffectInstance lustCurse = player.getEffect(ModEffects.CURSE_OF_OBESSSION.get());
             if (lustCurse != null) {
                 int amplifier = lustCurse.getAmplifier();
                 float damage = event.getAmount();
@@ -263,9 +268,9 @@ public class ModEvents {
             ItemStack itemStack = itemEntity.getItem();
             Player player = event.getEntity();
             Level level = player.level();
-            MobEffectInstance greedCurse = player.getEffect(ModEffects.CURSE_OF_GREED.get());
+            MobEffectInstance greedCurse = player.getEffect(ModEffects.CURSE_OF_AVARICE.get());
             if (greedCurse != null) {
-                CurseOfGreedEffect.resetInventoryValue(player);
+                CurseOfAvariceEffect.resetInventoryValue(player);
                 int amplifier = greedCurse.getAmplifier();
                 if (amplifier >= 0) {
                     int itemValue = ItemValueMap.getItemValue(itemStack, player.level());
@@ -276,7 +281,7 @@ public class ModEvents {
                 }
 
                 if (amplifier >= 1) {
-                    double itemDestroyChance = CurseOfGreedEffect.getItemDestroyChance(amplifier);
+                    double itemDestroyChance = CurseOfAvariceEffect.getItemDestroyChance(amplifier);
                     if (itemDestroyChance != 0) {
                         int stackSize = itemStack.getCount();
                         for (int i = 0; i < stackSize; i++) {
@@ -317,13 +322,13 @@ public class ModEvents {
     @SubscribeEvent
     public static void onItemCrafted(PlayerEvent.ItemCraftedEvent event) {
         Player player = event.getEntity();
-        CurseOfGreedEffect.resetInventoryValue(player);
+        CurseOfAvariceEffect.resetInventoryValue(player);
     }
 
     @SubscribeEvent
     public static void onItemSmelted(PlayerEvent.ItemSmeltedEvent event) {
         Player player = event.getEntity();
-        CurseOfGreedEffect.resetInventoryValue(player);
+        CurseOfAvariceEffect.resetInventoryValue(player);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -483,23 +488,23 @@ public class ModEvents {
                 if (endCurse != null) {
                     int pAmplifier = endCurse.getAmplifier();
                     if (!player.level().isClientSide) {
-                        double teleportChance = CurseOfEnding.getTeleportChance(pAmplifier);
+                        double teleportChance = CurseOfEndingEffect.getTeleportChance(pAmplifier);
                         if (player.getRandom().nextDouble() < teleportChance) {
-                            CurseOfEnding.randomTeleport(player, endCurse.getAmplifier());
+                            CurseOfEndingEffect.randomTeleport(player, endCurse.getAmplifier());
                             if (pAmplifier >= 1) {
-                                CurseOfEnding.giveConfusion(player, 100);
+                                CurseOfEndingEffect.giveConfusion(player, 100);
                             }
                         }
 
-                        if (CurseOfEnding.isVoid(player)){
+                        if (CurseOfEndingEffect.isVoid(player)){
                             event.setAmount(1);
                         }
                     }
                 }
 
-                MobEffectInstance lustCurse = player.getEffect(ModEffects.CURSE_OF_LUST.get());
-                if (lustCurse != null && CurseOfLust.hasLustTarget(player)) {
-                    CurseOfLust.resetLustCooldown(player, lustCurse.getAmplifier());
+                MobEffectInstance lustCurse = player.getEffect(ModEffects.CURSE_OF_OBESSSION.get());
+                if (lustCurse != null && CurseOfObessionEffect.hasLustTarget(player)) {
+                    CurseOfObessionEffect.resetLustCooldown(player, lustCurse.getAmplifier());
                 }
             }
         }
@@ -606,12 +611,45 @@ public class ModEvents {
             }
         }
 
+        if (source instanceof ServerPlayer player) {
+            UUID playerUUID = player.getUUID();
+            if (PlayerTrialData.isPlayerCursed(player)) {
+                BlockPos altarPos = PlayerTrialData.getAltarPos(player);
+                if (altarPos == null) {
+                    return;
+                }
+
+                BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
+                if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
+                    return;
+                }
+
+                Trial trial = altar.getPlayerTrial(playerUUID);
+                if (trial instanceof EliminationTrial eliminationTrial) {
+                    eliminationTrial.incrementEliminationCount(player);
+                    if (eliminationTrial.isTrialCompleted(player)) {
+                        eliminationTrial.rewardPlayer(player);
+                        PlayerTrialData.clearPlayerCurse(player);
+                        altar.setPlayerTrialStatus(playerUUID, true);
+                        altar.removePlayerTrial(playerUUID);
+                    } else {
+                        trial.trackProgress(player);
+                    }
+                }
+            }
+        }
+
         if (entity instanceof Player player) {
             List<Mob> nearbyMobs = level.getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(64.0D));
             for (Mob mob : nearbyMobs) {
                 if (mob.getTarget() == player) {
-                    CurseOfLust.removeTarget(mob);
+                    CurseOfObessionEffect.removeTarget(mob);
                 }
+            }
+
+            if (PlayerTrialData.isPlayerCursed(player)) {
+                PlayerTrialData.clearPlayerCurse(player);
+                player.sendSystemMessage(Component.literal("You died before completing the trial.").withStyle(ChatFormatting.RED));
             }
         }
     }
@@ -680,10 +718,38 @@ public class ModEvents {
                 EquipmentSlot slot = event.getSlot();
                 ItemStack newStack = event.getTo();
                 if (slot.getType() == EquipmentSlot.Type.ARMOR || slot == EquipmentSlot.MAINHAND || slot == EquipmentSlot.OFFHAND) {
-                    if (!player.getInventory().add(newStack)) {
-                        player.drop(newStack, false);
+                    if (!newStack.isEmpty()) {
+                        if (!player.getInventory().add(newStack)) {
+                            player.drop(newStack, false);
+                        }
                     }
-                    event.setCanceled(true);
+                }
+
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
+                if (PlayerTrialData.isPlayerCursed(player)) {
+                    BlockPos altarPos = PlayerTrialData.getAltarPos(player);
+                    if (altarPos == null) continue;
+
+                    BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
+                    if (!(blockEntity instanceof CursedAltarBlockEntity altar)) continue;
+
+                    Trial trial = altar.getPlayerTrial(player.getUUID());
+                    if (trial != null) {
+                        if (PlayerTrialData.getCurrentTrialType(player).equals("SurvivalTrial")) {
+                            trial.trackProgress(player);
+
+                            if (trial.isTrialCompleted(player)) {
+                                trial.rewardPlayer(player);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -739,7 +805,7 @@ public class ModEvents {
             }
         }
 
-        MobEffectInstance lustCurse = player.getEffect(ModEffects.CURSE_OF_LUST.get());
+        MobEffectInstance lustCurse = player.getEffect(ModEffects.CURSE_OF_OBESSSION.get());
         if (lustCurse != null) {
             int amplifier = lustCurse.getAmplifier();
             double aggroDistanceMultiplier = 2.0 + amplifier;

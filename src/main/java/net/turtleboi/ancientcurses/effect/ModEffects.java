@@ -22,8 +22,8 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> CURSE_OF_GLUTTONY = MOB_EFFECTS.register("curse_of_gluttony",
             () -> new CurseOfGluttonyEffect(MobEffectCategory.HARMFUL, 4928256));
 
-    public static final RegistryObject<MobEffect> CURSE_OF_GREED = MOB_EFFECTS.register("curse_of_greed",
-            () -> new CurseOfGreedEffect(MobEffectCategory.HARMFUL, 4928256));
+    public static final RegistryObject<MobEffect> CURSE_OF_AVARICE = MOB_EFFECTS.register("curse_of_avarice",
+            () -> new CurseOfAvariceEffect(MobEffectCategory.HARMFUL, 4928256));
 
     public static final RegistryObject<MobEffect> CURSE_OF_NATURE = MOB_EFFECTS.register("curse_of_nature",
             () -> new CurseOfNatureEffect(MobEffectCategory.HARMFUL, 4928256));
@@ -41,13 +41,13 @@ public class ModEffects {
             () -> new CurseOfPrideEffect(MobEffectCategory.HARMFUL, 4928256));
 
     public static final RegistryObject<MobEffect> CURSE_OF_ENDING = MOB_EFFECTS.register("curse_of_ending",
-            () -> new CurseOfEnding(MobEffectCategory.HARMFUL, 4928256));
+            () -> new CurseOfEndingEffect(MobEffectCategory.HARMFUL, 4928256));
 
     public static final RegistryObject<MobEffect> CURSE_OF_PESTILENCE = MOB_EFFECTS.register("curse_of_pestilence",
             () -> new CurseOfPestilenceEffect(MobEffectCategory.HARMFUL, 4928256));
 
-    public static final RegistryObject<MobEffect> CURSE_OF_LUST = MOB_EFFECTS.register("curse_of_lust",
-            () -> new CurseOfLust(MobEffectCategory.HARMFUL, 4928256));
+    public static final RegistryObject<MobEffect> CURSE_OF_OBESSSION = MOB_EFFECTS.register("curse_of_obsession",
+            () -> new CurseOfObessionEffect(MobEffectCategory.HARMFUL, 4928256));
 
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);

@@ -1,16 +1,18 @@
 package net.turtleboi.ancientcurses.block.blockentity;
 
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -24,20 +26,18 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.client.extensions.common.IClientBlockExtensions;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
+import net.turtleboi.ancientcurses.trials.PlayerTrialData;
 import net.turtleboi.ancientcurses.util.ModTags;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.function.Consumer;
+import java.util.*;
 
 public class CursedAltarBlock extends BaseEntityBlock {
     public static final VoxelShape SHAPE = BaseEntityBlock.box(0, 0, 0, 16, 12, 16);
     public static final List<BlockPos> SOUL_TORCH_OFFSETS = BlockPos.betweenClosedStream(-2, 0, -2, 2, 1, 2).filter((p_207914_) ->
             Math.abs(p_207914_.getX()) == 2 || Math.abs(p_207914_.getZ()) == 2).map(BlockPos::immutable).toList();
-
 
     public CursedAltarBlock(Properties pProperties) {
         super(pProperties);
@@ -97,34 +97,87 @@ public class CursedAltarBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pMovedByPiston) {
-        super.onRemove(pState, pLevel, pPos, pNewState, pMovedByPiston);
+    public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
+        if (!pLevel.isClientSide) {
+            BlockEntity blockEntity = pLevel.getBlockEntity(pPos);
+            if (blockEntity instanceof CursedAltarBlockEntity) {
+                for (Player player : pLevel.players()) {
+                    BlockPos playerAltarPos = PlayerTrialData.getAltarPos(player);
+                    if (playerAltarPos != null && playerAltarPos.equals(pPos)) {
+                        PlayerTrialData.clearPlayerCurse(player);
+                    }
+                }
+            }
+        }
+        super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
     }
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide) {
-            ItemStack heldItem = player.getItemInHand(hand);
             BlockEntity blockEntity = level.getBlockEntity(pos);
 
             if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
-                if (player.isShiftKeyDown()) {
-                    ejectItemsTowardPlayer(altarEntity, level, pos, player);
-                    return InteractionResult.SUCCESS;
-                } else {
-                    if (isPreciousGem(heldItem)) {
-                        for (int i = 0; i < 3; i++) {
-                            if (altarEntity.getGemInSlot(i).isEmpty()) {
-                                altarEntity.setGemInSlot(i, heldItem.split(1));
-                                altarEntity.setChanged();
+                if (CursedAltarBlockEntity.isPlayerCursed(player) && altarEntity.canPlayerUse(player)) {
+                    player.sendSystemMessage(Component.literal("You are already cursed! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
+                    return InteractionResult.FAIL;
+                }
+
+
+                if (altarEntity.hasPlayerCompletedTrial(player)){
+                    if (player.isShiftKeyDown() && altarEntity.canPlayerUse(player)) {
+                        for (int i = 2; i >= 0; i--) {
+                            ItemStack gem = altarEntity.getGemInSlot(i);
+                            if (!gem.isEmpty()) {
+                                if (player.getInventory().add(gem)) {
+                                    altarEntity.setGemInSlot(i, ItemStack.EMPTY);
+                                    altarEntity.setChanged();
+                                } else {
+                                    ejectItemsTowardPlayer(altarEntity, level, pos, player);
+                                }
+                                altarEntity.setPlayerCooldown(player);
                                 return InteractionResult.SUCCESS;
                             }
                         }
+                    } else {
+                        ItemStack heldItem = player.getItemInHand(hand);
+                        if (isPreciousGem(heldItem)) {
+                            for (int i = 0; i < 3; i++) {
+                                if (altarEntity.getGemInSlot(i).isEmpty()) {
+                                    altarEntity.setGemInSlot(i, heldItem.split(1));
+                                    altarEntity.setChanged();
+                                    return InteractionResult.SUCCESS;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    if (altarEntity.canPlayerUse(player)) {
+                        startTrial(player, altarEntity);
+                        altarEntity.setPlayerCooldown(player);
+                        return InteractionResult.SUCCESS;
+                    } else {
+                        //player.sendSystemMessage(Component.literal("The altar is recharging.").withStyle(ChatFormatting.RED));
+                        return InteractionResult.FAIL;
                     }
                 }
             }
         }
         return InteractionResult.PASS;
+    }
+
+    public void startTrial(Player player, CursedAltarBlockEntity altarEntity) {
+        if (altarEntity.hasPlayerCompletedTrial(player)) {
+            //player.sendSystemMessage(Component.literal("You have already completed the trial for this altar.").withStyle(ChatFormatting.GREEN));
+            return;
+        }
+
+        MobEffect randomCurse = CursedAltarBlockEntity.getRandomCurse();
+        int randomAmplifier = CursedAltarBlockEntity.getRandomAmplifier(player);
+        UUID playerUUID = player.getUUID();
+        altarEntity.setPlayerTrialStatus(playerUUID, false);
+        altarEntity.cursePlayer(player, randomCurse, randomAmplifier, altarEntity);
+        player.sendSystemMessage(Component.literal("You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE));
     }
 
     private boolean isPreciousGem(ItemStack itemStack){
@@ -161,4 +214,5 @@ public class CursedAltarBlock extends BaseEntityBlock {
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, BlockState pState, BlockEntityType<T> pBlockEntityType) {
         return pLevel.isClientSide ? createTickerHelper(pBlockEntityType, ModBlockEntities.CURSED_ALTAR_BE.get(), CursedAltarBlockEntity::bookAnimationTick) : null;
     }
+
 }

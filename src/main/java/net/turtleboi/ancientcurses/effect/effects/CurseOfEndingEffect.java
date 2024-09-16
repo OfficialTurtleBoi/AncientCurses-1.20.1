@@ -24,8 +24,8 @@ import net.turtleboi.ancientcurses.network.packets.VoidPacketS2C;
 
 import java.util.List;
 
-public class CurseOfEnding extends MobEffect {
-    public CurseOfEnding(MobEffectCategory pCategory, int pColor) {
+public class CurseOfEndingEffect extends MobEffect {
+    public CurseOfEndingEffect(MobEffectCategory pCategory, int pColor) {
         super(pCategory, pColor);
     }
 
