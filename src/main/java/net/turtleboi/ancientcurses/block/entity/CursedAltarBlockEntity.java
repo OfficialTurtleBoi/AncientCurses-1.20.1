@@ -46,7 +46,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
     private static final long cooldownTime = 250;
     private final Map<UUID, Long> playerCooldowns = new HashMap<>();
 
-    private final ItemStackHandler itemStackHandler = new ItemStackHandler(3){
+    public final ItemStackHandler itemStackHandler = new ItemStackHandler(3){
         @Override
         protected void onContentsChanged(int slot){
             setChanged();
@@ -167,15 +167,15 @@ public class CursedAltarBlockEntity extends BlockEntity {
         altar.addPlayerTrial(playerUUID, trial);
 
         if (trial instanceof EliminationTrial) {
-            PlayerTrialData.setCurrentTrialType(player, "EliminationTrial");
+            PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.ELIMINATION_TRIAL);
         }
 
         if (trial instanceof SurvivalTrial) {
-            PlayerTrialData.setCurrentTrialType(player, "SurvivalTrial");
+            PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.SURVIVAL_TRIAL);
         }
 
-        player.sendSystemMessage(Component.literal("You have been cursed with " + curse.getDescriptionId() + " at amplifier " + pAmplifier + "!")
-                .withStyle(ChatFormatting.RED));
+        //player.sendSystemMessage(Component.literal("You have been cursed with " + curse.getDescriptionId() + " at amplifier " + pAmplifier + "!")
+        //        .withStyle(ChatFormatting.RED)); //debug code
 
         CompoundTag playerTag = player.getPersistentData();
         playerTag.putBoolean("isCursed", true);
@@ -273,22 +273,22 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public Trial createTrialForCurse(Player player, MobEffect curseType, int curseDuration, int curseAmplifier, CursedAltarBlockEntity altar) {
         if (curseType == ModEffects.CURSE_OF_AVARICE.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(curseType, curseInstance.getDuration(), altar);
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), altar);
         } else if (curseType == ModEffects.CURSE_OF_ENDING.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(curseType, curseInstance.getDuration(), altar);
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), altar);
         } else if (curseType == ModEffects.CURSE_OF_ENVY.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(curseType, curseInstance.getDuration(), altar);
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), altar);
         } else if (curseType == ModEffects.CURSE_OF_FRAILTY.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(curseType, curseInstance.getDuration(), altar);
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), altar);
         } else if (curseType == ModEffects.CURSE_OF_GLUTTONY.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(curseType, curseInstance.getDuration(), altar);
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), altar);
         } else if (curseType == ModEffects.CURSE_OF_NATURE.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(curseType, curseInstance.getDuration(), altar);
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), altar);
         } else if (curseType == ModEffects.CURSE_OF_OBESSSION.get()) {
             return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), altar);
         } else if (curseType == ModEffects.CURSE_OF_PESTILENCE.get()) {

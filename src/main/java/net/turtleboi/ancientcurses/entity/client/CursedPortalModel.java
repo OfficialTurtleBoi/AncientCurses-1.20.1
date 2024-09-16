@@ -27,9 +27,9 @@ public class CursedPortalModel<T extends Entity> extends EntityModel<T> {
                 "cursed_portal",
                 CubeListBuilder.create()
                         .texOffs(0,0)
-                        .addBox(-10.0F, 0.0F, -0.5F, 20.0F, 40.0F, 1.0F,
+                        .addBox(-11.0F, 0.0F, -0.5F, 22.0F, 42.0F, 1.0F,
                                 new CubeDeformation(0.0F)),
-                PartPose.offset(0.0F, -40.0F, 0.0F));
+                PartPose.offset(0.0F, -42.0F, 0.0F));
 
         return LayerDefinition.create(meshdefinition, 64, 64);
     }

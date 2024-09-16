@@ -5,13 +5,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.player.Player;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
-import net.turtleboi.ancientcurses.effect.ModEffects;
 
 import java.util.UUID;
 
 public class EliminationTrial implements Trial {
-    private static final String ELIMINATION_COUNT_KEY = "EliminationCount";
-    private static final String ELIMINATION_REQUIREMENT_KEY = "EliminationRequirement";
+    public static final String ELIMINATION_COUNT_KEY = "EliminationCount";
+    public static final String ELIMINATION_REQUIREMENT_KEY = "EliminationRequirement";
     private CursedAltarBlockEntity altar;
     private final MobEffect effect;
 
@@ -19,6 +18,7 @@ public class EliminationTrial implements Trial {
         this.altar = altar;
         this.effect = effect;
         saveRequiredEliminations(player, requiredEliminations);
+        PlayerTrialData.setEffect(player, effect);
     }
 
     @Override
@@ -50,10 +50,12 @@ public class EliminationTrial implements Trial {
         UUID playerUUID = player.getUUID();
         player.displayClientMessage(Component.literal("You have completed the elimination trial!").withStyle(ChatFormatting.GREEN), true);
         player.removeEffect(this.effect);
-        clearEliminationData(player);
+        resetEliminationData(player);
+
         PlayerTrialData.clearPlayerCurse(player);
         PlayerTrialData.clearCurrentTrialType(player);
         PlayerTrialData.incrementPlayerTrialsCompleted(player);
+
         altar.setPlayerTrialStatus(playerUUID, true);
         altar.setPlayerTrialCompleted(player);
         altar.removePlayerTrial(playerUUID);
@@ -69,7 +71,6 @@ public class EliminationTrial implements Trial {
         player.getPersistentData().putInt(ELIMINATION_COUNT_KEY, count);
     }
 
-    // Load the player's elimination count from their NBT data
     public static int getEliminationCount(Player player) {
         return player.getPersistentData().getInt(ELIMINATION_COUNT_KEY);
     }
@@ -78,13 +79,11 @@ public class EliminationTrial implements Trial {
         player.getPersistentData().putInt(ELIMINATION_REQUIREMENT_KEY, requiredEliminations);
     }
 
-    // Load the required eliminations from the player's NBT data
     public static int getRequiredEliminations(Player player) {
         return player.getPersistentData().getInt(ELIMINATION_REQUIREMENT_KEY);
     }
 
-    // Clear the player's elimination count and required eliminations
-    public static void clearEliminationData(Player player) {
+    public static void resetEliminationData(Player player) {
         player.getPersistentData().remove(ELIMINATION_COUNT_KEY);
         player.getPersistentData().remove(ELIMINATION_REQUIREMENT_KEY);
     }

@@ -69,6 +69,23 @@ public class ModEvents {
     private static final Random random = new Random();
     private static int tickCounter = random.nextInt(11) + 10;
 
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event){
+        Player player = event.getEntity();
+        PlayerTrialData.loadTrialData(player);
+
+        String trialType = PlayerTrialData.getCurrentTrialType(player);
+        if (trialType != null && !trialType.isEmpty()) {
+            PlayerTrialData.reconstructTrial(player, trialType);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event){
+        Player player = event.getEntity();
+        PlayerTrialData.saveTrialData(player);
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onLivingUpdate(LivingEvent.LivingTickEvent event) {
         LivingEntity entity = event.getEntity();
@@ -730,32 +747,6 @@ public class ModEvents {
     }
 
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-            for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
-                if (PlayerTrialData.isPlayerCursed(player)) {
-                    BlockPos altarPos = PlayerTrialData.getAltarPos(player);
-                    if (altarPos == null) continue;
-
-                    BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
-                    if (!(blockEntity instanceof CursedAltarBlockEntity altar)) continue;
-
-                    Trial trial = altar.getPlayerTrial(player.getUUID());
-                    if (trial != null) {
-                        if (PlayerTrialData.getCurrentTrialType(player).equals("SurvivalTrial")) {
-                            trial.trackProgress(player);
-
-                            if (trial.isTrialCompleted(player)) {
-                                trial.rewardPlayer(player);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         Player player = event.player;
         Level level = player.level();
@@ -777,30 +768,25 @@ public class ModEvents {
         }
 
         MobEffectInstance prideCurse = player.getEffect(ModEffects.CURSE_OF_PRIDE.get());
-        if (prideCurse != null) {
+        if (prideCurse != null && !level.isClientSide) {
             if (player.isSprinting()) {
                 player.setSprinting(false);
                 if (prideCurse.getAmplifier() >= 1) {
                     player.hurt(player.level().damageSources().generic(), 1.0F);
                     player.displayClientMessage(Component.literal("Running is for the pathetic!"), true);
                 }
+            }
 
-                if (prideCurse.getAmplifier() >= 2) {
-                    ItemStack mainHand = player.getMainHandItem();
-                    ItemStack offHand = player.getOffhandItem();
-                    if (!mainHand.isEmpty()) {
-                        if (!player.getInventory().add(mainHand)) {
-                            player.drop(mainHand, false);
-                        }
-                        player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                    }
-
-                    if (!offHand.isEmpty()) {
-                        if (!player.getInventory().add(offHand)) {
-                            player.drop(offHand, false);
-                        }
-                        player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
-                    }
+            if (prideCurse.getAmplifier() >= 2) {
+                ItemStack mainHandItem = player.getMainHandItem();
+                if (!mainHandItem.isEmpty()) {
+                    player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                    player.drop(mainHandItem, false);
+                }
+                ItemStack offHandItem = player.getOffhandItem();
+                if (!offHandItem.isEmpty()) {
+                    player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+                    player.drop(offHandItem, false);
                 }
             }
         }
@@ -813,6 +799,27 @@ public class ModEvents {
             for (Monster monster : nearbyMonsters) {
                 if (monster.getTarget() == null) {
                     monster.setTarget(player);
+                }
+            }
+        }
+
+        if (event.phase == TickEvent.Phase.END && !player.level().isClientSide()) {
+            if (PlayerTrialData.isPlayerCursed(player)) {
+                BlockPos altarPos = PlayerTrialData.getAltarPos(player);
+                if (altarPos == null) return;
+
+                BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
+                if (!(blockEntity instanceof CursedAltarBlockEntity altar)) return;
+
+                Trial trial = altar.getPlayerTrial(player.getUUID());
+                if (trial != null) {
+                    if (PlayerTrialData.getCurrentTrialType(player).equals(PlayerTrialData.SURVIVAL_TRIAL)) {
+                        trial.trackProgress(player);
+
+                        if (trial.isTrialCompleted(player)) {
+                            trial.rewardPlayer(player);
+                        }
+                    }
                 }
             }
         }

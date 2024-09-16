@@ -14,7 +14,7 @@ public class ModEntities {
 
     public static final RegistryObject<EntityType<CursedPortalEntity>> CURSED_PORTAL =
             ENTITY_TYPES.register("cursed_portal" , () -> EntityType.Builder.of(CursedPortalEntity::new, MobCategory.MISC)
-                    .sized(0.25F, 2.5F)
+                    .sized(0.25F, 2.625F)
                     .build("cursed_portal"));
 
     public static void register(IEventBus eventBus) {

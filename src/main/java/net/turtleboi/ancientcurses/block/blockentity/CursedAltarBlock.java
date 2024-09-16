@@ -7,6 +7,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffect;
@@ -81,7 +82,6 @@ public class CursedAltarBlock extends BaseEntityBlock {
         }
     }
 
-
     private boolean isSoulTorch(Level level, BlockPos pos) {
         return level.getBlockState(pos).is(Blocks.SOUL_TORCH) || level.getBlockState(pos).is(Blocks.SOUL_WALL_TORCH);
     }
@@ -97,19 +97,27 @@ public class CursedAltarBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
-        if (!pLevel.isClientSide) {
-            BlockEntity blockEntity = pLevel.getBlockEntity(pPos);
-            if (blockEntity instanceof CursedAltarBlockEntity) {
-                for (Player player : pLevel.players()) {
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!level.isClientSide) {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
+                for (int i = 0; i < altarEntity.itemStackHandler.getSlots(); i++) {
+                    ItemStack stack = altarEntity.itemStackHandler.getStackInSlot(i);
+                    if (!stack.isEmpty()) {
+                        Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
+                        altarEntity.itemStackHandler.setStackInSlot(i, ItemStack.EMPTY);
+                    }
+                }
+
+                for (Player player : level.players()) {
                     BlockPos playerAltarPos = PlayerTrialData.getAltarPos(player);
-                    if (playerAltarPos != null && playerAltarPos.equals(pPos)) {
-                        PlayerTrialData.clearPlayerCurse(player);
+                    if (playerAltarPos != null && playerAltarPos.equals(pos)) {
+                        PlayerTrialData.resetAltarPos(player);
                     }
                 }
             }
         }
-        super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @Override
@@ -177,7 +185,8 @@ public class CursedAltarBlock extends BaseEntityBlock {
         UUID playerUUID = player.getUUID();
         altarEntity.setPlayerTrialStatus(playerUUID, false);
         altarEntity.cursePlayer(player, randomCurse, randomAmplifier, altarEntity);
-        player.sendSystemMessage(Component.literal("You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE));
+        player.displayClientMessage(Component.literal(
+                "You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE), true); //debug code
     }
 
     private boolean isPreciousGem(ItemStack itemStack){

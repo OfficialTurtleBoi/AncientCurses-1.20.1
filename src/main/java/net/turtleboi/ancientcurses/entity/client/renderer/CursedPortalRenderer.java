@@ -17,6 +17,7 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.entity.client.CursedPortalModel;
+import org.jetbrains.annotations.NotNull;
 
 public class CursedPortalRenderer extends EntityRenderer<CursedPortalEntity> {
     private static final ResourceLocation TEXTURE = new ResourceLocation(AncientCurses.MOD_ID, "textures/entity/cursed_portal.png");
@@ -28,8 +29,9 @@ public class CursedPortalRenderer extends EntityRenderer<CursedPortalEntity> {
     }
 
     @Override
-    public ResourceLocation getTextureLocation(CursedPortalEntity pEntity) {
-        return TEXTURE;
+    public @NotNull ResourceLocation getTextureLocation(@NotNull CursedPortalEntity pEntity) {
+        int textureIndex = pEntity.getTextureIndex();
+        return new ResourceLocation(AncientCurses.MOD_ID, "textures/entity/cursed_portal/cursed_portal" + textureIndex + ".png");
     }
 
     @Override
@@ -52,8 +54,8 @@ public class CursedPortalRenderer extends EntityRenderer<CursedPortalEntity> {
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
             RenderSystem.depthMask(false);
-            VertexConsumer vertexConsumer = bufferSource.getBuffer(ModRenderTypes.CURSED_PORTAL_RENDER_TYPE);
-            model.renderToBuffer(poseStack, vertexConsumer, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 0.66F);
+            VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entityTranslucentCull(this.getTextureLocation(entity)));
+            model.renderToBuffer(poseStack, vertexConsumer, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 0.9F);
             RenderSystem.depthMask(true);
             RenderSystem.disableBlend();
             poseStack.popPose();
