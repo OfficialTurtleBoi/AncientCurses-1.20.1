@@ -42,13 +42,13 @@ public class EliminationTrial implements Trial {
     public void trackProgress(Player player) {
         int eliminations = getEliminationCount(player);
         int requiredEliminations = getRequiredEliminations(player);
-        player.sendSystemMessage(Component.literal("Eliminations: " + eliminations + "/" + requiredEliminations).withStyle(ChatFormatting.YELLOW));
+        player.displayClientMessage(Component.literal("Eliminations: " + eliminations + "/" + requiredEliminations).withStyle(ChatFormatting.YELLOW), true);
     }
 
     @Override
     public void rewardPlayer(Player player) {
         UUID playerUUID = player.getUUID();
-        player.sendSystemMessage(Component.literal("You have completed the elimination trial!").withStyle(ChatFormatting.GREEN));
+        player.displayClientMessage(Component.literal("You have completed the elimination trial!").withStyle(ChatFormatting.GREEN), true);
         player.removeEffect(this.effect);
         clearEliminationData(player);
         PlayerTrialData.clearPlayerCurse(player);

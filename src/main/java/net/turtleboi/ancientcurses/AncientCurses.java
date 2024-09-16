@@ -16,6 +16,8 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.entity.ModEntities;
+import net.turtleboi.ancientcurses.event.ModEvents;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModCreativeModeTabs;
 import net.turtleboi.ancientcurses.item.ModItems;
@@ -36,6 +38,8 @@ public class AncientCurses {
 
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
+
+        ModEntities.register(modEventBus);
 
         ModEffects.register(modEventBus);
         ModSounds.register(modEventBus);
@@ -62,13 +66,5 @@ public class AncientCurses {
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
 
-    }
-
-    @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientModEvents {
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.CURSED_ALTAR.get(), RenderType.cutout());
-        }
     }
 }

@@ -57,15 +57,15 @@ public class SurvivalTrial implements Trial {
 
         double progressPercentage = (double) timeElapsed / trialDuration * 100.0;
         progressPercentage = Math.min(progressPercentage, 100.0);
-        player.sendSystemMessage(Component.literal(String.format("Trial progress: %.2f%% complete", progressPercentage))
-                .withStyle(ChatFormatting.YELLOW));
+        player.displayClientMessage(Component.literal(String.format("Trial progress: %.2f%% complete", progressPercentage))
+                .withStyle(ChatFormatting.YELLOW), true);
     }
 
 
     @Override
     public void rewardPlayer(Player player) {
         UUID playerUUID = player.getUUID();
-        player.sendSystemMessage(Component.literal("You have survived the trial!").withStyle(ChatFormatting.GREEN));
+        player.displayClientMessage(Component.literal("You have survived the trial!").withStyle(ChatFormatting.GREEN), true);
         player.removeEffect(this.effect);
         PlayerTrialData.clearPlayerCurse(player);
         PlayerTrialData.clearCurrentTrialType(player);
