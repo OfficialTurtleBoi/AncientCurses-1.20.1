@@ -9,6 +9,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
+import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 
 public class ModItems {
@@ -49,6 +50,21 @@ public class ModItems {
 
     public static final RegistryObject<Item> ROT_CLUMP = ITEMS.register("rotclump",
             () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> SCONCED_TORCH_ITEM = ITEMS.register("sconced_torch",
+            () -> new SconcedTorchItem(ModBlocks.SCONCED_TORCH.get(), new Item.Properties()));
+
+    public static final RegistryObject<Item> SCONCED_SOUL_TORCH_ITEM = ITEMS.register("sconced_soul_torch",
+            () -> new SconcedSoulTorchItem(ModBlocks.SCONCED_TORCH.get(), new Item.Properties()));
+
+    public static final RegistryObject<Item> SCONCED_REDSTONE_TORCH_ITEM = ITEMS.register("sconced_redstone_torch",
+            () -> new SconcedRedstoneTorchItem(ModBlocks.SCONCED_TORCH.get(), new Item.Properties()));
+
+    public static final RegistryObject<Item> SCONCED_CURSED_TORCH_ITEM = ITEMS.register("sconced_cursed_torch",
+            () -> new SconcedCursedTorchItem(ModBlocks.SCONCED_TORCH.get(), new Item.Properties()));
+
+    public static final RegistryObject<Item> SCONCED_UNLIT_TORCH_ITEM = ITEMS.register("sconced_unlit_torch",
+            () -> new SconcedUnlitTorchItem(ModBlocks.SCONCED_TORCH.get(), new Item.Properties()));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

@@ -2,6 +2,7 @@ package net.turtleboi.ancientcurses.effect.effects;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,6 +12,9 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import net.turtleboi.ancientcurses.client.PlayerClientData;
+import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.SleepPacketS2C;
 import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 import java.util.Random;
@@ -26,8 +30,8 @@ public class CurseOfSlothEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
-        if (pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
-            if (isSleeping(player)) {
+        if (pLivingEntity.level().isClientSide) {
+            if (PlayerClientData.isAsleep()) {
                 if (pLivingEntity.tickCount % 20 == 0 || pLivingEntity.tickCount % 20 == 3 || pLivingEntity.tickCount % 20 == 6) {
                     Vec3 lookVector = pLivingEntity.getLookAngle();
                     double velocityX = lookVector.x * 0.05 + 0.1;
@@ -76,6 +80,9 @@ public class CurseOfSlothEffect extends MobEffect {
 
             if (pAmplifier >= 1) {
                 if (isSleeping(player)) {
+                    if (player instanceof ServerPlayer serverPlayer) {
+                        ModNetworking.sendToPlayer(new SleepPacketS2C(true), serverPlayer);
+                    }
                     makePlayerFallAsleep(player);
                     decrementSleepTimer(player);
                 } else if (shouldFallAsleep(pAmplifier)) {
@@ -148,6 +155,9 @@ public class CurseOfSlothEffect extends MobEffect {
 
     private void wakePlayerUp(Player player) {
         AttributeModifierUtil.removeModifier(player, Attributes.MOVEMENT_SPEED, "COSSleepSpeed");
+        if (player instanceof ServerPlayer serverPlayer) {
+            ModNetworking.sendToPlayer(new SleepPacketS2C(false), serverPlayer);
+        }
     }
 
     private int getSleepTimer(Player player) {

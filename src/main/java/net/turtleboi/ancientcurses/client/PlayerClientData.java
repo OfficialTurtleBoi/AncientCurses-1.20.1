@@ -1,10 +1,19 @@
 package net.turtleboi.ancientcurses.client;
 
 public class PlayerClientData {
+    public static boolean isAsleep = false;
     public static boolean isLusted = false;
     public static boolean isVoid = false;
     public static int voidTimer = 0;
     public static int voidTotalTime = 0;
+
+    public static boolean isAsleep() {
+        return isAsleep;
+    }
+
+    public static void setAsleep(boolean sleep) {
+        isAsleep = sleep;
+    }
 
     public static boolean isLusted() {
         return isLusted;

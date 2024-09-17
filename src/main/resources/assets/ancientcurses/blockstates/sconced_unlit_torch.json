@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "ancientcurses:block/sconced_unlit_torch" }
+  }
+}

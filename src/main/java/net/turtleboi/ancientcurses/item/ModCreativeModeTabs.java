@@ -27,6 +27,7 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.PERFECT_RUBY.get());
                         pOutput.accept(ModItems.PERFECT_SAPPHIRE.get());
                         pOutput.accept(ModItems.PERFECT_TOPAZ.get());
+                        pOutput.accept(ModBlocks.SCONCED_TORCH.get());
                     })
                     .build());
 

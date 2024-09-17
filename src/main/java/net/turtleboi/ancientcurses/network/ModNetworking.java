@@ -9,6 +9,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
+import net.turtleboi.ancientcurses.network.packets.SleepPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.VoidPacketS2C;
 
 public class ModNetworking {
@@ -43,6 +44,12 @@ public class ModNetworking {
                 .decoder(VoidPacketS2C::new)
                 .encoder(VoidPacketS2C::toBytes)
                 .consumerMainThread(VoidPacketS2C::handle)
+                .add();
+
+        net.messageBuilder(SleepPacketS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(SleepPacketS2C::new)
+                .encoder(SleepPacketS2C::toBytes)
+                .consumerMainThread(SleepPacketS2C::handle)
                 .add();
     }
     public static <MSG> void sendToServer (MSG message) {
