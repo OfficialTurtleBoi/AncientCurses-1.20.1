@@ -5,7 +5,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
@@ -112,7 +111,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 for (Player player : level.players()) {
                     BlockPos playerAltarPos = PlayerTrialData.getAltarPos(player);
                     if (playerAltarPos != null && playerAltarPos.equals(pos)) {
-                        PlayerTrialData.resetAltarPos(player);
+                        PlayerTrialData.resetAltarAtPos(player, playerAltarPos);
                     }
                 }
             }
@@ -126,13 +125,13 @@ public class CursedAltarBlock extends BaseEntityBlock {
             BlockEntity blockEntity = level.getBlockEntity(pos);
 
             if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
-                if (CursedAltarBlockEntity.isPlayerCursed(player) && altarEntity.canPlayerUse(player)) {
+                if (PlayerTrialData.isPlayerCursed(player) && altarEntity.canPlayerUse(player)) {
                     player.sendSystemMessage(Component.literal("You are already cursed! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
                     return InteractionResult.FAIL;
                 }
 
-
                 if (altarEntity.hasPlayerCompletedTrial(player)){
+                    player.sendSystemMessage(Component.literal("You've completed this trial!").withStyle(ChatFormatting.GREEN));
                     if (player.isShiftKeyDown() && altarEntity.canPlayerUse(player)) {
                         for (int i = 2; i >= 0; i--) {
                             ItemStack gem = altarEntity.getGemInSlot(i);
@@ -160,11 +159,11 @@ public class CursedAltarBlock extends BaseEntityBlock {
                         }
                     }
                 } else {
-                    if (altarEntity.canPlayerUse(player)) {
+                    if (!altarEntity.hasPlayerCompletedTrial(player) && altarEntity.canPlayerUse(player)) {
                         startTrial(player, altarEntity);
                         altarEntity.setPlayerCooldown(player);
                         return InteractionResult.SUCCESS;
-                    } else {
+                    } else if (!altarEntity.hasPlayerCompletedTrial(player) && !altarEntity.canPlayerUse(player)){
                         //player.sendSystemMessage(Component.literal("The altar is recharging.").withStyle(ChatFormatting.RED));
                         return InteractionResult.FAIL;
                     }
@@ -176,7 +175,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
     public void startTrial(Player player, CursedAltarBlockEntity altarEntity) {
         if (altarEntity.hasPlayerCompletedTrial(player)) {
-            //player.sendSystemMessage(Component.literal("You have already completed the trial for this altar.").withStyle(ChatFormatting.GREEN));
+            player.sendSystemMessage(Component.literal("You have already completed the trial for this altar.").withStyle(ChatFormatting.GREEN));
             return;
         }
 

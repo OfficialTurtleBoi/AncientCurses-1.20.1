@@ -54,7 +54,6 @@ public class EliminationTrial implements Trial {
 
         PlayerTrialData.clearPlayerCurse(player);
         PlayerTrialData.clearCurrentTrialType(player);
-        PlayerTrialData.incrementPlayerTrialsCompleted(player);
 
         altar.setPlayerTrialStatus(playerUUID, true);
         altar.setPlayerTrialCompleted(player);

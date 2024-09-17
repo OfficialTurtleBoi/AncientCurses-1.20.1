@@ -139,7 +139,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public boolean canPlayerUse(Player player) {
         UUID playerUUID = player.getUUID();
-        if (isPlayerCursed(player)) {
+        if (PlayerTrialData.isPlayerCursed(player)) {
+            player.sendSystemMessage(Component.literal("You're cursed!").withStyle(ChatFormatting.RED));
             return false;
         }
 
@@ -147,6 +148,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
         if (playerCooldowns.containsKey(playerUUID)) {
             long lastUseTime = playerCooldowns.get(playerUUID);
             if (currentTime - lastUseTime < cooldownTime) {
+                player.sendSystemMessage(Component.literal("Altar is recharging...").withStyle(ChatFormatting.RED));
                 return false;
             }
         }
@@ -161,8 +163,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public void cursePlayer(Player player, MobEffect curse, int pAmplifier, CursedAltarBlockEntity altar) {
         UUID playerUUID = player.getUUID();
         int duration = 6000;
-        player.addEffect(new MobEffectInstance(curse, duration, pAmplifier));
 
+        player.addEffect(new MobEffectInstance(curse, duration, pAmplifier, false, false, true));
         Trial trial = createTrialForCurse(player, curse, duration, pAmplifier, altar);
         altar.addPlayerTrial(playerUUID, trial);
 
@@ -174,22 +176,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
             PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.SURVIVAL_TRIAL);
         }
 
-        //player.sendSystemMessage(Component.literal("You have been cursed with " + curse.getDescriptionId() + " at amplifier " + pAmplifier + "!")
-        //        .withStyle(ChatFormatting.RED)); //debug code
-
-        CompoundTag playerTag = player.getPersistentData();
-        playerTag.putBoolean("isCursed", true);
-        playerTag.putString("curseId", curse.getDescriptionId());
-        playerTag.putInt("curseAmplifier", pAmplifier);
-        PlayerTrialData.setAltarPos(player, altar.worldPosition);
-    }
-
-    public static void clearPlayerCurse(Player player) {
-        CompoundTag playerTag = player.getPersistentData();
-        playerTag.putBoolean("isCursed", false);
-        playerTag.remove("curseId");
-        playerTag.remove("curseAmplifier");
-        playerTag.remove("altarUUID");
+        PlayerTrialData.setCurseAmplifier(player, pAmplifier);
+        PlayerTrialData.addAltarToTrialList(player, altar.worldPosition, false);
     }
 
     public boolean hasPlayerCompletedTrial(Player player) {
@@ -255,19 +243,6 @@ public class CursedAltarBlockEntity extends BlockEntity {
         for (int i = 0; i < amplifier2Weight; i++) weightedAmplifiers.add(2);
 
         return weightedAmplifiers;
-    }
-
-
-    public static boolean isPlayerCursed(Player player) {
-        return player.getPersistentData().getBoolean("isCursed");
-    }
-
-    public static String getPlayerCurse(Player player) {
-        return player.getPersistentData().getString("curseId");
-    }
-
-    public static int getPlayerCurseAmplifier(Player player) {
-        return player.getPersistentData().getInt("curseAmplifier");
     }
 
     public Trial createTrialForCurse(Player player, MobEffect curseType, int curseDuration, int curseAmplifier, CursedAltarBlockEntity altar) {

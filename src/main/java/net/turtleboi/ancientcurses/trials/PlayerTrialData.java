@@ -2,6 +2,7 @@ package net.turtleboi.ancientcurses.trials;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.player.Player;
@@ -10,77 +11,130 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 
 public class PlayerTrialData {
-    private static final String IS_CURSED_KEY = "isCursed";
-    private static final String CURSE_ID_KEY = "CurseId";
-    private static final String CURSE_AMP_KEY = "CurseAmplifier";
-    private static final String ALTAR_POS_KEY = "AltarPos";
-    private static final String TRIAL_COMPLETED_KEY = "CurseTrialCompleted";
-    private static final String NBT_TRIALS_COMPLETED = "TrialsCompleted";
-    private static final String COMPLETED_ALTARS_KEY = "CompletedAltars";
-    private static final String CURRENT_TRIAL_TYPE = "CurrentTrialType";
-    private static final String EFFECT_KEY = "Effect";
+    private static final String curseEffect = "CurseEffect";
+    private static final String curseAmplifier = "CurseAmplifier";
 
+    private static final String COMPLETED_ALTARS_KEY = "CompletedAltars";
+
+    private static final String CURRENT_TRIAL_TYPE = "CurrentTrialType";
     public static final String ELIMINATION_TRIAL = "EliminationTrial";
     public static final String SURVIVAL_TRIAL = "SurvivalTrial";
 
     public static boolean isPlayerCursed(Player player) {
-        return player.getPersistentData().getBoolean(IS_CURSED_KEY);
-    }
-
-    public static void setPlayerCursed(Player player, boolean cursed) {
-        player.getPersistentData().putBoolean(IS_CURSED_KEY, cursed);
-    }
-
-    public static BlockPos getAltarPos(Player player) {
-        if (player.getPersistentData().contains(ALTAR_POS_KEY)) {
-            long posLong = player.getPersistentData().getLong(ALTAR_POS_KEY);
-            return BlockPos.of(posLong);
-        }
-        return null;
-    }
-
-    public static void setAltarPos(Player player, BlockPos altarPos) {
-        player.getPersistentData().putLong(ALTAR_POS_KEY, altarPos.asLong());
-    }
-
-    public static void resetAltarPos(Player player){
-        player.getPersistentData().remove(ALTAR_POS_KEY);
+        return player.getPersistentData().contains(curseEffect) && player.getPersistentData().contains(curseAmplifier);
     }
 
     public static void clearPlayerCurse(Player player) {
-        player.getPersistentData().remove(IS_CURSED_KEY);
-        player.getPersistentData().remove(CURSE_ID_KEY);
-        player.getPersistentData().remove(CURSE_AMP_KEY);
-        player.getPersistentData().remove(TRIAL_COMPLETED_KEY);
+        player.getPersistentData().remove(curseEffect);
+        player.getPersistentData().remove(curseAmplifier);
         player.getPersistentData().remove(CURRENT_TRIAL_TYPE);
     }
 
+    public static void addAltarToTrialList(Player player, BlockPos altarPos, boolean completed) {
+        // Get the existing list of completed altars
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10); // 10 for CompoundTag
+
+        // Create a CompoundTag to store the BlockPos and completion status
+        CompoundTag altarData = new CompoundTag();
+        altarData.putLong("AltarPos", altarPos.asLong());
+        altarData.putBoolean("Completed", completed);
+
+        // Check if the altar is already in the list (shouldn't add duplicates)
+        boolean alreadyInList = false;
+        for (int i = 0; i < completedAltarsList.size(); i++) {
+            CompoundTag existingAltar = completedAltarsList.getCompound(i);
+            if (existingAltar.getLong("AltarPos") == altarPos.asLong()) {
+                alreadyInList = true;
+                break;
+            }
+        }
+
+        // Add the altar to the list if it's not already present
+        if (!alreadyInList) {
+            completedAltarsList.add(altarData);
+        }
+
+        // Update the player's persistent data
+        player.getPersistentData().put(COMPLETED_ALTARS_KEY, completedAltarsList);
+    }
+
+
+    // Method to mark an altar as completed and store its position
     public static void setTrialCompleted(Player player, BlockPos altarPos) {
-        CompoundTag completedAltars = player.getPersistentData().getCompound(COMPLETED_ALTARS_KEY);
-        completedAltars.putBoolean(altarPos.asLong() + "", true);
-        player.getPersistentData().put(COMPLETED_ALTARS_KEY, completedAltars);
+        // Get the existing list of completed altars
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10); // 10 for CompoundTag
+
+        // Update the existing entry in the list
+        for (int i = 0; i < completedAltarsList.size(); i++) {
+            CompoundTag existingAltar = completedAltarsList.getCompound(i);
+            if (existingAltar.getLong("AltarPos") == altarPos.asLong()) {
+                existingAltar.putBoolean("Completed", true);
+                break; // Exit after updating the correct altar
+            }
+        }
+
+        // Update the player's persistent data
+        player.getPersistentData().put(COMPLETED_ALTARS_KEY, completedAltarsList);
     }
 
+
+    // Method to check if a trial has been completed based on BlockPos
     public static boolean hasCompletedTrial(Player player, BlockPos altarPos) {
-        CompoundTag completedAltars = player.getPersistentData().getCompound(COMPLETED_ALTARS_KEY);
-        return completedAltars.getBoolean(altarPos.asLong() + "");
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10); // 10 for CompoundTag
+
+        // Check if the list contains the given altar position
+        for (int i = 0; i < completedAltarsList.size(); i++) {
+            CompoundTag existingAltar = completedAltarsList.getCompound(i);
+            if (existingAltar.getLong("AltarPos") == altarPos.asLong()) {
+                return existingAltar.getBoolean("Completed");
+            }
+        }
+        return false;
     }
 
+    // Method to retrieve the number of trials (altars) completed
     public static int getPlayerTrialsCompleted(Player player) {
-        return player.getPersistentData().getInt(NBT_TRIALS_COMPLETED);
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10); // 10 for CompoundTag
+        return completedAltarsList.size(); // The size of the list equals the number of completed trials
     }
 
-    public static void incrementPlayerTrialsCompleted(Player player) {
-        int currentTrials = getPlayerTrialsCompleted(player);
-        player.getPersistentData().putInt(NBT_TRIALS_COMPLETED, currentTrials + 1);
+    // Method to get the BlockPos of a specific altar from player data
+    public static BlockPos getAltarPos(Player player) {
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10); // 10 for CompoundTag
+
+        // Example: Return the first completed altar's position (customize this if needed)
+        if (!completedAltarsList.isEmpty()) {
+            CompoundTag firstAltar = completedAltarsList.getCompound(0);
+            return BlockPos.of(firstAltar.getLong("AltarPos"));
+        }
+        return null; // Return null if no altar has been completed yet
     }
+
+    // Method to reset a specific altar's position
+    public static void resetAltarAtPos(Player player, BlockPos altarPos) {
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10); // 10 for CompoundTag
+
+        // Remove the altar from the list if it matches the given BlockPos
+        ListTag updatedAltarsList = new ListTag();
+        for (int i = 0; i < completedAltarsList.size(); i++) {
+            CompoundTag existingAltar = completedAltarsList.getCompound(i);
+            if (existingAltar.getLong("AltarPos") != altarPos.asLong()) {
+                updatedAltarsList.add(existingAltar); // Add back only the altars that don't match
+            }
+        }
+
+        // Update the player's persistent data
+        player.getPersistentData().put(COMPLETED_ALTARS_KEY, updatedAltarsList);
+    }
+
+
 
     public static void setCurseAmplifier(Player player, int amplifier) {
-        player.getPersistentData().putInt(CURSE_AMP_KEY, amplifier);
+        player.getPersistentData().putInt(curseAmplifier, amplifier);
     }
 
     public static int getCurseAmplifier(Player player) {
-        return player.getPersistentData().getInt(CURSE_AMP_KEY);
+        return player.getPersistentData().getInt(curseAmplifier);
     }
 
     public static void setCurrentTrialType(Player player, String trialType) {
@@ -99,13 +153,13 @@ public class PlayerTrialData {
         if (effect != null && ForgeRegistries.MOB_EFFECTS.containsValue(effect)) {
             ResourceLocation effectKey = ForgeRegistries.MOB_EFFECTS.getKey(effect);
             if (effectKey != null) {
-                player.getPersistentData().putString(EFFECT_KEY, effectKey.toString());
+                player.getPersistentData().putString(curseEffect, effectKey.toString());
             }
         }
     }
 
     public static MobEffect getEffect(Player player) {
-        String effectName = player.getPersistentData().getString(EFFECT_KEY);
+        String effectName = player.getPersistentData().getString(curseEffect);
         if (effectName != null && !effectName.isEmpty()) {
             return ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(effectName));
         }
@@ -118,7 +172,7 @@ public class PlayerTrialData {
 
         MobEffect effect = getEffect(player);
         if (effect != null) {
-            nbt.putString(EFFECT_KEY, effect.getDescriptionId());
+            nbt.putString(curseEffect, effect.getDescriptionId());
         }
 
         if (getCurrentTrialType(player).equals(ELIMINATION_TRIAL)) {
@@ -131,61 +185,62 @@ public class PlayerTrialData {
             nbt.putLong(SurvivalTrial.TRIAL_ELAPSED_TIME_KEY, SurvivalTrial.getTrialElapsedTime(player));
         }
 
-        BlockPos altarPos = getAltarPos(player);
-        if (altarPos != null) {
-            nbt.putLong(ALTAR_POS_KEY, altarPos.asLong());
-        }
-        // Other trial data
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10);
+        nbt.put(COMPLETED_ALTARS_KEY, completedAltarsList);
     }
+
 
     public static void loadTrialData(Player player) {
         CompoundTag nbt = player.getPersistentData();
         setCurrentTrialType(player, nbt.getString(CURRENT_TRIAL_TYPE));
 
-
-        if (nbt.contains(EFFECT_KEY)) {
-            String effectName = nbt.getString(EFFECT_KEY);
+        if (nbt.contains(curseEffect)) {
+            String effectName = nbt.getString(curseEffect);
             MobEffect effect = ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(effectName));
             setEffect(player, effect);
         }
 
-        if (nbt.getString(CURRENT_TRIAL_TYPE).equals(ELIMINATION_TRIAL)){
+        if (nbt.getString(CURRENT_TRIAL_TYPE).equals(ELIMINATION_TRIAL)) {
             EliminationTrial.saveEliminationCount(player, nbt.getInt(EliminationTrial.ELIMINATION_COUNT_KEY));
             EliminationTrial.saveRequiredEliminations(player, nbt.getInt(EliminationTrial.ELIMINATION_REQUIREMENT_KEY));
         }
 
-        if (nbt.getString(CURRENT_TRIAL_TYPE).equals(SURVIVAL_TRIAL)){
+        if (nbt.getString(CURRENT_TRIAL_TYPE).equals(SURVIVAL_TRIAL)) {
             SurvivalTrial.setTrialDuration(player, nbt.getLong(SurvivalTrial.TRIAL_DURATION_KEY));
             SurvivalTrial.setTrialElapsedTime(player, nbt.getLong(SurvivalTrial.TRIAL_ELAPSED_TIME_KEY));
         }
 
-        if (nbt.contains(ALTAR_POS_KEY)) {
-            setAltarPos(player, BlockPos.of(nbt.getLong(ALTAR_POS_KEY)));
-        }
-        // Other trial data
+        ListTag completedAltarsList = nbt.getList(COMPLETED_ALTARS_KEY, 10);
+        player.getPersistentData().put(COMPLETED_ALTARS_KEY, completedAltarsList);
     }
 
-    public static void reconstructTrial(Player player, String trialType) {
-        BlockPos altarPos = PlayerTrialData.getAltarPos(player);
-        if (altarPos != null) {
-            BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
-            if (blockEntity instanceof CursedAltarBlockEntity altar) {
-                Trial trial = null;
-                MobEffect effect = PlayerTrialData.getEffect(player);
-                if (trialType.equals(ELIMINATION_TRIAL)) {
-                    int requiredEliminations = EliminationTrial.getRequiredEliminations(player);
-                    trial = new EliminationTrial(player, effect, requiredEliminations, altar);
-                } else if (trialType.equals(SURVIVAL_TRIAL)) {
-                    long trialDuration = SurvivalTrial.getTrialDuration(player);
-                    long elapsedTime = SurvivalTrial.getTrialElapsedTime(player);
-                    long remainingTime = trialDuration - elapsedTime;
-                    trial = new SurvivalTrial(player, effect, remainingTime, altar);
-                }
 
-                if (trial != null) {
-                    altar.addPlayerTrial(player.getUUID(), trial);
+    public static void reconstructTrial(Player player, String trialType) {
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10);
+        for (int i = 0; i < completedAltarsList.size(); i++) {
+            CompoundTag altarData = completedAltarsList.getCompound(i);
+            BlockPos altarPos = BlockPos.of(altarData.getLong("AltarPos"));
+            boolean completed = altarData.getBoolean("Completed");
+            if (!completed) {
+                BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
+                if (blockEntity instanceof CursedAltarBlockEntity altar) {
+                    Trial trial = null;
+                    MobEffect effect = PlayerTrialData.getEffect(player);
+                    if (trialType.equals(ELIMINATION_TRIAL)) {
+                        int requiredEliminations = EliminationTrial.getRequiredEliminations(player);
+                        trial = new EliminationTrial(player, effect, requiredEliminations, altar);
+                    } else if (trialType.equals(SURVIVAL_TRIAL)) {
+                        long trialDuration = SurvivalTrial.getTrialDuration(player);
+                        long elapsedTime = SurvivalTrial.getTrialElapsedTime(player);
+                        long remainingTime = trialDuration - elapsedTime;
+                        trial = new SurvivalTrial(player, effect, remainingTime, altar);
+                    }
+                    if (trial != null) {
+                        altar.addPlayerTrial(player.getUUID(), trial);
+                    }
                 }
             }
         }
     }
+
 }

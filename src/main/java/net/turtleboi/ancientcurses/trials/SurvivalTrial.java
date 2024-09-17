@@ -64,7 +64,6 @@ public class SurvivalTrial implements Trial {
 
         PlayerTrialData.clearPlayerCurse(player);
         PlayerTrialData.clearCurrentTrialType(player);
-        PlayerTrialData.incrementPlayerTrialsCompleted(player);
 
         altar.setPlayerTrialStatus(playerUUID, true);
         altar.setPlayerTrialCompleted(player);

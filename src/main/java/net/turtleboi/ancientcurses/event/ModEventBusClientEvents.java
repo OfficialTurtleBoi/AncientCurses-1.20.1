@@ -24,7 +24,9 @@ import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.entity.client.CursedPortalModel;
 import net.turtleboi.ancientcurses.entity.client.renderer.CursedPortalRenderer;
 import net.turtleboi.ancientcurses.particle.ModParticles;
+import net.turtleboi.ancientcurses.particle.custom.CursedParticles;
 import net.turtleboi.ancientcurses.particle.custom.HealParticles;
+import net.turtleboi.ancientcurses.particle.custom.SleepParticles;
 import org.lwjgl.glfw.GLFW;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
@@ -48,5 +50,7 @@ public class ModEventBusClientEvents {
     @SubscribeEvent
     public static void registerParticles(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(ModParticles.HEAL_PARTICLES.get(), HealParticles.Provider::new);
+        event.registerSpriteSet(ModParticles.CURSED_PARTICLES.get(), CursedParticles.Provider::new);
+        event.registerSpriteSet(ModParticles.SLEEP_PARTICLES.get(), SleepParticles.Provider::new);
     }
 }

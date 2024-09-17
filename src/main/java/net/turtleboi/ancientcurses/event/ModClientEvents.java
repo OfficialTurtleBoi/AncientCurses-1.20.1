@@ -27,7 +27,9 @@ import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.particle.ModParticles;
+import net.turtleboi.ancientcurses.particle.custom.CursedParticles;
 import net.turtleboi.ancientcurses.particle.custom.HealParticles;
+import net.turtleboi.ancientcurses.particle.custom.SleepParticles;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import org.joml.Matrix4f;
 
@@ -60,6 +62,10 @@ public class ModClientEvents {
     public static void registerParticleFactories(RegisterParticleProvidersEvent event){
         event.registerSpriteSet(ModParticles.HEAL_PARTICLES.get(),
                 HealParticles.Provider::new);
+        event.registerSpriteSet(ModParticles.CURSED_PARTICLES.get(),
+                CursedParticles.Provider::new);
+        event.registerSpriteSet(ModParticles.SLEEP_PARTICLES.get(),
+                SleepParticles.Provider::new);
     }
 
     @SubscribeEvent

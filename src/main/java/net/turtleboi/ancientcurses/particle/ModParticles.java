@@ -14,6 +14,12 @@ public class ModParticles {
     public static final RegistryObject<SimpleParticleType> HEAL_PARTICLES =
             PARTICLES.register("heal_particles", () -> new SimpleParticleType(true));
 
+    public static final RegistryObject<SimpleParticleType> CURSED_PARTICLES =
+            PARTICLES.register("cursed_particles", () -> new SimpleParticleType(true));
+
+    public static final RegistryObject<SimpleParticleType> SLEEP_PARTICLES =
+            PARTICLES.register("sleep_particles", () -> new SimpleParticleType(true));
+
     public static void register(IEventBus eventBus) {
         PARTICLES.register(eventBus);
     }

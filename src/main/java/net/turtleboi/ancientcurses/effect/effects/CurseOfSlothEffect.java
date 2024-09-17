@@ -10,6 +10,8 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
+import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 import java.util.Random;
 
@@ -24,6 +26,37 @@ public class CurseOfSlothEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
+        if (pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
+            if (isSleeping(player)) {
+                if (pLivingEntity.tickCount % 20 == 0 || pLivingEntity.tickCount % 20 == 3 || pLivingEntity.tickCount % 20 == 6) {
+                    Vec3 lookVector = pLivingEntity.getLookAngle();
+                    double velocityX = lookVector.x * 0.05 + 0.1;
+                    double velocityY = 0.1;
+                    double velocityZ = lookVector.z * 0.05;
+                    double particleX = pLivingEntity.getX();
+                    double particleY = pLivingEntity.getY() + pLivingEntity.getBbHeight();
+                    double particleZ = pLivingEntity.getZ();
+
+                    if (pLivingEntity.tickCount % 20 == 0) {
+                        pLivingEntity.level().addParticle(
+                                ModParticles.SLEEP_PARTICLES.get(),
+                                particleX, particleY, particleZ,
+                                velocityX * 1.5, velocityY * 1.5, velocityZ * 1.5);
+                    } else if (pLivingEntity.tickCount % 20 == 3) {
+                        pLivingEntity.level().addParticle(
+                                ModParticles.SLEEP_PARTICLES.get(),
+                                particleX, particleY, particleZ,
+                                velocityX, velocityY, velocityZ);
+                    } else if (pLivingEntity.tickCount % 20 == 6) {
+                        pLivingEntity.level().addParticle(
+                                ModParticles.SLEEP_PARTICLES.get(),
+                                particleX, particleY, particleZ,
+                                velocityX * 0.66, velocityY * 0.66, velocityZ * 0.66);
+                    }
+                }
+            }
+        }
+
         if (!pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
             double movementMultiplier = getMovementMultiplier(pAmplifier);
             AttributeModifierUtil.applyTransientModifier(
@@ -72,22 +105,16 @@ public class CurseOfSlothEffect extends MobEffect {
         return true;
     }
 
-    private double getMovementMultiplier(int pAmplifier) {
-        switch (pAmplifier) {
-            case 0: return -0.5;
-            case 1: return -0.7;
-            case 2: return -0.9;
-            default: return 0;
-        }
+    private static double getMovementMultiplier(int pAmplifier){
+        double[] movementSpeedValues = {-0.5, -0.7, -0.9};
+        int index = Math.min(pAmplifier, movementSpeedValues.length - 1);
+        return movementSpeedValues[index];
     }
 
-    private double getSwingSpeedMultiplier(int pAmplifier) {
-        switch (pAmplifier) {
-            case 0: return -0.25;
-            case 1: return -0.40;
-            case 2: return -0.66;
-            default: return 0;
-        }
+    private static double getSwingSpeedMultiplier(int pAmplifier){
+        double[] swingSpeedValues = {-0.25, -0.40, -0.66};
+        int index = Math.min(pAmplifier, swingSpeedValues.length - 1);
+        return swingSpeedValues[index];
     }
 
     private boolean shouldFallAsleep(int pAmplifier) {
@@ -138,9 +165,8 @@ public class CurseOfSlothEffect extends MobEffect {
             ItemStack stack = player.getInventory().items.get(i);
             if (!stack.isEmpty()) {
                 player.drop(stack, true);
-                player.getInventory().items.set(i, ItemStack.EMPTY); // Clear the slot
+                player.getInventory().items.set(i, ItemStack.EMPTY);
             }
         }
     }
-
 }
