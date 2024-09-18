@@ -5,6 +5,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.player.Player;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
+import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
+import net.turtleboi.ancientcurses.entity.ModEntities;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,6 +66,8 @@ public class SurvivalTrial implements Trial {
 
         PlayerTrialData.clearPlayerCurse(player);
         PlayerTrialData.clearCurrentTrialType(player);
+
+        CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel());
 
         altar.setPlayerTrialStatus(playerUUID, true);
         altar.setPlayerTrialCompleted(player);
