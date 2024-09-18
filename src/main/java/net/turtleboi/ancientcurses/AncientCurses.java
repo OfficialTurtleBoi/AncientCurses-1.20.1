@@ -25,6 +25,7 @@ import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.sound.ModSounds;
+import net.turtleboi.ancientcurses.world.structures.ModStructures;
 import org.slf4j.Logger;
 
 @Mod(AncientCurses.MOD_ID)
@@ -47,6 +48,7 @@ public class AncientCurses {
 
         ModBlockEntities.register(modEventBus);
         ModParticles.register(modEventBus);
+        ModStructures.register(modEventBus);
 
         ModAttributes.REGISTRY.register(modEventBus);
 

@@ -55,16 +55,16 @@ public class ModItems {
             () -> new SconcedTorchItem(ModBlocks.SCONCED_TORCH.get(), new Item.Properties()));
 
     public static final RegistryObject<Item> SCONCED_SOUL_TORCH_ITEM = ITEMS.register("sconced_soul_torch",
-            () -> new SconcedSoulTorchItem(ModBlocks.SCONCED_TORCH.get(), new Item.Properties()));
+            () -> new SconcedSoulTorchItem(ModBlocks.SCONCED_SOUL_TORCH.get(), new Item.Properties()));
 
     public static final RegistryObject<Item> SCONCED_REDSTONE_TORCH_ITEM = ITEMS.register("sconced_redstone_torch",
-            () -> new SconcedRedstoneTorchItem(ModBlocks.SCONCED_TORCH.get(), new Item.Properties()));
+            () -> new SconcedRedstoneTorchItem(ModBlocks.SCONCED_REDSTONE_TORCH.get(), new Item.Properties()));
 
     public static final RegistryObject<Item> SCONCED_CURSED_TORCH_ITEM = ITEMS.register("sconced_cursed_torch",
-            () -> new SconcedCursedTorchItem(ModBlocks.SCONCED_TORCH.get(), new Item.Properties()));
+            () -> new SconcedCursedTorchItem(ModBlocks.SCONCED_CURSED_TORCH.get(), new Item.Properties()));
 
     public static final RegistryObject<Item> SCONCED_UNLIT_TORCH_ITEM = ITEMS.register("sconced_unlit_torch",
-            () -> new SconcedUnlitTorchItem(ModBlocks.SCONCED_TORCH.get(), new Item.Properties()));
+            () -> new SconcedUnlitTorchItem(ModBlocks.SCONCED_UNLIT_TORCH.get(), new Item.Properties()));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
