@@ -124,7 +124,7 @@ public class CursedPortalEntity extends Entity {
 
         if (portalPos != null) {
             CursedPortalEntity portal = new CursedPortalEntity(ModEntities.CURSED_PORTAL.get(), level);
-            portal.setPos(portalPos.getX() + 0.5, portalPos.getY() -0.5, portalPos.getZ() + 0.5);
+            portal.setPos(portalPos.getX() + 0.5, portalPos.getY() + 0.5, portalPos.getZ() + 0.5);
             portal.setAltarPos(altarPos);
             portal.setTeleportEnabled(true);
             level.addFreshEntity(portal);

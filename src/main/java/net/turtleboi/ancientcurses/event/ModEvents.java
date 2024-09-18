@@ -647,7 +647,7 @@ public class ModEvents {
                     if (eliminationTrial.isTrialCompleted(player)) {
                         eliminationTrial.rewardPlayer(player);
                         PlayerTrialData.clearPlayerCurse(player);
-                        altar.setPlayerTrialStatus(playerUUID, true);
+                        altar.setPlayerTrialStatus(playerUUID, true, false);
                         altar.removePlayerTrial(playerUUID);
                     } else {
                         trial.trackProgress(player);

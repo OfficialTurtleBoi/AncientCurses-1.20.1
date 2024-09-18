@@ -1,10 +1,15 @@
 package net.turtleboi.ancientcurses.block.blockentity;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
@@ -13,6 +18,7 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -23,9 +29,17 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootDataType;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.turtleboi.ancientcurses.AncientCurses;
+import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
@@ -82,7 +96,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
     }
 
     private boolean isSoulTorch(Level level, BlockPos pos) {
-        return level.getBlockState(pos).is(Blocks.SOUL_TORCH) || level.getBlockState(pos).is(Blocks.SOUL_WALL_TORCH);
+        return level.getBlockState(pos).is(ModBlocks.SCONCED_SOUL_TORCH.get()) || level.getBlockState(pos).is(ModBlocks.SCONCED_WALL_SOUL_TORCH.get());
     }
 
     @Override
@@ -131,6 +145,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 }
 
                 if (altarEntity.hasPlayerCompletedTrial(player)){
+                    rewardPlayer(player, altarEntity, level, pos);
                     player.sendSystemMessage(Component.literal("You've completed this trial!").withStyle(ChatFormatting.GREEN));
                     if (player.isShiftKeyDown() && altarEntity.canPlayerUse(player)) {
                         for (int i = 2; i >= 0; i--) {
@@ -140,7 +155,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                                     altarEntity.setGemInSlot(i, ItemStack.EMPTY);
                                     altarEntity.setChanged();
                                 } else {
-                                    ejectItemsTowardPlayer(altarEntity, level, pos, player);
+                                    ejectItemsTowardPlayer(level, pos, player, Collections.singletonList(gem));
                                 }
                                 altarEntity.setPlayerCooldown(player);
                                 return InteractionResult.SUCCESS;
@@ -182,7 +197,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
         MobEffect randomCurse = CursedAltarBlockEntity.getRandomCurse();
         int randomAmplifier = CursedAltarBlockEntity.getRandomAmplifier(player);
         UUID playerUUID = player.getUUID();
-        altarEntity.setPlayerTrialStatus(playerUUID, false);
+        altarEntity.setPlayerTrialStatus(playerUUID, false, false);
         altarEntity.cursePlayer(player, randomCurse, randomAmplifier, altarEntity);
         player.displayClientMessage(Component.literal(
                 "You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE), true); //debug code
@@ -192,11 +207,65 @@ public class CursedAltarBlock extends BaseEntityBlock {
         return itemStack.is(ModTags.Items.PRECIOUS_GEMS);
     }
 
-    private void ejectItemsTowardPlayer(CursedAltarBlockEntity altarEntity, Level level, BlockPos pos, Player player) {
-        for (int i = 0; i < 3; i++) {
-            ItemStack gem = altarEntity.getGemInSlot(i);
-            if (!gem.isEmpty()) {
-                ItemEntity itemEntity = new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1.5, pos.getZ() + 0.5, gem.copy());
+    private void rewardPlayer(Player player, CursedAltarBlockEntity altarEntity, Level level, BlockPos pos) {
+        altarEntity.setPlayerCooldown(player);
+        int amplifier = PlayerTrialData.getCurseAmplifier(player);
+        //if (altarEntity.hasCollectedReward(player)) {
+        //    player.sendSystemMessage(Component.literal("You have already received your reward for this trial.").withStyle(ChatFormatting.RED));
+        //    return;
+        //}
+
+        if (player instanceof ServerPlayer) {
+            rewardPlayerWithLootTable(player, amplifier, level, pos);
+        }
+        altarEntity.markRewardCollected(player);
+    }
+
+    private void rewardPlayerWithLootTable(Player player, int pAmplifier, Level level, BlockPos pos) {
+        ResourceLocation lootTableLoc = switch (pAmplifier) {
+            case 1 -> new ResourceLocation("ancientcurses", "amplifier_1");
+            case 2 -> new ResourceLocation("ancientcurses", "amplifier_2");
+            default -> new ResourceLocation("ancientcurses", "amplifier_0");
+        };
+
+        ServerLevel serverLevel = (ServerLevel) player.level();
+        LootTable lootTable = serverLevel.getServer().getLootData().getElement(LootDataType.TABLE, lootTableLoc);
+
+        if (lootTable == null) {
+            player.sendSystemMessage(Component.literal("No loot table found for this trial reward.").withStyle(ChatFormatting.RED));
+            return;
+        }
+
+        Random random = new Random();
+        int minRolls = 3 - (pAmplifier);
+        int maxRolls = 5 - (pAmplifier * 2);
+        int rollCount = random.nextInt(maxRolls - minRolls + 1) + minRolls;
+
+        List<ItemStack> totalGeneratedLoot = new ArrayList<>();
+
+        for (int i = 0; i < rollCount; i++) {
+            LootParams.Builder lootParamsBuilder = new LootParams.Builder(serverLevel)
+                    .withParameter(LootContextParams.THIS_ENTITY, player)
+                    .withParameter(LootContextParams.ORIGIN, player.position());
+
+            LootParams lootParams = lootParamsBuilder.create(LootContextParamSets.CHEST);
+            ObjectArrayList<ItemStack> generatedLoot = lootTable.getRandomItems(lootParams);
+
+            totalGeneratedLoot.addAll(generatedLoot);
+        }
+
+        for (ItemStack item : totalGeneratedLoot) {
+            if (!item.isEmpty()) {
+                ejectItemsTowardPlayer(level, pos, player, Collections.singletonList(item));
+            }
+        }
+    }
+
+
+    private void ejectItemsTowardPlayer(Level level, BlockPos pos, Player player, List<ItemStack> items) {
+        for (ItemStack item : items) {
+            if (!item.isEmpty()) {
+                ItemEntity itemEntity = new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1.5, pos.getZ() + 0.5, item.copy());
                 double dX = player.getX() - pos.getX();
                 double dY = (player.getY() + player.getEyeHeight()) - (pos.getY() + 1.5);
                 double dZ = player.getZ() - pos.getZ();
@@ -204,11 +273,8 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 itemEntity.setDeltaMovement(dX * velocityFactor, dY * velocityFactor, dZ * velocityFactor);
 
                 level.addFreshEntity(itemEntity);
-
-                altarEntity.setGemInSlot(i, ItemStack.EMPTY);
             }
         }
-        altarEntity.setChanged();
     }
 
     @Nullable

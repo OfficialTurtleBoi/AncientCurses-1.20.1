@@ -61,7 +61,7 @@ public class EliminationTrial implements Trial {
 
         CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel());
 
-        altar.setPlayerTrialStatus(playerUUID, true);
+        altar.setPlayerTrialStatus(playerUUID, true, false);
         altar.setPlayerTrialCompleted(player);
         altar.removePlayerTrial(playerUUID);
     }

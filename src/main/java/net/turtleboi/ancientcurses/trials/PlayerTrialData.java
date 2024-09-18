@@ -31,15 +31,10 @@ public class PlayerTrialData {
     }
 
     public static void addAltarToTrialList(Player player, BlockPos altarPos, boolean completed) {
-        // Get the existing list of completed altars
-        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10); // 10 for CompoundTag
-
-        // Create a CompoundTag to store the BlockPos and completion status
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10);
         CompoundTag altarData = new CompoundTag();
         altarData.putLong("AltarPos", altarPos.asLong());
         altarData.putBoolean("Completed", completed);
-
-        // Check if the altar is already in the list (shouldn't add duplicates)
         boolean alreadyInList = false;
         for (int i = 0; i < completedAltarsList.size(); i++) {
             CompoundTag existingAltar = completedAltarsList.getCompound(i);
@@ -49,40 +44,28 @@ public class PlayerTrialData {
             }
         }
 
-        // Add the altar to the list if it's not already present
         if (!alreadyInList) {
             completedAltarsList.add(altarData);
         }
 
-        // Update the player's persistent data
         player.getPersistentData().put(COMPLETED_ALTARS_KEY, completedAltarsList);
     }
 
 
-    // Method to mark an altar as completed and store its position
     public static void setTrialCompleted(Player player, BlockPos altarPos) {
-        // Get the existing list of completed altars
-        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10); // 10 for CompoundTag
-
-        // Update the existing entry in the list
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10);
         for (int i = 0; i < completedAltarsList.size(); i++) {
             CompoundTag existingAltar = completedAltarsList.getCompound(i);
             if (existingAltar.getLong("AltarPos") == altarPos.asLong()) {
                 existingAltar.putBoolean("Completed", true);
-                break; // Exit after updating the correct altar
+                break;
             }
         }
-
-        // Update the player's persistent data
         player.getPersistentData().put(COMPLETED_ALTARS_KEY, completedAltarsList);
     }
 
-
-    // Method to check if a trial has been completed based on BlockPos
     public static boolean hasCompletedTrial(Player player, BlockPos altarPos) {
-        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10); // 10 for CompoundTag
-
-        // Check if the list contains the given altar position
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10);
         for (int i = 0; i < completedAltarsList.size(); i++) {
             CompoundTag existingAltar = completedAltarsList.getCompound(i);
             if (existingAltar.getLong("AltarPos") == altarPos.asLong()) {
@@ -92,38 +75,31 @@ public class PlayerTrialData {
         return false;
     }
 
-    // Method to retrieve the number of trials (altars) completed
     public static int getPlayerTrialsCompleted(Player player) {
-        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10); // 10 for CompoundTag
-        return completedAltarsList.size(); // The size of the list equals the number of completed trials
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10);
+        return completedAltarsList.size();
     }
 
-    // Method to get the BlockPos of a specific altar from player data
     public static BlockPos getAltarPos(Player player) {
-        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10); // 10 for CompoundTag
-
-        // Example: Return the first completed altar's position (customize this if needed)
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10);
         if (!completedAltarsList.isEmpty()) {
             CompoundTag firstAltar = completedAltarsList.getCompound(0);
             return BlockPos.of(firstAltar.getLong("AltarPos"));
         }
-        return null; // Return null if no altar has been completed yet
+        return null;
     }
 
     // Method to reset a specific altar's position
     public static void resetAltarAtPos(Player player, BlockPos altarPos) {
-        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10); // 10 for CompoundTag
-
-        // Remove the altar from the list if it matches the given BlockPos
+        ListTag completedAltarsList = player.getPersistentData().getList(COMPLETED_ALTARS_KEY, 10);
         ListTag updatedAltarsList = new ListTag();
         for (int i = 0; i < completedAltarsList.size(); i++) {
             CompoundTag existingAltar = completedAltarsList.getCompound(i);
             if (existingAltar.getLong("AltarPos") != altarPos.asLong()) {
-                updatedAltarsList.add(existingAltar); // Add back only the altars that don't match
+                updatedAltarsList.add(existingAltar);
             }
         }
 
-        // Update the player's persistent data
         player.getPersistentData().put(COMPLETED_ALTARS_KEY, updatedAltarsList);
     }
 

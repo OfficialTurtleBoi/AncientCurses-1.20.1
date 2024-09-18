@@ -41,7 +41,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public float oRot;
     public float tRot;
     private static final RandomSource RANDOM = RandomSource.create();
-    private static final Map<UUID, Boolean> playerTrialCompletion = new HashMap<>();
+    private static final Map<UUID, CompoundTag> playerTrialCompletion = new HashMap<>();
     private static final Map<UUID, Trial> playerTrials = new HashMap<>();
     private static final long cooldownTime = 250;
     private final Map<UUID, Long> playerCooldowns = new HashMap<>();
@@ -190,9 +190,33 @@ public class CursedAltarBlockEntity extends BlockEntity {
         PlayerTrialData.setTrialCompleted(player, altarPos);
     }
 
-    public void setPlayerTrialStatus(UUID playerUUID, boolean completed) {
-        playerTrialCompletion.put(playerUUID, completed);
+    public void setPlayerTrialStatus(UUID playerUUID, boolean completed, boolean rewardCollected) {
+        CompoundTag playerTag = new CompoundTag();
+        playerTag.putBoolean("Completed", completed);
+        playerTag.putBoolean("RewardCollected", rewardCollected);
+
+        // Store player trial status in NBT
+        playerTrialCompletion.put(playerUUID, playerTag);
         setChanged();
+    }
+
+    public boolean hasCollectedReward(Player player) {
+        UUID playerUUID = player.getUUID();
+        if (playerTrialCompletion.containsKey(playerUUID)) {
+            CompoundTag playerTag = playerTrialCompletion.get(playerUUID);
+            return playerTag.getBoolean("RewardCollected");
+        }
+        return false;
+    }
+
+    public void markRewardCollected(Player player) {
+        UUID playerUUID = player.getUUID();
+        if (playerTrialCompletion.containsKey(playerUUID)) {
+            CompoundTag playerTag = playerTrialCompletion.get(playerUUID);
+            playerTag.putBoolean("RewardCollected", true);
+            playerTrialCompletion.put(playerUUID, playerTag);
+            setChanged();
+        }
     }
 
     public Trial getPlayerTrial(UUID playerUUID) {
@@ -288,7 +312,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
         for (UUID playerUUID : playerTrialCompletion.keySet()) {
             CompoundTag playerTag = new CompoundTag();
             playerTag.putUUID("PlayerUUID", playerUUID);
-            playerTag.putBoolean("Completed", playerTrialCompletion.get(playerUUID));
+            playerTag.put("TrialStatus", playerTrialCompletion.get(playerUUID));
             completedPlayerList.add(playerTag);
         }
         tag.put("PlayerTrialCompletion", completedPlayerList);
@@ -304,8 +328,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
         for (int i = 0; i < completedPlayerList.size(); i++) {
             CompoundTag playerTag = completedPlayerList.getCompound(i);
             UUID playerUUID = playerTag.getUUID("PlayerUUID");
-            boolean completed = playerTag.getBoolean("Completed");
-            playerTrialCompletion.put(playerUUID, completed);
+            CompoundTag trialStatus = playerTag.getCompound("TrialStatus");
+            playerTrialCompletion.put(playerUUID, trialStatus);
         }
     }
 
