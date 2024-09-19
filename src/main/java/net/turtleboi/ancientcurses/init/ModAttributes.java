@@ -15,7 +15,7 @@ import net.turtleboi.ancientcurses.AncientCurses;
 public class ModAttributes {
     public static final DeferredRegister<Attribute> REGISTRY =
             DeferredRegister.create(ForgeRegistries.ATTRIBUTES, AncientCurses.MOD_ID);
-    //Ranged damage modifier
+
     public static final RegistryObject<Attribute> HIT_CHANCE =
             create("hit_chance", 1D, 0D);
 

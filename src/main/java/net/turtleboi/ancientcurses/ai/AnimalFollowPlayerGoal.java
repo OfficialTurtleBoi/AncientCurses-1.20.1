@@ -6,13 +6,13 @@ import net.minecraft.world.entity.animal.Animal;
 
 import java.util.EnumSet;
 
-public class FollowPlayerGoal extends Goal {
+public class AnimalFollowPlayerGoal extends Goal {
     private final Animal animal;
     private Player targetPlayer;
     private final double speed;
     private final double followDistance;
 
-    public FollowPlayerGoal(Animal animal, Player player, double speed, double followDistance) {
+    public AnimalFollowPlayerGoal(Animal animal, Player player, double speed, double followDistance) {
         this.animal = animal;
         this.targetPlayer = player;
         this.speed = speed;

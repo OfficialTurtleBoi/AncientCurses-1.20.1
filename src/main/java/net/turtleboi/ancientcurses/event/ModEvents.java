@@ -20,6 +20,8 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.animal.AbstractFish;
+import net.minecraft.world.entity.animal.AbstractSchoolingFish;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -46,7 +48,8 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.turtleboi.ancientcurses.AncientCurses;
-import net.turtleboi.ancientcurses.ai.FollowPlayerGoal;
+import net.turtleboi.ancientcurses.ai.AnimalFollowPlayerGoal;
+import net.turtleboi.ancientcurses.ai.FishFollowPlayerGoal;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.*;
@@ -101,11 +104,22 @@ public class ModEvents {
                         if (mob instanceof Animal animal) {
                             animal.getLookControl().setLookAt(player, 30.0F, 30.0F);
                             if (animal.goalSelector.getRunningGoals().noneMatch(goal -> goal.getGoal() instanceof FollowMobGoal)) {
-                                animal.goalSelector.addGoal(1, new FollowPlayerGoal(animal, player, 1.25D, 25.0D));
+                                animal.goalSelector.addGoal(1, new AnimalFollowPlayerGoal(animal, player, 1.25D, 25.0D));
                             }
                             if (animal.distanceTo(player) < 1.75) {
                                 if (tickCounter <= 0) {
                                     player.hurt(level.damageSources().mobAttack(animal), 1.0F);
+                                }
+                            }
+                        }
+                        if (mob instanceof AbstractFish fish) {
+                            fish.getLookControl().setLookAt(player, 30.0F, 30.0F);
+                            if (fish.goalSelector.getRunningGoals().noneMatch(goal -> goal.getGoal() instanceof FollowMobGoal)) {
+                                fish.goalSelector.addGoal(1, new FishFollowPlayerGoal(fish, player, 1.25D, 25.0D));
+                            }
+                            if (fish.distanceTo(player) < 1.75) {
+                                if (tickCounter <= 0) {
+                                    player.hurt(level.damageSources().mobAttack(fish), 1.0F);
                                 }
                             }
                         }
