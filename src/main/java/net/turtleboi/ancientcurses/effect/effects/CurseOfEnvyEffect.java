@@ -21,7 +21,7 @@ public class CurseOfEnvyEffect extends MobEffect {
             float blue = (effectColor & 0xFF) / 255.0F;
             for (int i = 0; i < 5; i++) {
                 pLivingEntity.level().addParticle(
-                        ModParticles.CURSED_PARTICLES.get(), // Replace this with your custom particle
+                        ModParticles.CURSED_PARTICLES.get(),
                         pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
                         pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
                         pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),

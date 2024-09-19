@@ -14,6 +14,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.turtleboi.ancientcurses.particle.ModParticles;
 
 import java.util.List;
 
@@ -23,8 +24,25 @@ public class CurseOfShadowsEffect extends MobEffect {
     }
 
     @Override
-    public void applyEffectTick(LivingEntity entity, int amplifier) {
-        if (entity instanceof Player player) {
+    public void applyEffectTick(LivingEntity pLivingEntity, int amplifier) {
+        if (pLivingEntity.level().isClientSide) {
+            if (pLivingEntity.tickCount % 20 == 0) {
+                int effectColor = this.getColor();
+                float red = ((effectColor >> 16) & 0xFF) / 255.0F;
+                float green = ((effectColor >> 8) & 0xFF) / 255.0F;
+                float blue = (effectColor & 0xFF) / 255.0F;
+                for (int i = 0; i < 5; i++) {
+                    pLivingEntity.level().addParticle(
+                            ModParticles.CURSED_PARTICLES.get(),
+                            pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
+                            pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
+                            pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
+                            red, green, blue);
+                }
+            }
+        }
+
+        if (pLivingEntity instanceof Player player) {
             player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 100, amplifier, false, false, false));
             Level level = player.level();
 
@@ -44,7 +62,7 @@ public class CurseOfShadowsEffect extends MobEffect {
                 applyInvisibilityToMobs(player, 25.0D);
             }
         }
-        super.applyEffectTick(entity, amplifier);
+        super.applyEffectTick(pLivingEntity, amplifier);
     }
 
     @Override

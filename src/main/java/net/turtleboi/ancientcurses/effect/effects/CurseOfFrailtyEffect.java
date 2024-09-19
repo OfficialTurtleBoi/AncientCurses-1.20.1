@@ -16,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.ChunkRenderTypeSet;
 import net.turtleboi.ancientcurses.init.ModAttributes;
+import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 
 import java.util.Objects;
@@ -32,6 +33,23 @@ public class CurseOfFrailtyEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
+        if (pLivingEntity.level().isClientSide) {
+            if (pLivingEntity.tickCount % 20 == 0) {
+                int effectColor = this.getColor();
+                float red = ((effectColor >> 16) & 0xFF) / 255.0F;
+                float green = ((effectColor >> 8) & 0xFF) / 255.0F;
+                float blue = (effectColor & 0xFF) / 255.0F;
+                for (int i = 0; i < 5; i++) {
+                    pLivingEntity.level().addParticle(
+                            ModParticles.CURSED_PARTICLES.get(),
+                            pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
+                            pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
+                            pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
+                            red, green, blue);
+                }
+            }
+        }
+
         if (!pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
             double healthReduction = getHealthReduction(pAmplifier);
             AttributeModifierUtil.applyTransientModifier(

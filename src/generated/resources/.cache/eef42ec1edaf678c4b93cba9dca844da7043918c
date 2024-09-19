@@ -1,4 +1,10 @@
-// 1.20.1	2024-09-07T22:16:38.4786165	Item Models: ancientcurses
+// 1.20.1	2024-09-19T00:25:59.5915001	Item Models: ancientcurses
+38f1d31ba9442031d0f59e16dad72e64c91be8b4 assets/ancientcurses/models/item/broken_amethyst.json
+ff6e9a38b906419f98410cfbb022152f7c742573 assets/ancientcurses/models/item/broken_diamond.json
+021f8c9d3c197a6c9795381da119a27debecc05f assets/ancientcurses/models/item/broken_emerald.json
+fdb269e33ec73b1ff6159d2dfeba6e4c8a8782e7 assets/ancientcurses/models/item/broken_ruby.json
+ba9cae501179d97a060253a52f4a924adadceb8e assets/ancientcurses/models/item/broken_sapphire.json
+65ed886065808456889621e26e27bb70d330af7c assets/ancientcurses/models/item/broken_topaz.json
 09b94b118cb70b05fee0c5fcbd49ed3d7ebc7075 assets/ancientcurses/models/item/deprecophobia_music_disc.json
 03c539e54576913add8837f492c7c7f3dc42e994 assets/ancientcurses/models/item/golden_amulet.json
 ad131cfe2dbcf0bf554168cf180c4519a7289e99 assets/ancientcurses/models/item/perfect_amethyst.json
@@ -7,4 +13,10 @@ a7660ac71bb0c9aba59acddaf29a2538fd912448 assets/ancientcurses/models/item/perfec
 79866320ad9f7a7a379454b0e56033c180cd4504 assets/ancientcurses/models/item/perfect_ruby.json
 7bec58013e8f2f562e34aa4a1bce144d361f2452 assets/ancientcurses/models/item/perfect_sapphire.json
 fd32767e0bcd9defaa8e7da92dc542c14e761d32 assets/ancientcurses/models/item/perfect_topaz.json
+d34897627248d0f38c9868f53b2630eb0471f6c4 assets/ancientcurses/models/item/polished_amethyst.json
+c2475accbf2d321769a30295de8654dd0e4afdde assets/ancientcurses/models/item/polished_diamond.json
+08afb43a7952c2caf0887ee0118045d9de5ad3fb assets/ancientcurses/models/item/polished_emerald.json
+5b7421cab001deea3676f262addb3d0293c65d2f assets/ancientcurses/models/item/polished_ruby.json
+2bcdb836c650ddc36b4ef42bc6ec6194a704c132 assets/ancientcurses/models/item/polished_sapphire.json
+5662ab4a70702fbdc2b25363d2851b1e733b3170 assets/ancientcurses/models/item/polished_topaz.json
 09e93c33c17126b0fcc7fb4a75997133766afd23 assets/ancientcurses/models/item/rotclump.json

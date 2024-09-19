@@ -646,9 +646,6 @@ public class ModEvents {
                     eliminationTrial.incrementEliminationCount(player);
                     if (eliminationTrial.isTrialCompleted(player)) {
                         eliminationTrial.rewardPlayer(player);
-                        PlayerTrialData.clearPlayerCurse(player);
-                        altar.setPlayerTrialStatus(playerUUID, true, false);
-                        altar.removePlayerTrial(playerUUID);
                     } else {
                         trial.trackProgress(player);
                     }
@@ -813,7 +810,7 @@ public class ModEvents {
 
                 Trial trial = altar.getPlayerTrial(player.getUUID());
                 if (trial != null) {
-                    if (PlayerTrialData.getCurrentTrialType(player).equals(PlayerTrialData.SURVIVAL_TRIAL)) {
+                    if (PlayerTrialData.getCurrentTrialType(player).equals(PlayerTrialData.survivalTrial)) {
                         trial.trackProgress(player);
 
                         if (trial.isTrialCompleted(player)) {

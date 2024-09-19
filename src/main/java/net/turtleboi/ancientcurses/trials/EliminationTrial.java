@@ -1,14 +1,11 @@
 package net.turtleboi.ancientcurses.trials;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
-import net.turtleboi.ancientcurses.entity.ModEntities;
 
 import java.util.UUID;
 
@@ -22,7 +19,7 @@ public class EliminationTrial implements Trial {
         this.altar = altar;
         this.effect = effect;
         saveRequiredEliminations(player, requiredEliminations);
-        PlayerTrialData.setEffect(player, effect);
+        PlayerTrialData.setCurseEffect(player, effect);
     }
 
     @Override
@@ -56,7 +53,7 @@ public class EliminationTrial implements Trial {
         player.removeEffect(this.effect);
         resetEliminationData(player);
 
-        PlayerTrialData.clearPlayerCurse(player);
+        PlayerTrialData.clearCurseEffect(player);
         PlayerTrialData.clearCurrentTrialType(player);
 
         CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel());

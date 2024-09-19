@@ -140,7 +140,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public boolean canPlayerUse(Player player) {
         UUID playerUUID = player.getUUID();
         if (PlayerTrialData.isPlayerCursed(player)) {
-            player.sendSystemMessage(Component.literal("You're cursed!").withStyle(ChatFormatting.RED));
+            //player.sendSystemMessage(Component.literal("You're cursed!").withStyle(ChatFormatting.RED));
             return false;
         }
 
@@ -148,7 +148,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
         if (playerCooldowns.containsKey(playerUUID)) {
             long lastUseTime = playerCooldowns.get(playerUUID);
             if (currentTime - lastUseTime < cooldownTime) {
-                player.sendSystemMessage(Component.literal("Altar is recharging...").withStyle(ChatFormatting.RED));
+                //player.sendSystemMessage(Component.literal("Altar is recharging...").withStyle(ChatFormatting.RED));
                 return false;
             }
         }
@@ -169,11 +169,11 @@ public class CursedAltarBlockEntity extends BlockEntity {
         altar.addPlayerTrial(playerUUID, trial);
 
         if (trial instanceof EliminationTrial) {
-            PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.ELIMINATION_TRIAL);
+            PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.eliminationTrial);
         }
 
         if (trial instanceof SurvivalTrial) {
-            PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.SURVIVAL_TRIAL);
+            PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.survivalTrial);
         }
 
         PlayerTrialData.setCurseAmplifier(player, pAmplifier);
@@ -194,8 +194,6 @@ public class CursedAltarBlockEntity extends BlockEntity {
         CompoundTag playerTag = new CompoundTag();
         playerTag.putBoolean("Completed", completed);
         playerTag.putBoolean("RewardCollected", rewardCollected);
-
-        // Store player trial status in NBT
         playerTrialCompletion.put(playerUUID, playerTag);
         setChanged();
     }

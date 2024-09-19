@@ -6,7 +6,6 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.player.Player;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
-import net.turtleboi.ancientcurses.entity.ModEntities;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +13,6 @@ import java.util.UUID;
 
 public class SurvivalTrial implements Trial {
     private final long trialDuration;
-    private final Map<UUID, Long> startTimes = new HashMap<>();
     private CursedAltarBlockEntity altar;
     private final MobEffect effect;
     public static final String TRIAL_DURATION_KEY = "TrialDuration";
@@ -25,7 +23,7 @@ public class SurvivalTrial implements Trial {
         this.altar = altar;
         this.effect = effect;
         setTrialDuration(player, trialDuration);
-        PlayerTrialData.setEffect(player, effect);
+        PlayerTrialData.setCurseEffect(player, effect);
 
     }
 
@@ -64,7 +62,7 @@ public class SurvivalTrial implements Trial {
         player.removeEffect(this.effect);
         resetTrialData(player);
 
-        PlayerTrialData.clearPlayerCurse(player);
+        PlayerTrialData.clearCurseEffect(player);
         PlayerTrialData.clearCurrentTrialType(player);
 
         CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel());

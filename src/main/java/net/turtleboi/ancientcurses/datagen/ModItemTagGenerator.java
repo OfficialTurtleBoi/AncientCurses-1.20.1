@@ -25,6 +25,42 @@ public class ModItemTagGenerator extends ItemTagsProvider {
                 .add(ModItems.DEPRECOPHOBIA_MUSIC_DISC.get());
 
         this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.BROKEN_AMETHYST.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.BROKEN_DIAMOND.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.BROKEN_EMERALD.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.BROKEN_RUBY.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.BROKEN_SAPPHIRE.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.BROKEN_TOPAZ.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.POLISHED_AMETHYST.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.POLISHED_DIAMOND.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.POLISHED_EMERALD.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.POLISHED_RUBY.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.POLISHED_SAPPHIRE.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
+                .add(ModItems.POLISHED_TOPAZ.get());
+
+        this.tag(ModTags.Items.PRECIOUS_GEMS)
                 .add(ModItems.PERFECT_AMETHYST.get());
 
         this.tag(ModTags.Items.PRECIOUS_GEMS)

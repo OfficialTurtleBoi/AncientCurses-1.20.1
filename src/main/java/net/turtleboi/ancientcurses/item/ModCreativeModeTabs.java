@@ -18,20 +18,33 @@ public class ModCreativeModeTabs {
             () -> CreativeModeTab.builder().icon(() -> new ItemStack(ModItems.GOLDEN_AMULET.get()))
                     .title(Component.translatable("creativetab.ancientcurses_tab"))
                     .displayItems((pParameters, pOutput) -> {
+                        pOutput.accept(ModBlocks.CURSED_ALTAR.get());
+                        pOutput.accept(ModBlocks.SCONCED_TORCH.get());
+                        pOutput.accept(ModBlocks.SCONCED_SOUL_TORCH.get());
+                        pOutput.accept(ModBlocks.SCONCED_REDSTONE_TORCH.get());
+                        pOutput.accept(ModBlocks.SCONCED_CURSED_TORCH.get());
+                        pOutput.accept(ModBlocks.SCONCED_UNLIT_TORCH.get());
+
                         pOutput.accept(ModItems.GOLDEN_AMULET.get());
                         pOutput.accept(ModItems.DEPRECOPHOBIA_MUSIC_DISC.get());
-                        pOutput.accept(ModBlocks.CURSED_ALTAR.get());
+                        pOutput.accept(ModItems.BROKEN_AMETHYST.get());
+                        pOutput.accept(ModItems.BROKEN_DIAMOND.get());
+                        pOutput.accept(ModItems.BROKEN_EMERALD.get());
+                        pOutput.accept(ModItems.BROKEN_RUBY.get());
+                        pOutput.accept(ModItems.BROKEN_SAPPHIRE.get());
+                        pOutput.accept(ModItems.BROKEN_TOPAZ.get());
+                        pOutput.accept(ModItems.POLISHED_AMETHYST.get());
+                        pOutput.accept(ModItems.POLISHED_DIAMOND.get());
+                        pOutput.accept(ModItems.POLISHED_EMERALD.get());
+                        pOutput.accept(ModItems.POLISHED_RUBY.get());
+                        pOutput.accept(ModItems.POLISHED_SAPPHIRE.get());
+                        pOutput.accept(ModItems.POLISHED_TOPAZ.get());
                         pOutput.accept(ModItems.PERFECT_AMETHYST.get());
                         pOutput.accept(ModItems.PERFECT_DIAMOND.get());
                         pOutput.accept(ModItems.PERFECT_EMERALD.get());
                         pOutput.accept(ModItems.PERFECT_RUBY.get());
                         pOutput.accept(ModItems.PERFECT_SAPPHIRE.get());
                         pOutput.accept(ModItems.PERFECT_TOPAZ.get());
-                        pOutput.accept(ModBlocks.SCONCED_TORCH.get());
-                        pOutput.accept(ModBlocks.SCONCED_SOUL_TORCH.get());
-                        pOutput.accept(ModBlocks.SCONCED_REDSTONE_TORCH.get());
-                        pOutput.accept(ModBlocks.SCONCED_CURSED_TORCH.get());
-                        pOutput.accept(ModBlocks.SCONCED_UNLIT_TORCH.get());
                     })
                     .build());
 

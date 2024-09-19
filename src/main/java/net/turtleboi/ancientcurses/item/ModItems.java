@@ -21,11 +21,41 @@ public class ModItems {
     public static final RegistryObject<Item> GOLDEN_AMULET = ITEMS.register("golden_amulet",
             () -> new Item(new Item.Properties()));
 
-    public static final RegistryObject<Item> BROKEN_GEM = ITEMS.register("broken_gem",
-            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> BROKEN_AMETHYST = ITEMS.register("broken_amethyst",
+            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
 
-    public static final RegistryObject<Item> FINE_GEM = ITEMS.register("fine_gem",
-            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> BROKEN_DIAMOND = ITEMS.register("broken_diamond",
+            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+
+    public static final RegistryObject<Item> BROKEN_EMERALD = ITEMS.register("broken_emerald",
+            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+
+    public static final RegistryObject<Item> BROKEN_RUBY = ITEMS.register("broken_ruby",
+            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+
+    public static final RegistryObject<Item> BROKEN_SAPPHIRE = ITEMS.register("broken_sapphire",
+            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+
+    public static final RegistryObject<Item> BROKEN_TOPAZ = ITEMS.register("broken_topaz",
+            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+
+    public static final RegistryObject<Item> POLISHED_AMETHYST = ITEMS.register("polished_amethyst",
+            () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+
+    public static final RegistryObject<Item> POLISHED_DIAMOND = ITEMS.register("polished_diamond",
+            () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+
+    public static final RegistryObject<Item> POLISHED_EMERALD = ITEMS.register("polished_emerald",
+            () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+
+    public static final RegistryObject<Item> POLISHED_RUBY = ITEMS.register("polished_ruby",
+            () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+
+    public static final RegistryObject<Item> POLISHED_SAPPHIRE = ITEMS.register("polished_sapphire",
+            () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+
+    public static final RegistryObject<Item> POLISHED_TOPAZ = ITEMS.register("polished_topaz",
+            () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
 
     public static final RegistryObject<Item> PERFECT_AMETHYST = ITEMS.register("perfect_amethyst",
             () -> new Item(new Item.Properties().rarity(Rarity.EPIC)));

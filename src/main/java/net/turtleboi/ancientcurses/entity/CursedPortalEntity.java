@@ -56,6 +56,10 @@ public class CursedPortalEntity extends Entity {
             if (this.isTeleportEnabled()) {
                 teleportNearbyPlayers();
             }
+
+            if (age >= 620){
+                this.discard();
+            }
         }
     }
 
@@ -77,7 +81,7 @@ public class CursedPortalEntity extends Entity {
         float yaw = calculateYaw(playerPos, altarPos);
         float pitch = calculatePitch(player, playerPos, altarPos);
 
-        player.teleportTo(serverLevel, altarPos.getX() + 2.5, altarPos.getY() - 1, altarPos.getZ() + 2.5, Set.of(), yaw, pitch);
+        player.teleportTo(serverLevel, altarPos.getX() + 2.5, altarPos.getY(), altarPos.getZ() + 2.5, Set.of(), yaw, pitch);
     }
 
     private static float calculateYaw(BlockPos playerPos, BlockPos altarPos) {

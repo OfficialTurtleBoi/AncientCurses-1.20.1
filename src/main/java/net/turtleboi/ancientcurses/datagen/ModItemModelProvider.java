@@ -19,6 +19,18 @@ public class ModItemModelProvider extends ItemModelProvider {
     protected void registerModels() {
         simpleItem(ModItems.GOLDEN_AMULET);
         simpleItem(ModItems.DEPRECOPHOBIA_MUSIC_DISC);
+        simpleItem(ModItems.BROKEN_AMETHYST);
+        simpleItem(ModItems.BROKEN_DIAMOND);
+        simpleItem(ModItems.BROKEN_EMERALD);
+        simpleItem(ModItems.BROKEN_RUBY);
+        simpleItem(ModItems.BROKEN_SAPPHIRE);
+        simpleItem(ModItems.BROKEN_TOPAZ);
+        simpleItem(ModItems.POLISHED_AMETHYST);
+        simpleItem(ModItems.POLISHED_DIAMOND);
+        simpleItem(ModItems.POLISHED_EMERALD);
+        simpleItem(ModItems.POLISHED_RUBY);
+        simpleItem(ModItems.POLISHED_SAPPHIRE);
+        simpleItem(ModItems.POLISHED_TOPAZ);
         simpleItem(ModItems.PERFECT_AMETHYST);
         simpleItem(ModItems.PERFECT_DIAMOND);
         simpleItem(ModItems.PERFECT_EMERALD);

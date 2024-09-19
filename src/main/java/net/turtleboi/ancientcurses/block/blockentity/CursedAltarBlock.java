@@ -139,14 +139,14 @@ public class CursedAltarBlock extends BaseEntityBlock {
             BlockEntity blockEntity = level.getBlockEntity(pos);
 
             if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
-                if (PlayerTrialData.isPlayerCursed(player) && altarEntity.canPlayerUse(player)) {
-                    player.sendSystemMessage(Component.literal("You are already cursed! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
+                if (PlayerTrialData.isPlayerCursed(player)) {
+                    //player.sendSystemMessage(Component.literal("You are already cursed! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
                     return InteractionResult.FAIL;
                 }
 
                 if (altarEntity.hasPlayerCompletedTrial(player)){
                     rewardPlayer(player, altarEntity, level, pos);
-                    player.sendSystemMessage(Component.literal("You've completed this trial!").withStyle(ChatFormatting.GREEN));
+                    //player.sendSystemMessage(Component.literal("You've completed this trial!").withStyle(ChatFormatting.GREEN));
                     if (player.isShiftKeyDown() && altarEntity.canPlayerUse(player)) {
                         for (int i = 2; i >= 0; i--) {
                             ItemStack gem = altarEntity.getGemInSlot(i);
@@ -190,7 +190,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
     public void startTrial(Player player, CursedAltarBlockEntity altarEntity) {
         if (altarEntity.hasPlayerCompletedTrial(player)) {
-            player.sendSystemMessage(Component.literal("You have already completed the trial for this altar.").withStyle(ChatFormatting.GREEN));
+            //player.sendSystemMessage(Component.literal("You have already completed the trial for this altar.").withStyle(ChatFormatting.GREEN));
             return;
         }
 
@@ -210,26 +210,29 @@ public class CursedAltarBlock extends BaseEntityBlock {
     private void rewardPlayer(Player player, CursedAltarBlockEntity altarEntity, Level level, BlockPos pos) {
         altarEntity.setPlayerCooldown(player);
         int amplifier = PlayerTrialData.getCurseAmplifier(player);
-        //if (altarEntity.hasCollectedReward(player)) {
-        //    player.sendSystemMessage(Component.literal("You have already received your reward for this trial.").withStyle(ChatFormatting.RED));
-        //    return;
-        //}
+        if (altarEntity.hasCollectedReward(player)) {
+            //player.sendSystemMessage(Component.literal("You have already received your reward for this trial.").withStyle(ChatFormatting.RED));
+            return;
+        }
+
+        System.out.println(Component.literal("Giving player loot of amplifier: " + amplifier));
 
         if (player instanceof ServerPlayer) {
             rewardPlayerWithLootTable(player, amplifier, level, pos);
+            PlayerTrialData.clearCurseAmplifier(player);
+            altarEntity.markRewardCollected(player);
         }
-        altarEntity.markRewardCollected(player);
     }
 
     private void rewardPlayerWithLootTable(Player player, int pAmplifier, Level level, BlockPos pos) {
-        ResourceLocation lootTableLoc = switch (pAmplifier) {
-            case 1 -> new ResourceLocation("ancientcurses", "amplifier_1");
-            case 2 -> new ResourceLocation("ancientcurses", "amplifier_2");
-            default -> new ResourceLocation("ancientcurses", "amplifier_0");
-        };
+        ResourceLocation[] lootTableLocations = {
+                new ResourceLocation("ancientcurses", "amplifier_0"),
+                new ResourceLocation("ancientcurses", "amplifier_1"),
+                new ResourceLocation("ancientcurses", "amplifier_2")};
+        int lootIndex = Math.min(pAmplifier, lootTableLocations.length - 1);
 
         ServerLevel serverLevel = (ServerLevel) player.level();
-        LootTable lootTable = serverLevel.getServer().getLootData().getElement(LootDataType.TABLE, lootTableLoc);
+        LootTable lootTable = serverLevel.getServer().getLootData().getElement(LootDataType.TABLE, lootTableLocations[lootIndex]);
 
         if (lootTable == null) {
             player.sendSystemMessage(Component.literal("No loot table found for this trial reward.").withStyle(ChatFormatting.RED));
@@ -237,8 +240,18 @@ public class CursedAltarBlock extends BaseEntityBlock {
         }
 
         Random random = new Random();
-        int minRolls = 3 - (pAmplifier);
-        int maxRolls = 5 - (pAmplifier * 2);
+        int minRolls, maxRolls;
+        if (pAmplifier == 0) {
+            minRolls = 3;
+            maxRolls = 5;
+        } else if (pAmplifier == 1) {
+            minRolls = 2;
+            maxRolls = 3;
+        } else {
+            minRolls = 1;
+            maxRolls = 1;
+        }
+
         int rollCount = random.nextInt(maxRolls - minRolls + 1) + minRolls;
 
         List<ItemStack> totalGeneratedLoot = new ArrayList<>();
@@ -254,13 +267,38 @@ public class CursedAltarBlock extends BaseEntityBlock {
             totalGeneratedLoot.addAll(generatedLoot);
         }
 
+        ResourceLocation[] gemLootLocations = {
+                new ResourceLocation("ancientcurses", "broken_gems"),
+                new ResourceLocation("ancientcurses", "polished_gems"),
+                new ResourceLocation("ancientcurses", "perfect_gems")};
+        int gemIndex = Math.min(pAmplifier, gemLootLocations.length - 1);
+
+        LootTable gemLootTable = serverLevel.getServer().getLootData().getElement(LootDataType.TABLE, gemLootLocations[gemIndex]);
+
+        if (gemLootTable != null) {
+            int[] gemLootChance = {100, 80, 60};
+            int gemLootIndex = Math.min(pAmplifier, gemLootChance.length - 1);
+            if (random.nextInt(100) < gemLootChance[gemLootIndex]) {
+                LootParams.Builder gemLootParamsBuilder = new LootParams.Builder(serverLevel)
+                        .withParameter(LootContextParams.THIS_ENTITY, player)
+                        .withParameter(LootContextParams.ORIGIN, player.position());
+
+                LootParams gemLootParams = gemLootParamsBuilder.create(LootContextParamSets.CHEST);
+                ObjectArrayList<ItemStack> gemLoot = gemLootTable.getRandomItems(gemLootParams);
+
+
+                if (!gemLoot.isEmpty()) {
+                    totalGeneratedLoot.add(gemLoot.get(0));
+                }
+            }
+        }
+
         for (ItemStack item : totalGeneratedLoot) {
             if (!item.isEmpty()) {
                 ejectItemsTowardPlayer(level, pos, player, Collections.singletonList(item));
             }
         }
     }
-
 
     private void ejectItemsTowardPlayer(Level level, BlockPos pos, Player player, List<ItemStack> items) {
         for (ItemStack item : items) {
