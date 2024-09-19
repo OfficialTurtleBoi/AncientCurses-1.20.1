@@ -19,7 +19,7 @@ public class ModItems {
             DeferredRegister.create(ForgeRegistries.ITEMS, AncientCurses.MOD_ID);
 
     public static final RegistryObject<Item> GOLDEN_AMULET = ITEMS.register("golden_amulet",
-            () -> new Item(new Item.Properties()));
+            () -> new GoldenAmuletItem(new Item.Properties()));
 
     public static final RegistryObject<Item> BROKEN_AMETHYST = ITEMS.register("broken_amethyst",
             () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));

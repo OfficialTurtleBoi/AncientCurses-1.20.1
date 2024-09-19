@@ -24,6 +24,7 @@ import net.turtleboi.ancientcurses.item.ModCreativeModeTabs;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.particle.ModParticles;
+import net.turtleboi.ancientcurses.screen.ModMenuTypes;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.ancientcurses.world.structures.ModStructures;
 import org.slf4j.Logger;
@@ -45,6 +46,8 @@ public class AncientCurses {
 
         ModEffects.register(modEventBus);
         ModSounds.register(modEventBus);
+
+        ModMenuTypes.register(modEventBus);
 
         ModBlockEntities.register(modEventBus);
         ModParticles.register(modEventBus);
