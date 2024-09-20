@@ -3,6 +3,8 @@ package net.turtleboi.ancientcurses.event;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -33,6 +35,7 @@ import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -55,12 +58,15 @@ import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.*;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
+import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
 import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
 import net.turtleboi.ancientcurses.trials.Trial;
+import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 
 import java.util.List;
@@ -761,6 +767,41 @@ public class ModEvents {
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         Player player = event.player;
         Level level = player.level();
+        CompoundTag playerData = player.getPersistentData();
+        UUID activeAmuletUUID = null;
+
+        if (playerData.contains("ActiveAmuletUUID", 11)) {
+            activeAmuletUUID = playerData.getUUID("ActiveAmuletUUID");
+        }
+        ItemStack activeAmulet  = ItemStack.EMPTY;
+
+        if (!level.isClientSide && event.phase == TickEvent.Phase.END) {
+            for (ItemStack stack : player.getInventory().items) {
+                if (stack.getItem() instanceof GoldenAmuletItem) {
+                    UUID amuletUUID = GoldenAmuletItem.getUUID(stack);
+                    if (amuletUUID != null && amuletUUID.equals(activeAmuletUUID)) {
+                        activeAmulet = stack;
+                        break;
+                    }
+                }
+            }
+
+            if (!activeAmulet.isEmpty()) {
+                GoldenAmuletItem amuletItem = (GoldenAmuletItem) activeAmulet.getItem();
+                amuletItem.applyGemBonuses(player, activeAmulet);
+            } else {
+                PreciousGemItem.removeBonus(player);
+                player.getPersistentData().remove("ActiveAmuletUUID");
+                for (ItemStack stack : player.getInventory().items) {
+                    if (stack.getItem() instanceof GoldenAmuletItem amuletItem) {
+                        UUID newUUID = GoldenAmuletItem.getOrCreateUUID(stack);
+                        player.getPersistentData().putUUID("ActiveAmuletUUID", newUUID);
+                        amuletItem.applyGemBonuses(player, stack);
+                        break;
+                    }
+                }
+            }
+        }
 
         MobEffectInstance shadowCurse = player.getEffect(ModEffects.CURSE_OF_SHADOWS.get());
         if (shadowCurse != null && shadowCurse.getAmplifier() >= 1 && !level.isClientSide) {

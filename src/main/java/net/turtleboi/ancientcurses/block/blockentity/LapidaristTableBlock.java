@@ -11,12 +11,15 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.network.NetworkHooks;
 import net.turtleboi.ancientcurses.block.entity.LapidaristTableBlockEntity;
+import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,4 +61,14 @@ public class LapidaristTableBlock extends BaseEntityBlock {
     public @Nullable BlockEntity newBlockEntity(BlockPos pPos, BlockState pState) {
         return new LapidaristTableBlockEntity(pPos, pState);
     }
+
+    //@Nullable
+    //@Override
+    //public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, BlockState pState, BlockEntityType<T> pBlockEntityType) {
+    //    if(pLevel.isClientSide()){
+    //        return null;
+    //    }
+    //    return createTickerHelper(pBlockEntityType, ModBlockEntities.LAPIDARIST_TABLE_BE.get(),
+    //            (pLevel1, pPos, pState1, pBlockEntity) -> pBlockEntity.tick(pLevel1, pPos, pState1));
+    //}
 }

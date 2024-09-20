@@ -42,4 +42,14 @@ public class AttributeModifierUtil {
             attributeInstance.removeModifier(uuid);
         }
     }
+
+    public static void removeModifiersByPrefix(Player player, Attribute attribute, String prefix) {
+        AttributeInstance attributeInstance = player.getAttribute(attribute);
+        if (attributeInstance != null) {
+            attributeInstance.getModifiers().stream()
+                    .filter(modifier -> modifier.getName().startsWith(prefix))
+                    .forEach(attributeInstance::removeModifier);
+        }
+    }
+
 }

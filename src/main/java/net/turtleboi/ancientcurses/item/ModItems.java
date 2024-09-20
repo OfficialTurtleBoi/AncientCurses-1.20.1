@@ -23,58 +23,58 @@ public class ModItems {
             () -> new GoldenAmuletItem(new Item.Properties()));
 
     public static final RegistryObject<Item> BROKEN_AMETHYST = ITEMS.register("broken_amethyst",
-            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
 
     public static final RegistryObject<Item> BROKEN_DIAMOND = ITEMS.register("broken_diamond",
-            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
 
     public static final RegistryObject<Item> BROKEN_EMERALD = ITEMS.register("broken_emerald",
-            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
 
     public static final RegistryObject<Item> BROKEN_RUBY = ITEMS.register("broken_ruby",
-            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
 
     public static final RegistryObject<Item> BROKEN_SAPPHIRE = ITEMS.register("broken_sapphire",
-            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
 
     public static final RegistryObject<Item> BROKEN_TOPAZ = ITEMS.register("broken_topaz",
-            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
 
     public static final RegistryObject<Item> POLISHED_AMETHYST = ITEMS.register("polished_amethyst",
-            () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.RARE)));
 
     public static final RegistryObject<Item> POLISHED_DIAMOND = ITEMS.register("polished_diamond",
-            () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.RARE)));
 
     public static final RegistryObject<Item> POLISHED_EMERALD = ITEMS.register("polished_emerald",
-            () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.RARE)));
 
     public static final RegistryObject<Item> POLISHED_RUBY = ITEMS.register("polished_ruby",
-            () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.RARE)));
 
     public static final RegistryObject<Item> POLISHED_SAPPHIRE = ITEMS.register("polished_sapphire",
-            () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.RARE)));
 
     public static final RegistryObject<Item> POLISHED_TOPAZ = ITEMS.register("polished_topaz",
-            () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.RARE)));
 
     public static final RegistryObject<Item> PERFECT_AMETHYST = ITEMS.register("perfect_amethyst",
-            () -> new Item(new Item.Properties().rarity(Rarity.EPIC)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC)));
 
     public static final RegistryObject<Item> PERFECT_DIAMOND = ITEMS.register("perfect_diamond",
-            () -> new Item(new Item.Properties().rarity(Rarity.EPIC)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC)));
 
     public static final RegistryObject<Item> PERFECT_EMERALD = ITEMS.register("perfect_emerald",
-            () -> new Item(new Item.Properties().rarity(Rarity.EPIC)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC)));
 
     public static final RegistryObject<Item> PERFECT_RUBY = ITEMS.register("perfect_ruby",
-            () -> new Item(new Item.Properties().rarity(Rarity.EPIC)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC)));
 
     public static final RegistryObject<Item> PERFECT_SAPPHIRE = ITEMS.register("perfect_sapphire",
-            () -> new Item(new Item.Properties().rarity(Rarity.EPIC)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC)));
 
     public static final RegistryObject<Item> PERFECT_TOPAZ = ITEMS.register("perfect_topaz",
-            () -> new Item(new Item.Properties().rarity(Rarity.EPIC)));
+            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC)));
 
     public static final RegistryObject<Item> DEPRECOPHOBIA_MUSIC_DISC = ITEMS.register("deprecophobia_music_disc",
             () -> new RecordItem(13, ModSounds.DEPRECOPHOBIA, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC), 2780));

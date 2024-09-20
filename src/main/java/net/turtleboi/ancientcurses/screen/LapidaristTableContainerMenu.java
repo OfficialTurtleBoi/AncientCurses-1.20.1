@@ -2,7 +2,6 @@ package net.turtleboi.ancientcurses.screen;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
@@ -10,10 +9,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.LapidaristTableBlockEntity;
+import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
+import net.turtleboi.ancientcurses.util.ModTags;
+import org.jetbrains.annotations.NotNull;
 
 public class LapidaristTableContainerMenu extends AbstractContainerMenu {
     public final LapidaristTableBlockEntity blockEntity;
@@ -35,15 +37,36 @@ public class LapidaristTableContainerMenu extends AbstractContainerMenu {
         addPlayerHotbar(pPlayerInventory);
 
         this.blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(iItemHandler -> {
-            this.addSlot(new SlotItemHandler(iItemHandler, 0, 18, 29));
+            this.addSlot(new SlotItemHandler(iItemHandler, 0, 18, 29) {
+                @Override
+                public boolean mayPlace(@NotNull ItemStack stack) {
+                    return stack.getItem() instanceof GoldenAmuletItem;
+                }
 
-            this.addSlot(new SlotItemHandler(iItemHandler, 2, 80, 4));
-            this.addSlot(new SlotItemHandler(iItemHandler, 3, 53, 24));
-            this.addSlot(new SlotItemHandler(iItemHandler, 4, 107, 24));
-            this.addSlot(new SlotItemHandler(iItemHandler, 1, 80, 29));
-            this.addSlot(new SlotItemHandler(iItemHandler, 5, 62, 54));
-            this.addSlot(new SlotItemHandler(iItemHandler, 6, 98, 54));
+                @Override
+                public void set(@NotNull ItemStack stack) {
+                    super.set(stack);
+                    blockEntity.onSlotChanged();
+                }
 
+                @Override
+                public void setChanged() {
+                    super.setChanged();
+                    blockEntity.onSlotChanged();
+                }
+            });
+
+            this.addSlot(new PreciousGemSlot(iItemHandler, 2, 80, 4, blockEntity));
+            this.addSlot(new PreciousGemSlot(iItemHandler, 3, 53, 24, blockEntity));
+            this.addSlot(new PreciousGemSlot(iItemHandler, 4, 107, 24, blockEntity));
+            this.addSlot(new PreciousGemSlot(iItemHandler, 1, 80, 29, blockEntity) {
+                @Override
+                public boolean mayPlace(@NotNull ItemStack stack) {
+                    return !stack.is(ModTags.Items.MINOR_GEMS);
+                }
+            });
+            this.addSlot(new PreciousGemSlot(iItemHandler, 5, 62, 54, blockEntity));
+            this.addSlot(new PreciousGemSlot(iItemHandler, 6, 98, 54, blockEntity));
         });
 
         addDataSlots(pData);
@@ -62,6 +85,14 @@ public class LapidaristTableContainerMenu extends AbstractContainerMenu {
             this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 137));
         }
     }
+
+
+
+
+
+
+
+
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
