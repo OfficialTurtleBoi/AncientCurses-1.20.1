@@ -1,14 +1,14 @@
-package net.turtleboi.ancientcurses.block;
+package net.turtleboi.ancientcurses.block.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.TorchBlock;
+import net.minecraft.world.level.block.WallTorchBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class SconcedUnlitTorch extends TorchBlock {
-    public SconcedUnlitTorch(Properties pProperties, ParticleOptions pFlameParticle) {
+public class SconcedWallUnlitTorchBlock extends WallTorchBlock {
+    public SconcedWallUnlitTorchBlock(Properties pProperties, ParticleOptions pFlameParticle) {
         super(pProperties, pFlameParticle);
     }
 

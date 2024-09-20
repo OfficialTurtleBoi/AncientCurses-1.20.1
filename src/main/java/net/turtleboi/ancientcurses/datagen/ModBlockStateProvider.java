@@ -18,6 +18,9 @@ public class ModBlockStateProvider extends BlockStateProvider {
     protected void registerStatesAndModels() {
         simpleBlockWithItem(ModBlocks.CURSED_ALTAR.get(),
                 new ModelFile.UncheckedModelFile(modLoc("block/cursed_altar")));
+
+        simpleBlockWithItem(ModBlocks.LAPIDARIST_TABLE.get(),
+                new ModelFile.UncheckedModelFile(modLoc("block/lapidarist_table")));
     }
 
     private void blockWithItem(RegistryObject<Block> blockRegistryObject) {

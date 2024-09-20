@@ -20,6 +20,11 @@ public class ModBlockEntities{
                     BlockEntityType.Builder.of(CursedAltarBlockEntity::new,
                             ModBlocks.CURSED_ALTAR.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<LapidaristTableBlockEntity>> LAPIDARIST_TABLE_BE =
+            BLOCK_ENTITIES.register("lapidarist_table_be", () ->
+                    BlockEntityType.Builder.of(LapidaristTableBlockEntity::new,
+                            ModBlocks.LAPIDARIST_TABLE.get()).build(null));
+
     public static void register(IEventBus eventBus){
         BLOCK_ENTITIES.register(eventBus);
     }

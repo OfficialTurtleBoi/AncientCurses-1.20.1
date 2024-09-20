@@ -7,14 +7,13 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.turtleboi.ancientcurses.AncientCurses;
 
-public class GemSlotContainerScreen extends AbstractContainerScreen<GemSlotContainerMenu> {
+public class LapidaristTableContainerScreen extends AbstractContainerScreen<LapidaristTableContainerMenu> {
     private static final ResourceLocation TEXTURE =
-            new ResourceLocation(AncientCurses.MOD_ID, "textures/gui/amulet_gui.png");
+            new ResourceLocation(AncientCurses.MOD_ID, "textures/gui/lapidarist_table_gui.png");
 
-    public GemSlotContainerScreen(GemSlotContainerMenu pMenu, Inventory pPlayerInventory, Component pTitle) {
+    public LapidaristTableContainerScreen(LapidaristTableContainerMenu pMenu, Inventory pPlayerInventory, Component pTitle) {
         super(pMenu, pPlayerInventory, pTitle);
     }
 
@@ -34,5 +33,12 @@ public class GemSlotContainerScreen extends AbstractContainerScreen<GemSlotConta
         int y = (height - imageWidth) / 2;
 
         pGuiGraphics.blit(TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
+    }
+
+    @Override
+    public void render(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
+        renderBackground(pGuiGraphics);
+        super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
+        renderTooltip(pGuiGraphics, pMouseX, pMouseY);
     }
 }

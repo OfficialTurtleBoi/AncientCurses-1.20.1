@@ -24,6 +24,8 @@ public class ModBlockLootTables extends BlockLootSubProvider {
     @Override
     protected void generate() {
         this.dropSelf(ModBlocks.CURSED_ALTAR.get());
+        this.dropSelf(ModBlocks.LAPIDARIST_TABLE.get());
+
         this.add(ModBlocks.SCONCED_TORCH.get(),
                 block -> createSingleItemTable(ModItems.SCONCED_TORCH_ITEM.get()));
         this.add(ModBlocks.SCONCED_WALL_TORCH.get(),

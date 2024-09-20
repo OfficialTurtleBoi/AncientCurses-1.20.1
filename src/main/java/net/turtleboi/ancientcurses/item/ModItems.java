@@ -10,6 +10,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.ModBlocks;
+import net.turtleboi.ancientcurses.item.items.*;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 
 public class ModItems {

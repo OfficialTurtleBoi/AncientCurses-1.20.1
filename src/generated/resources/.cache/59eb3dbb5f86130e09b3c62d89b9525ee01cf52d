@@ -1,5 +1,6 @@
-// 1.20.1	2024-09-17T15:04:57.8433078	Loot Tables
+// 1.20.1	2024-09-20T00:14:29.3122716	Loot Tables
 173be01067a3fb33d2abc3a9422ca4085756dfba data/ancientcurses/loot_tables/blocks/cursed_altar.json
+7e081e67147938419195f6daca068769f54f0fc6 data/ancientcurses/loot_tables/blocks/jewelers_table.json
 371f957dba4076473e7aa868ddced40e340d0805 data/ancientcurses/loot_tables/blocks/sconced_cursed_torch.json
 d98119ec27d9bb4ca9ef2c604581680c66358a2a data/ancientcurses/loot_tables/blocks/sconced_redstone_torch.json
 a845b245540f4d9bae20570b1b6373507a62bdfe data/ancientcurses/loot_tables/blocks/sconced_soul_torch.json

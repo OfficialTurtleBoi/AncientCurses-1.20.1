@@ -1,6 +1,7 @@
 package net.turtleboi.ancientcurses;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraftforge.api.distmarker.Dist;
@@ -24,6 +25,7 @@ import net.turtleboi.ancientcurses.item.ModCreativeModeTabs;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.particle.ModParticles;
+import net.turtleboi.ancientcurses.screen.LapidaristTableContainerScreen;
 import net.turtleboi.ancientcurses.screen.ModMenuTypes;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.ancientcurses.world.structures.ModStructures;
@@ -47,9 +49,8 @@ public class AncientCurses {
         ModEffects.register(modEventBus);
         ModSounds.register(modEventBus);
 
-        ModMenuTypes.register(modEventBus);
-
         ModBlockEntities.register(modEventBus);
+        ModMenuTypes.register(modEventBus);
         ModParticles.register(modEventBus);
         ModStructures.register(modEventBus);
 
@@ -72,5 +73,7 @@ public class AncientCurses {
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         ClearCurseCommand.register(event.getServer().getCommands().getDispatcher());
+
+        MenuScreens.register(ModMenuTypes.LAPIDARIST_MENU.get(), LapidaristTableContainerScreen::new);
     }
 }

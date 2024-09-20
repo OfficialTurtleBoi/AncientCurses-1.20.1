@@ -19,6 +19,8 @@ public class ModCreativeModeTabs {
                     .title(Component.translatable("creativetab.ancientcurses_tab"))
                     .displayItems((pParameters, pOutput) -> {
                         pOutput.accept(ModBlocks.CURSED_ALTAR.get());
+                        pOutput.accept(ModBlocks.LAPIDARIST_TABLE.get());
+
                         pOutput.accept(ModBlocks.SCONCED_TORCH.get());
                         pOutput.accept(ModBlocks.SCONCED_SOUL_TORCH.get());
                         pOutput.accept(ModBlocks.SCONCED_REDSTONE_TORCH.get());

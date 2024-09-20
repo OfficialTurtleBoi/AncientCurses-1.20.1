@@ -14,9 +14,8 @@ public class ModMenuTypes {
     public static final DeferredRegister<MenuType<?>> MENUS =
             DeferredRegister.create(ForgeRegistries.MENU_TYPES, AncientCurses.MOD_ID);
 
-    public static final RegistryObject<MenuType<GemSlotContainerMenu>> GOLDEN_AMULET_MENU =
-            registerMenuTypes("golden_amulet_menu", GemSlotContainerMenu::new);
-
+    public static final RegistryObject<MenuType<LapidaristTableContainerMenu>> LAPIDARIST_MENU =
+            registerMenuTypes("lapidarist_table_menu", LapidaristTableContainerMenu::new);
 
     private static <T extends AbstractContainerMenu>RegistryObject<MenuType<T>> registerMenuTypes(String name, IContainerFactory<T> factory){
         return MENUS.register(name, () -> IForgeMenuType.create(factory));
