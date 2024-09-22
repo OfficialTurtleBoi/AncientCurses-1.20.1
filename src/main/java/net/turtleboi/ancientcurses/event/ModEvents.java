@@ -2,9 +2,9 @@ package net.turtleboi.ancientcurses.event;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -15,6 +15,8 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -23,7 +25,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.animal.AbstractFish;
-import net.minecraft.world.entity.animal.AbstractSchoolingFish;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -35,7 +36,6 @@ import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -66,7 +66,6 @@ import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
 import net.turtleboi.ancientcurses.trials.Trial;
-import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 
 import java.util.List;
@@ -759,6 +758,26 @@ public class ModEvents {
                     }
                 }
 
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPotionEffectAdded(MobEffectEvent.Added event) {
+        LivingEntity entity = event.getEntity();
+        if (entity instanceof Player player) {
+            MobEffectInstance newEffect = event.getEffectInstance();
+            if (newEffect.getEffect().isBeneficial()) {
+                double magicAmp = player.getAttributeValue(ModAttributes.MAGIC_AMP.get());
+                //System.out.println("Player Magical Potency: " + magicAmp); //debug code
+                if (magicAmp > 1.0) {
+                    int originalDuration = newEffect.getDuration();
+                    int increasedDuration = (int) (originalDuration * magicAmp);
+                    //System.out.println("Original Potion Duration: " + originalDuration); //debug code
+                    //System.out.println("Increased Potion Duration: " + increasedDuration); //debug code
+                    newEffect.update(new MobEffectInstance(newEffect.getEffect(), increasedDuration, newEffect.getAmplifier(),
+                            newEffect.isAmbient(), newEffect.isVisible(), newEffect.showIcon()));
+                }
             }
         }
     }

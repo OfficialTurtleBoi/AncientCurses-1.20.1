@@ -9,9 +9,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.items.ItemStackHandler;
-import net.turtleboi.ancientcurses.util.ModTags;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -84,7 +81,7 @@ public class GoldenAmuletItem extends Item {
             CompoundTag mainGemTag = amuletTag.getCompound("MainGem");
             ItemStack mainGem = ItemStack.of(mainGemTag);
             if (mainGem.getItem() instanceof PreciousGemItem preciousGem) {
-                preciousGem.applyBonus(player, 0);
+                preciousGem.applyMajorBonus(player, 0);
             }
         }
 
@@ -94,7 +91,7 @@ public class GoldenAmuletItem extends Item {
                 CompoundTag minorGemTag = minorGemsTag.getCompound(i);
                 ItemStack minorGem = ItemStack.of(minorGemTag);
                 if (minorGem.getItem() instanceof PreciousGemItem preciousGem) {
-                    preciousGem.applyBonus(player, i + 1);
+                    preciousGem.applyMinorBonus(player, i + 1);
                 }
             }
         }

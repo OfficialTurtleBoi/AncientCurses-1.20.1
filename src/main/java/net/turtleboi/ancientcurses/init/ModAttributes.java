@@ -19,6 +19,9 @@ public class ModAttributes {
     public static final RegistryObject<Attribute> HIT_CHANCE =
             create("hit_chance", 1D, 0D);
 
+    public static final RegistryObject<Attribute> MAGIC_AMP =
+            create("magic_amp", 1D, 0D);
+
     private static RegistryObject<Attribute> create(
             String name, double defaultValue, double minValue) {
         String descriptionId = "attribute.name." + AncientCurses.MOD_ID + "." + name;
