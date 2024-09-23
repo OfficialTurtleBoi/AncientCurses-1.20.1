@@ -1,15 +1,11 @@
 package net.turtleboi.ancientcurses.effect.effects;
 
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.client.extensions.common.IClientMobEffectExtensions;
-import net.turtleboi.ancientcurses.particle.ModParticles;
-
-import java.util.function.Consumer;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 
 public class CurseOfWrathEffect extends MobEffect {
     public CurseOfWrathEffect(MobEffectCategory pCategory, int pColor) {
@@ -25,7 +21,7 @@ public class CurseOfWrathEffect extends MobEffect {
             float blue = (effectColor & 0xFF) / 255.0F;
             for (int i = 0; i < 5; i++) {
                 pLivingEntity.level().addParticle(
-                        ModParticles.CURSED_PARTICLES.get(),
+                        ModParticleTypes.CURSED_PARTICLE.get(),
                         pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
                         pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
                         pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),

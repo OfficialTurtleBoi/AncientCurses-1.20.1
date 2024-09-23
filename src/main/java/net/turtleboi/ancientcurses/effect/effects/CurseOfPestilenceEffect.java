@@ -10,11 +10,10 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.effect.ModEffects;
-import net.turtleboi.ancientcurses.particle.ModParticles;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class CurseOfPestilenceEffect extends MobEffect {
     public CurseOfPestilenceEffect(MobEffectCategory pCategory, int pColor) {
@@ -31,7 +30,7 @@ public class CurseOfPestilenceEffect extends MobEffect {
                 float blue = (effectColor & 0xFF) / 255.0F;
                 for (int i = 0; i < 5; i++) {
                     pLivingEntity.level().addParticle(
-                            ModParticles.CURSED_PARTICLES.get(),
+                            ModParticleTypes.CURSED_PARTICLE.get(),
                             pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
                             pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
                             pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),

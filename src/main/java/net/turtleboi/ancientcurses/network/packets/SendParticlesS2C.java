@@ -1,16 +1,11 @@
 package net.turtleboi.ancientcurses.network.packets;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.particle.Particle;
-import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
-import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.turtleboi.ancientcurses.particle.ModParticles;
 
 import java.util.function.Supplier;
 
@@ -46,7 +41,6 @@ public class SendParticlesS2C {
         this.particleSpread = buf.readDouble();
     }
 
-    // Write the data to the network buffer
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeRegistryId(ForgeRegistries.PARTICLE_TYPES, this.particleType.getType());
         this.particleType.writeToNetwork(buf);

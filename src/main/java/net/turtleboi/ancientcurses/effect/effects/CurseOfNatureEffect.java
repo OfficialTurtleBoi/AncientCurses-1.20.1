@@ -5,11 +5,8 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
-import net.turtleboi.ancientcurses.init.ModAttributes;
-import net.turtleboi.ancientcurses.particle.ModParticles;
-import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 
 public class CurseOfNatureEffect extends MobEffect {
     public CurseOfNatureEffect(MobEffectCategory pCategory, int pColor) {
@@ -26,7 +23,7 @@ public class CurseOfNatureEffect extends MobEffect {
                 float blue = (effectColor & 0xFF) / 255.0F;
                 for (int i = 0; i < 5; i++) {
                     pLivingEntity.level().addParticle(
-                            ModParticles.CURSED_PARTICLES.get(),
+                            ModParticleTypes.CURSED_PARTICLE.get(),
                             pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
                             pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
                             pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),

@@ -1,17 +1,12 @@
 package net.turtleboi.ancientcurses;
 
 import com.mojang.logging.LogUtils;
-import net.minecraft.client.gui.screens.MenuScreens;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.turtleboi.ancientcurses.block.ModBlocks;
@@ -19,13 +14,11 @@ import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.command.ClearCurseCommand;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.entity.ModEntities;
-import net.turtleboi.ancientcurses.event.ModEvents;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModCreativeModeTabs;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.particle.ModParticles;
-import net.turtleboi.ancientcurses.screen.LapidaristTableContainerScreen;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.screen.ModMenuTypes;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.ancientcurses.world.structures.ModStructures;
@@ -39,6 +32,7 @@ public class AncientCurses {
     public AncientCurses() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
+        ModParticleTypes.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
 
         ModItems.register(modEventBus);
@@ -51,13 +45,12 @@ public class AncientCurses {
 
         ModBlockEntities.register(modEventBus);
         ModMenuTypes.register(modEventBus);
-        ModParticles.register(modEventBus);
+
         ModStructures.register(modEventBus);
 
         ModAttributes.REGISTRY.register(modEventBus);
 
         modEventBus.addListener(this::commonSetup);
-
         MinecraftForge.EVENT_BUS.register(this);
         modEventBus.addListener(this::addCreative);
     }

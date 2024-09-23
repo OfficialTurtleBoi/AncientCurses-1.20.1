@@ -3,8 +3,6 @@ package net.turtleboi.ancientcurses.effect.effects;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,12 +12,10 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.client.ChunkRenderTypeSet;
 import net.turtleboi.ancientcurses.init.ModAttributes;
-import net.turtleboi.ancientcurses.particle.ModParticles;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 
-import java.util.Objects;
 import java.util.Random;
 
 
@@ -41,7 +37,7 @@ public class CurseOfFrailtyEffect extends MobEffect {
                 float blue = (effectColor & 0xFF) / 255.0F;
                 for (int i = 0; i < 5; i++) {
                     pLivingEntity.level().addParticle(
-                            ModParticles.CURSED_PARTICLES.get(),
+                            ModParticleTypes.CURSED_PARTICLE.get(),
                             pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
                             pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
                             pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),

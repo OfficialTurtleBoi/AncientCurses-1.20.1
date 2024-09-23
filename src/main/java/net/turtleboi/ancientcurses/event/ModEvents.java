@@ -2,7 +2,6 @@ package net.turtleboi.ancientcurses.event;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -15,8 +14,6 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageType;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -62,7 +59,7 @@ import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
-import net.turtleboi.ancientcurses.particle.ModParticles;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
 import net.turtleboi.ancientcurses.trials.Trial;
@@ -484,7 +481,7 @@ public class ModEvents {
                         mob.heal(healing);
                         if (player instanceof ServerPlayer serverPlayer) {
                             ModNetworking.sendToPlayer(new SendParticlesS2C(
-                                    ModParticles.HEAL_PARTICLES.get(),
+                                    ModParticleTypes.HEAL_PARTICLE.get(),
                                     mob.getX(),
                                     mob.getEyeY() + 0.5,
                                     mob.getZ(),

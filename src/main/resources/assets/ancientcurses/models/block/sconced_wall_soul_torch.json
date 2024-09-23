@@ -133,9 +133,9 @@
 		},
 		{
 			"name": "brace1",
-			"from": [6.75, 8.35, 12.5],
-			"to": [9.25, 9.6, 17.25],
-			"rotation": {"angle": -22.5, "axis": "x", "origin": [8, 9.1, 14]},
+			"from": [6.75, 7.75, 12.5],
+			"to": [9.25, 9, 17.25],
+			"rotation": {"angle": -22.5, "axis": "x", "origin": [8, 8.45, 14]},
 			"faces": {
 				"north": {"uv": [6, 2, 8, 3], "texture": "#0"},
 				"east": {"uv": [6, 2, 8, 3], "texture": "#0"},
@@ -147,9 +147,9 @@
 		},
 		{
 			"name": "brace2",
-			"from": [6.75, 5.35, 12.5],
-			"to": [9.25, 6.6, 17.25],
-			"rotation": {"angle": -22.5, "axis": "x", "origin": [8, 9.1, 14]},
+			"from": [6.75, 4.75, 12.5],
+			"to": [9.25, 6, 17.25],
+			"rotation": {"angle": -22.5, "axis": "x", "origin": [8, 8.1, 14]},
 			"faces": {
 				"north": {"uv": [6, 2, 8, 3], "texture": "#0"},
 				"east": {"uv": [6, 2, 8, 3], "texture": "#0"},
