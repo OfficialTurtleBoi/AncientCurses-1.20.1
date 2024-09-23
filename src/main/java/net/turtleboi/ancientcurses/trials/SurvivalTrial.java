@@ -22,7 +22,7 @@ public class SurvivalTrial implements Trial {
     private final MobEffect effect;
     public static final String TRIAL_DURATION_KEY = "TrialDuration";
     public static final String TRIAL_ELAPSED_TIME_KEY = "TrialElapsedTime";
-    private TrialEvent trialEvent;
+    private ServerBossEvent bossEvent;
 
     public SurvivalTrial(Player player, MobEffect effect, long trialDuration, CursedAltarBlockEntity altar) {
         this.trialDuration = trialDuration;
@@ -30,6 +30,18 @@ public class SurvivalTrial implements Trial {
         this.effect = effect;
         setTrialDuration(player, trialDuration);
         PlayerTrialData.setCurseEffect(player, effect);
+
+        this.bossEvent = new ServerBossEvent(
+                Component.literal("Survival Trial"),
+                BossEvent.BossBarColor.RED,
+                BossEvent.BossBarOverlay.PROGRESS);
+
+        this.bossEvent.setProgress(0.0f);
+
+        // Add the player to the boss bar
+        if (player instanceof ServerPlayer serverPlayer) {
+            this.bossEvent.addPlayer(serverPlayer);
+        }
     }
 
     @Override
@@ -55,6 +67,11 @@ public class SurvivalTrial implements Trial {
         SurvivalTrial.setTrialElapsedTime(player, elapsedTime);
         float progressPercentage = Math.min((float) elapsedTime / trialDuration, 1.0f);
 
+        // Update the boss bar's progress
+        if (this.bossEvent != null) {
+            this.bossEvent.setProgress(progressPercentage); // Update progress on the bar
+        }
+
         player.displayClientMessage(Component.literal(String.format("Trial progress: %.2f%% complete", progressPercentage * 100))
                 .withStyle(ChatFormatting.YELLOW), true);
     }
@@ -75,6 +92,10 @@ public class SurvivalTrial implements Trial {
         altar.setPlayerTrialCompleted(player);
         altar.removePlayerTrial(playerUUID);
 
+        if (player instanceof ServerPlayer serverPlayer) {
+            this.bossEvent.removePlayer(serverPlayer);
+        }
+        this.bossEvent = null;
     }
 
     public static void setTrialDuration(Player player, long duration) {

@@ -6,11 +6,14 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.BossHealthOverlay;
+import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.BossEvent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
@@ -24,17 +27,22 @@ import net.minecraftforge.fml.common.Mod;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
+import net.turtleboi.ancientcurses.client.TrialEvent;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import org.joml.Matrix4f;
 
+import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID, value = Dist.CLIENT)
 public class ModClientEvents {
     @SubscribeEvent
     public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
         Player player = Minecraft.getInstance().player;
+        Minecraft minecraft = Minecraft.getInstance();
         if (player != null){
             if (event.getOverlay() == VanillaGuiOverlay.FOOD_LEVEL.type()) {
                 if (player.hasEffect(ModEffects.CURSE_OF_GLUTTONY.get())) {
@@ -42,6 +50,31 @@ public class ModClientEvents {
                     renderCustomHungerBar(event.getGuiGraphics(), player);
                 }
             }
+
+            if (event.getOverlay() == VanillaGuiOverlay.BOSS_EVENT_PROGRESS.type()) {
+                BossHealthOverlay bossOverlay = minecraft.gui.getBossOverlay();
+
+                try {
+                    Field eventsField = BossHealthOverlay.class.getDeclaredField("events");
+                    eventsField.setAccessible(true);
+                    @SuppressWarnings("unchecked")
+                    Map<UUID, LerpingBossEvent> events = (Map<UUID, LerpingBossEvent>) eventsField.get(bossOverlay);
+                    for (LerpingBossEvent bossEvent : events.values()) {
+                        String trialName = bossEvent.getName().getString();
+                        if (trialName.equalsIgnoreCase("Survival Trial")) {
+                            event.setCanceled(true);
+                            int x = minecraft.getWindow().getGuiScaledWidth() / 2 - 96;
+                            int y = 12;
+                            TrialEvent.render(event.getGuiGraphics(), x, y, bossEvent, minecraft);
+                            break;
+                        }
+                    }
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    //e.printStackTrace();
+                }
+            }
+
+
 
             if (player.hasEffect(ModEffects.CURSE_OF_OBESSSION.get())) {
                 renderPinkOverlay(event.getGuiGraphics());
