@@ -7,27 +7,28 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 
-public class SleepParticles extends TextureSheetParticle {
-    private final SpriteSet spriteSet;
+public class HealParticle extends TextureSheetParticle {
 
-    public SleepParticles(ClientLevel level, double xCoord, double yCoord, double zCoord,
-                          SpriteSet spriteSet, double xd, double yd, double zd) {
+    public HealParticle(ClientLevel level, double xCoord, double yCoord, double zCoord,
+                        SpriteSet spriteSet, double xd, double yd, double zd) {
         super(level, xCoord, yCoord, zCoord, xd, yd, zd);
 
         this.friction = 0.8F;
         this.xd = xd;
         this.yd = yd;
         this.zd = zd;
-        this.spriteSet = spriteSet;
-        this.quadSize = (float) yd;
+        this.quadSize *= 0.85F;
         this.lifetime = 20;
         this.setSpriteFromAge(spriteSet);
+
+        this.rCol = 1f;
+        this.gCol = 1f;
+        this.bCol = 1f;
     }
 
     @Override
     public void tick() {
         super.tick();
-        this.setSpriteFromAge(this.spriteSet);
         fadeOut();
     }
 
@@ -52,12 +53,7 @@ public class SleepParticles extends TextureSheetParticle {
         public Particle createParticle(@NotNull SimpleParticleType particleType, @NotNull ClientLevel level,
                                        double x, double y, double z,
                                        double dx, double dy, double dz) {
-            SleepParticles particle = new SleepParticles(level, x, y, z, this.sprites, dx, dy, dz);
-
-            float size = (float) dy;
-            particle.setSize(size, size);
-
-            return particle;
+            return new HealParticle(level, x, y, z, this.sprites, dx, dy, dz);
         }
     }
 }

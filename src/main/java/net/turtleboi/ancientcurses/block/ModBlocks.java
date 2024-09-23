@@ -15,6 +15,7 @@ import net.turtleboi.ancientcurses.block.blockentity.CursedAltarBlock;
 import net.turtleboi.ancientcurses.block.blockentity.LapidaristTableBlock;
 import net.turtleboi.ancientcurses.block.blocks.*;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 
 import java.util.function.Supplier;
 
@@ -47,10 +48,10 @@ public class ModBlocks {
             () -> new SconcedWallRedstoneTorchBlock(BlockBehaviour.Properties.copy(Blocks.REDSTONE_TORCH), ParticleTypes.ELECTRIC_SPARK));
 
     public static final RegistryObject<Block> SCONCED_CURSED_TORCH = BLOCKS.register("sconced_cursed_torch",
-            () -> new SconcedCursedTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH), ParticleTypes.SOUL_FIRE_FLAME));
+            () -> new SconcedCursedTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH), ModParticleTypes.CURSED_FLAME_PARTICLE));
 
     public static final RegistryObject<Block> SCONCED_WALL_CURSED_TORCH = BLOCKS.register("sconced_wall_cursed_torch",
-            () -> new SconcedWallCursedTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH), ParticleTypes.SOUL_FIRE_FLAME));
+            () -> new SconcedWallCursedTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH), ModParticleTypes.CURSED_FLAME_PARTICLE));
 
     public static final RegistryObject<Block> SCONCED_UNLIT_TORCH = BLOCKS.register("sconced_unlit_torch",
             () -> new SconcedUnlitTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH), ParticleTypes.SOUL_FIRE_FLAME));

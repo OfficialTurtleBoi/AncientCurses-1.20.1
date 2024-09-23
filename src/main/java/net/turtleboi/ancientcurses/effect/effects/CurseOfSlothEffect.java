@@ -15,7 +15,7 @@ import net.minecraft.world.phys.Vec3;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.SleepPacketS2C;
-import net.turtleboi.ancientcurses.particle.ModParticles;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 import java.util.Random;
 
@@ -43,17 +43,17 @@ public class CurseOfSlothEffect extends MobEffect {
 
                     if (pLivingEntity.tickCount % 20 == 0) {
                         pLivingEntity.level().addParticle(
-                                ModParticles.SLEEP_PARTICLES.get(),
+                                ModParticleTypes.SLEEP_PARTICLE.get(),
                                 particleX, particleY, particleZ,
                                 velocityX * 1.5, velocityY * 1.5, velocityZ * 1.5);
                     } else if (pLivingEntity.tickCount % 20 == 3) {
                         pLivingEntity.level().addParticle(
-                                ModParticles.SLEEP_PARTICLES.get(),
+                                ModParticleTypes.SLEEP_PARTICLE.get(),
                                 particleX, particleY, particleZ,
                                 velocityX, velocityY, velocityZ);
                     } else if (pLivingEntity.tickCount % 20 == 6) {
                         pLivingEntity.level().addParticle(
-                                ModParticles.SLEEP_PARTICLES.get(),
+                                ModParticleTypes.SLEEP_PARTICLE.get(),
                                 particleX, particleY, particleZ,
                                 velocityX * 0.66, velocityY * 0.66, velocityZ * 0.66);
                     }
@@ -67,7 +67,7 @@ public class CurseOfSlothEffect extends MobEffect {
                 float blue = (effectColor & 0xFF) / 255.0F;
                 for (int i = 0; i < 5; i++) {
                     pLivingEntity.level().addParticle(
-                            ModParticles.CURSED_PARTICLES.get(),
+                            ModParticleTypes.CURSED_PARTICLE.get(),
                             pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
                             pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
                             pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
