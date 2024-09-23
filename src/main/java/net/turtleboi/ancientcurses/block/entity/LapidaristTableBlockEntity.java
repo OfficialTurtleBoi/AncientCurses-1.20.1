@@ -120,10 +120,8 @@ public class LapidaristTableBlockEntity extends BlockEntity implements MenuProvi
             }
             saveGemsToAmulet();
         } else {
-            if (hasAmulet) {
-                clearGemSlots();
-                hasAmulet = false;
-            }
+            clearGemSlots();
+            hasAmulet = false;
         }
         markForUpdate();
     }
@@ -171,7 +169,7 @@ public class LapidaristTableBlockEntity extends BlockEntity implements MenuProvi
 
     public void loadGemsFromAmulet() {
         ItemStack amulet = getInventory().getStackInSlot(amuletSlot);
-        if (!amulet.isEmpty() && amulet.getItem() instanceof GoldenAmuletItem) {
+        if (!amulet.isEmpty()) {
             CompoundTag amuletTag = amulet.getOrCreateTag();
             if (amuletTag.contains("MainGem")) {
                 CompoundTag mainGemTag = amuletTag.getCompound("MainGem");
@@ -211,7 +209,10 @@ public class LapidaristTableBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public void load(CompoundTag pTag) {
         super.load(pTag);
+        ItemStack amulet = getInventory().getStackInSlot(amuletSlot);
         getInventory().deserializeNBT(pTag.getCompound("inventory"));
-        loadGemsFromAmulet();
+        if (!amulet.isEmpty()) {
+            loadGemsFromAmulet();
+        }
     }
 }

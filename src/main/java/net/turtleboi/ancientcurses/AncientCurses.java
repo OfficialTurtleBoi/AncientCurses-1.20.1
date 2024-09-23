@@ -73,7 +73,5 @@ public class AncientCurses {
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         ClearCurseCommand.register(event.getServer().getCommands().getDispatcher());
-
-        MenuScreens.register(ModMenuTypes.LAPIDARIST_MENU.get(), LapidaristTableContainerScreen::new);
     }
 }

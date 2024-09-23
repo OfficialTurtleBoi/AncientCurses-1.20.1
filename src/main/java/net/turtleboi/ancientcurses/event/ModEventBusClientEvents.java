@@ -1,6 +1,7 @@
 package net.turtleboi.ancientcurses.event;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -27,14 +28,16 @@ import net.turtleboi.ancientcurses.particle.ModParticles;
 import net.turtleboi.ancientcurses.particle.custom.CursedParticles;
 import net.turtleboi.ancientcurses.particle.custom.HealParticles;
 import net.turtleboi.ancientcurses.particle.custom.SleepParticles;
+import net.turtleboi.ancientcurses.screen.LapidaristTableContainerScreen;
+import net.turtleboi.ancientcurses.screen.ModMenuTypes;
 import org.lwjgl.glfw.GLFW;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ModEventBusClientEvents {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
-        //ItemBlockRenderTypes.setRenderLayer(ModBlocks.CURSED_ALTAR.get(), RenderType.cutout());
         EntityRenderers.register(ModEntities.CURSED_PORTAL.get(), CursedPortalRenderer::new);
+        MenuScreens.register(ModMenuTypes.LAPIDARIST_MENU.get(), LapidaristTableContainerScreen::new);
     }
 
     @SubscribeEvent

@@ -1,11 +1,9 @@
 package net.turtleboi.ancientcurses.block.entity;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -43,8 +41,9 @@ public class CursedAltarBlockEntity extends BlockEntity {
     private static final RandomSource RANDOM = RandomSource.create();
     private static final Map<UUID, CompoundTag> playerTrialCompletion = new HashMap<>();
     private static final Map<UUID, Trial> playerTrials = new HashMap<>();
-    private static final long cooldownTime = 250;
     private final Map<UUID, Long> playerCooldowns = new HashMap<>();
+    private boolean isAnimating;
+    private long animationStartTime;
 
     public final ItemStackHandler itemStackHandler = new ItemStackHandler(3){
         @Override
@@ -71,23 +70,25 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public CursedAltarBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(ModBlockEntities.CURSED_ALTAR_BE.get(), pPos, pBlockState);
+        this.isAnimating = false;
+        this.animationStartTime = 0;
     }
 
     public static void bookAnimationTick(Level pLevel, BlockPos pPos, BlockState pState, CursedAltarBlockEntity pBlockEntity) {
         pBlockEntity.oOpen = pBlockEntity.open;
         pBlockEntity.oRot = pBlockEntity.rot;
-        Player $$4 = pLevel.getNearestPlayer((double)pPos.getX() + 0.5, (double)pPos.getY() + 0.5, (double)pPos.getZ() + 0.5, 3.0, false);
-        if ($$4 != null) {
-            double $$5 = $$4.getX() - ((double)pPos.getX() + 0.5);
-            double $$6 = $$4.getZ() - ((double)pPos.getZ() + 0.5);
-            pBlockEntity.tRot = (float) Mth.atan2($$6, $$5);
+        Player v1 = pLevel.getNearestPlayer((double)pPos.getX() + 0.5, (double)pPos.getY() + 0.5, (double)pPos.getZ() + 0.5, 3.0, false);
+        if (v1 != null) {
+            double v2 = v1.getX() - ((double)pPos.getX() + 0.5);
+            double v3 = v1.getZ() - ((double)pPos.getZ() + 0.5);
+            pBlockEntity.tRot = (float) Mth.atan2(v3, v2);
             pBlockEntity.open += 0.1F;
             if (pBlockEntity.open < 0.5F || RANDOM.nextInt(40) == 0) {
-                float $$7 = pBlockEntity.flipT;
+                float v4 = pBlockEntity.flipT;
 
                 do {
                     pBlockEntity.flipT += (float)(RANDOM.nextInt(4) - RANDOM.nextInt(4));
-                } while($$7 == pBlockEntity.flipT);
+                } while(v4 == pBlockEntity.flipT);
             }
         } else {
             pBlockEntity.tRot += 0.02F;
@@ -110,23 +111,47 @@ public class CursedAltarBlockEntity extends BlockEntity {
             pBlockEntity.tRot += 6.2831855F;
         }
 
-        float $$8;
-        for($$8 = pBlockEntity.tRot - pBlockEntity.rot; $$8 >= 3.1415927F; $$8 -= 6.2831855F) {
+        float v5;
+        for(v5 = pBlockEntity.tRot - pBlockEntity.rot; v5 >= 3.1415927F; v5 -= 6.2831855F) {
         }
 
-        while($$8 < -3.1415927F) {
-            $$8 += 6.2831855F;
+        while(v5 < -3.1415927F) {
+            v5 += 6.2831855F;
         }
 
-        pBlockEntity.rot += $$8 * 0.4F;
+        pBlockEntity.rot += v5 * 0.4F;
         pBlockEntity.open = Mth.clamp(pBlockEntity.open, 0.0F, 1.0F);
         ++pBlockEntity.time;
         pBlockEntity.oFlip = pBlockEntity.flip;
-        float $$9 = (pBlockEntity.flipT - pBlockEntity.flip) * 0.4F;
-        float $$10 = 0.2F;
-        $$9 = Mth.clamp($$9, -0.2F, 0.2F);
-        pBlockEntity.flipA += ($$9 - pBlockEntity.flipA) * 0.9F;
+        float v6 = (pBlockEntity.flipT - pBlockEntity.flip) * 0.4F;
+        v6 = Mth.clamp(v6, -0.2F, 0.2F);
+        pBlockEntity.flipA += (v6 - pBlockEntity.flipA) * 0.9F;
         pBlockEntity.flip += pBlockEntity.flipA;
+    }
+
+    public void startAnimation() {
+        this.isAnimating = true;
+        setAnimationStartTime(System.currentTimeMillis());
+        setChanged();
+        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3); // Ensure update is sent
+    }
+
+    public void stopAnimation() {
+        this.isAnimating = false;
+        setChanged();
+        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3); // Ensure update is sent
+    }
+
+    public boolean isAnimating() {
+        return isAnimating;
+    }
+
+    public void setAnimationStartTime (Long startTime) {
+        this.getPersistentData().putLong("AnimationStartTime", startTime);
+    }
+
+    public long getAnimationStartTime() {
+        return this.getPersistentData().getLong("AnimationStartTime");
     }
 
     public ItemStack getGemInSlot(int slot) {
@@ -139,25 +164,28 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public boolean canPlayerUse(Player player) {
         UUID playerUUID = player.getUUID();
+
         if (PlayerTrialData.isPlayerCursed(player)) {
             //player.sendSystemMessage(Component.literal("You're cursed!").withStyle(ChatFormatting.RED));
             return false;
         }
 
         long currentTime = System.currentTimeMillis();
+        long cooldownTime = 250;
         if (playerCooldowns.containsKey(playerUUID)) {
             long lastUseTime = playerCooldowns.get(playerUUID);
-            if (currentTime - lastUseTime < cooldownTime) {
-                //player.sendSystemMessage(Component.literal("Altar is recharging...").withStyle(ChatFormatting.RED));
+            long timePassed = currentTime - lastUseTime;
+            //player.sendSystemMessage(Component.literal("Current time: " + currentTime).withStyle(ChatFormatting.RED));
+            //player.sendSystemMessage(Component.literal("Last used: " + lastUseTime).withStyle(ChatFormatting.RED));
+            //player.sendSystemMessage(Component.literal("Time passed since last use: " + timePassed).withStyle(ChatFormatting.RED));
+            if (timePassed < cooldownTime) {
+                long timeRemaining = cooldownTime - timePassed;
+                //player.sendSystemMessage(Component.literal("Altar is recharging... Time remaining: " + timeRemaining).withStyle(ChatFormatting.RED));
                 return false;
             }
         }
+        playerCooldowns.put(playerUUID, currentTime);
         return true;
-    }
-
-    public void setPlayerCooldown(Player player) {
-        UUID playerUUID = player.getUUID();
-        playerCooldowns.put(playerUUID, System.currentTimeMillis());
     }
 
     public void cursePlayer(Player player, MobEffect curse, int pAmplifier, CursedAltarBlockEntity altar) {
@@ -305,6 +333,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
     @Override
     public void saveAdditional(@NotNull CompoundTag tag) {
         super.saveAdditional(tag);
+        tag.putBoolean("IsAnimating", this.isAnimating);
+        tag.putLong("AnimationStartTime", this.animationStartTime);
         tag.put("gems", itemStackHandler.serializeNBT());
         ListTag completedPlayerList = new ListTag();
         for (UUID playerUUID : playerTrialCompletion.keySet()) {
@@ -319,6 +349,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
     @Override
     public void load(@NotNull CompoundTag tag) {
         super.load(tag);
+        this.isAnimating = tag.getBoolean("IsAnimating");
+        this.animationStartTime = tag.getLong("AnimationStartTime");
         if (tag.contains("gems")) {
             itemStackHandler.deserializeNBT(tag.getCompound("gems"));
         }

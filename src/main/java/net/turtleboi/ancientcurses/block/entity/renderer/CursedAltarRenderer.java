@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 
@@ -25,6 +26,45 @@ public class CursedAltarRenderer implements BlockEntityRenderer<CursedAltarBlock
 
     public CursedAltarRenderer(BlockEntityRendererProvider.Context pContext) {
         this.bookModel = new BookModel(pContext.bakeLayer(ModelLayers.BOOK));
+    }
+
+    private void renderGem(ItemStack gem, float hoverHeight, float orbitRadius, float baseAngle, float f1, float spinSpeed, float orbitSpeedMultiplier, PoseStack pPoseStack, int pPackedLight, int pPackedOverlay, MultiBufferSource pBuffer, BlockEntity pBlockEntity) {
+        if (!gem.isEmpty()) {
+            pPoseStack.pushPose();
+            pPoseStack.translate(0.5F, hoverHeight, 0.5F);
+            pPoseStack.mulPose(Axis.YP.rotation(spinSpeed));
+            float normalizedTime = f1 % 360.0F;
+            float adjustedOrbitSpeedMultiplier = orbitSpeedMultiplier * (1.0F / normalizedTime);
+            float adjustedOrbitAngle = baseAngle + (normalizedTime * adjustedOrbitSpeedMultiplier);
+            adjustedOrbitAngle = (float) (adjustedOrbitAngle % (2 * Math.PI));
+            pPoseStack.translate(orbitRadius * Math.cos(adjustedOrbitAngle), 0.0, orbitRadius * Math.sin(adjustedOrbitAngle));
+            this.itemRenderer.renderStatic(gem, ItemDisplayContext.GROUND, pPackedLight, pPackedOverlay, pPoseStack, pBuffer, pBlockEntity.getLevel(), 0);
+            pPoseStack.popPose();
+        }
+    }
+
+    private void renderGems(PoseStack pPoseStack, CursedAltarBlockEntity pBlockEntity, float f1, int pPackedLight, int pPackedOverlay, MultiBufferSource pBuffer, float orbitRadius, float orbitSpeedMultiplier) {
+        ItemStack gem1 = pBlockEntity.getGemInSlot(0);
+        ItemStack gem2 = pBlockEntity.getGemInSlot(1);
+        ItemStack gem3 = pBlockEntity.getGemInSlot(2);
+
+        float hoverHeight = 1.25F + Mth.sin(f1 * 0.1F) * 0.05F;
+        float spinSpeed1 = (f1 % 360) * (float) Math.PI / 180.0F;
+        float spinSpeed2 = (f1 + 120 % 360 + 120) * (float) Math.PI / 180.0F;
+        float spinSpeed3 = (f1 + 240 % 360 + 240) * (float) Math.PI / 180.0F;
+
+        int gemCount = (!gem1.isEmpty() ? 1 : 0) + (!gem2.isEmpty() ? 1 : 0) + (!gem3.isEmpty() ? 1 : 0);
+
+        if (gemCount == 1) {
+            renderGem(gem1, hoverHeight, 0.0F, 0.0F, f1, spinSpeed1, orbitSpeedMultiplier, pPoseStack, pPackedLight, pPackedOverlay, pBuffer, pBlockEntity);
+        } else if (gemCount == 2) {
+            renderGem(gem1, hoverHeight, orbitRadius, 0.0F, f1, spinSpeed1, orbitSpeedMultiplier, pPoseStack, pPackedLight, pPackedOverlay, pBuffer, pBlockEntity);
+            renderGem(gem2, hoverHeight, orbitRadius, (float) (Math.PI / 2) - (orbitSpeedMultiplier * (float) Math.PI * 2), f1, spinSpeed2, orbitSpeedMultiplier, pPoseStack, pPackedLight, pPackedOverlay, pBuffer, pBlockEntity);
+        } else if (gemCount == 3) {
+            renderGem(gem1, hoverHeight, orbitRadius, 0.0F, f1, spinSpeed1, orbitSpeedMultiplier, pPoseStack, pPackedLight, pPackedOverlay, pBuffer, pBlockEntity);
+            renderGem(gem2, hoverHeight, orbitRadius, (float) (2 * Math.PI / 3), f1, spinSpeed2, orbitSpeedMultiplier, pPoseStack, pPackedLight, pPackedOverlay, pBuffer, pBlockEntity);
+            renderGem(gem3, hoverHeight, orbitRadius, (float) (4 * Math.PI / 3), f1, spinSpeed3, orbitSpeedMultiplier, pPoseStack, pPackedLight, pPackedOverlay, pBuffer, pBlockEntity);
+        }
     }
 
     public void render(CursedAltarBlockEntity pBlockEntity, float pPartialTick, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverlay) {
@@ -59,52 +99,30 @@ public class CursedAltarRenderer implements BlockEntityRenderer<CursedAltarBlock
         this.bookModel.render(pPoseStack, vertexConsumer, pPackedLight, pPackedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
         pPoseStack.popPose();
 
-        ItemStack gemItem = pBlockEntity.getGemInSlot(0);
-        if (!gemItem.isEmpty()) {
-            ItemStack gem1 = pBlockEntity.getGemInSlot(0);
-            ItemStack gem2 = pBlockEntity.getGemInSlot(1);
-            ItemStack gem3 = pBlockEntity.getGemInSlot(2);
+        float orbitRadius = 0.5F;
+        float orbitSpeedMultiplier = 0.05F;
 
-            float hoverHeight = 1.25F + Mth.sin(f1 * 0.1F) * 0.05F;
-            float orbitRadius = 0.5F;
+        if (pBlockEntity.isAnimating()) {
+            //System.out.println("Rendering with animation!");
+            long currentTime = System.currentTimeMillis();
+            long animationDuration = currentTime - pBlockEntity.getAnimationStartTime();
+            float animationProgress = Math.min(animationDuration / 8000.0F, 1.0F);
+            float baseRadius = 0.5F;
+            float maxRadius = 1F;
+            orbitRadius = baseRadius + (maxRadius - baseRadius) * (1 - (4 * ((animationProgress * 1.25F) - 0.5F) * ((animationProgress * 1.25F) - 0.5F)));
 
-            if (!gem1.isEmpty()) {
-                pPoseStack.pushPose();
-                pPoseStack.translate(0.5F, hoverHeight, 0.5F);
-                float spinSpeed1 = (f1 % 360) * (float) Math.PI / 180.0F;
-                pPoseStack.mulPose(Axis.YP.rotation(spinSpeed1));
+            orbitRadius = Math.max(0.0F, orbitRadius);
 
-                pPoseStack.translate(orbitRadius * Math.cos(f1 * 0.05), 0.0, orbitRadius * Math.sin(f1 * 0.05));
+            orbitSpeedMultiplier = 0.05F + (-(64.0F * (animationProgress * animationProgress)));
 
-                this.itemRenderer.renderStatic(gem1, ItemDisplayContext.GROUND, pPackedLight, pPackedOverlay, pPoseStack, pBuffer, pBlockEntity.getLevel(), 0);
-                pPoseStack.popPose();
+            if (animationProgress >= 1.0F) {
+                pBlockEntity.stopAnimation();
             }
-
-            if (!gem2.isEmpty()) {
-                pPoseStack.pushPose();
-                pPoseStack.translate(0.5F, hoverHeight, 0.5F);
-                float spinSpeed2 = (f1 + 120 % 360 + 120) * (float) Math.PI / 180.0F;
-                pPoseStack.mulPose(Axis.YP.rotation(spinSpeed2));
-
-                pPoseStack.translate(orbitRadius * Math.cos(f1 * 0.05 + Math.PI * 2 / 3), 0.0, orbitRadius * Math.sin(f1 * 0.05 + Math.PI * 2 / 3));
-
-                this.itemRenderer.renderStatic(gem2, ItemDisplayContext.GROUND, pPackedLight, pPackedOverlay, pPoseStack, pBuffer, pBlockEntity.getLevel(), 0);
-                pPoseStack.popPose();
-            }
-
-            if (!gem3.isEmpty()) {
-                pPoseStack.pushPose();
-                pPoseStack.translate(0.5F, hoverHeight, 0.5F);
-                float spinSpeed3 = (f1 + 240 % 360 + 240) * (float) Math.PI / 180.0F;
-                pPoseStack.mulPose(Axis.YP.rotation(spinSpeed3));
-
-                pPoseStack.translate(orbitRadius * Math.cos(f1 * 0.05 + 2 * Math.PI * 2 / 3), 0.0, orbitRadius * Math.sin(f1 * 0.05 + 2 * Math.PI * 2 / 3));
-
-                this.itemRenderer.renderStatic(gem3, ItemDisplayContext.GROUND, pPackedLight, pPackedOverlay, pPoseStack, pBuffer, pBlockEntity.getLevel(), 0);
-                pPoseStack.popPose();
-            }
-
+        } else {
+            //System.out.println("Rendering without animation.");
         }
+
+        renderGems(pPoseStack, pBlockEntity, f1, pPackedLight, pPackedOverlay, pBuffer, orbitRadius, orbitSpeedMultiplier);
     }
 }
 

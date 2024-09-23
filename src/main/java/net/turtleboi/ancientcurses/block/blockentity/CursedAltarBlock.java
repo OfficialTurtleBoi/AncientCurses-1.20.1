@@ -148,6 +148,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                     rewardPlayer(player, altarEntity, level, pos);
                     //player.sendSystemMessage(Component.literal("You've completed this trial!").withStyle(ChatFormatting.GREEN));
                     if (player.isShiftKeyDown() && altarEntity.canPlayerUse(player)) {
+                        //player.sendSystemMessage(Component.literal("Getting gem!"));
                         for (int i = 2; i >= 0; i--) {
                             ItemStack gem = altarEntity.getGemInSlot(i);
                             if (!gem.isEmpty()) {
@@ -157,13 +158,14 @@ public class CursedAltarBlock extends BaseEntityBlock {
                                 } else {
                                     ejectItemsTowardPlayer(level, pos, player, Collections.singletonList(gem));
                                 }
-                                altarEntity.setPlayerCooldown(player);
                                 return InteractionResult.SUCCESS;
                             }
                         }
-                    } else {
+                    } else if (altarEntity.canPlayerUse(player)){
+                        //player.sendSystemMessage(Component.literal("Right click!"));
                         ItemStack heldItem = player.getItemInHand(hand);
                         if (isPreciousGem(heldItem)) {
+                            //player.sendSystemMessage(Component.literal("Adding gem!"));
                             for (int i = 0; i < 3; i++) {
                                 if (altarEntity.getGemInSlot(i).isEmpty()) {
                                     altarEntity.setGemInSlot(i, heldItem.split(1));
@@ -172,11 +174,24 @@ public class CursedAltarBlock extends BaseEntityBlock {
                                 }
                             }
                         }
+
+                        ItemStack gemSlot0 = altarEntity.getGemInSlot(0);
+                        ItemStack gemSlot1 = altarEntity.getGemInSlot(1);
+                        ItemStack gemSlot2 = altarEntity.getGemInSlot(2);
+
+                        if (!gemSlot0.isEmpty() && gemSlot0.is(gemSlot1.getItem()) && gemSlot0.is(gemSlot2.getItem())) {
+                            player.sendSystemMessage(Component.literal("3 Matching gems!"));
+                            altarEntity.startAnimation();
+                            level.sendBlockUpdated(pos, state, state, 3);
+                            return InteractionResult.SUCCESS;
+                        }
+
+                    } else {
+                        //.sendSystemMessage(Component.literal("Too bad so sad!"));
                     }
                 } else {
                     if (!altarEntity.hasPlayerCompletedTrial(player) && altarEntity.canPlayerUse(player)) {
                         startTrial(player, altarEntity);
-                        altarEntity.setPlayerCooldown(player);
                         return InteractionResult.SUCCESS;
                     } else if (!altarEntity.hasPlayerCompletedTrial(player) && !altarEntity.canPlayerUse(player)){
                         //player.sendSystemMessage(Component.literal("The altar is recharging.").withStyle(ChatFormatting.RED));
@@ -208,7 +223,6 @@ public class CursedAltarBlock extends BaseEntityBlock {
     }
 
     private void rewardPlayer(Player player, CursedAltarBlockEntity altarEntity, Level level, BlockPos pos) {
-        altarEntity.setPlayerCooldown(player);
         int amplifier = PlayerTrialData.getCurseAmplifier(player);
         if (altarEntity.hasCollectedReward(player)) {
             //player.sendSystemMessage(Component.literal("You have already received your reward for this trial.").withStyle(ChatFormatting.RED));
