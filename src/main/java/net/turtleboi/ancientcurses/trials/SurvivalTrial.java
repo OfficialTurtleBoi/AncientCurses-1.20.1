@@ -2,11 +2,16 @@ package net.turtleboi.ancientcurses.trials;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerBossEvent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.BossEvent;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.player.Player;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
+import net.turtleboi.ancientcurses.client.TrialEvent;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -17,6 +22,7 @@ public class SurvivalTrial implements Trial {
     private final MobEffect effect;
     public static final String TRIAL_DURATION_KEY = "TrialDuration";
     public static final String TRIAL_ELAPSED_TIME_KEY = "TrialElapsedTime";
+    private TrialEvent trialEvent;
 
     public SurvivalTrial(Player player, MobEffect effect, long trialDuration, CursedAltarBlockEntity altar) {
         this.trialDuration = trialDuration;
@@ -24,7 +30,6 @@ public class SurvivalTrial implements Trial {
         this.effect = effect;
         setTrialDuration(player, trialDuration);
         PlayerTrialData.setCurseEffect(player, effect);
-
     }
 
     @Override
@@ -48,10 +53,9 @@ public class SurvivalTrial implements Trial {
         long elapsedTime = SurvivalTrial.getTrialElapsedTime(player);
         elapsedTime += 1;
         SurvivalTrial.setTrialElapsedTime(player, elapsedTime);
-        double progressPercentage = (double) elapsedTime / trialDuration * 100.0;
-        progressPercentage = Math.min(progressPercentage, 100.0);
+        float progressPercentage = Math.min((float) elapsedTime / trialDuration, 1.0f);
 
-        player.displayClientMessage(Component.literal(String.format("Trial progress: %.2f%% complete", progressPercentage))
+        player.displayClientMessage(Component.literal(String.format("Trial progress: %.2f%% complete", progressPercentage * 100))
                 .withStyle(ChatFormatting.YELLOW), true);
     }
 
@@ -70,6 +74,7 @@ public class SurvivalTrial implements Trial {
         altar.setPlayerTrialStatus(playerUUID, true, false);
         altar.setPlayerTrialCompleted(player);
         altar.removePlayerTrial(playerUUID);
+
     }
 
     public static void setTrialDuration(Player player, long duration) {
