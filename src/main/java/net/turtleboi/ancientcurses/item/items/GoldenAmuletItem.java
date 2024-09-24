@@ -66,7 +66,6 @@ public class GoldenAmuletItem extends Item {
         }
     }
 
-
     public void applyGemBonuses(Player player, ItemStack amulet) {
         if (!amulet.hasTag()) {
             return;

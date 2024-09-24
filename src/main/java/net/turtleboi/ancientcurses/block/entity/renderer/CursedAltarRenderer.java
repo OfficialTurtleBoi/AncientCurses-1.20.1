@@ -113,7 +113,7 @@ public class CursedAltarRenderer implements BlockEntityRenderer<CursedAltarBlock
 
             orbitRadius = Math.max(0.0F, orbitRadius);
 
-            orbitSpeedMultiplier = 0.05F + (-(64.0F * (animationProgress * animationProgress)));
+            orbitSpeedMultiplier = 0.05F + (-(96.0F * (animationProgress * animationProgress)));
 
             if (animationProgress >= 1.0F) {
                 pBlockEntity.stopAnimation();

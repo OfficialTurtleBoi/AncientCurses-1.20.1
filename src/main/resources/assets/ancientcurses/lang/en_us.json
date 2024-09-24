@@ -16,7 +16,14 @@
   "effect.ancientcurses.curse_of_wrath": "Curse of Wrath",
 
   "block.ancientcurses.cursed_altar": "Cursed Altar",
+  "block.ancientcurses.lapidarist_table": "Lapidary Table",
+  "block.ancientcurses.sconced_torch": "Sconced Torch",
+  "block.ancientcurses.sconced_soul_torch": "Sconced Soul Torch",
+  "block.ancientcurses.sconced_redstone_torch": "Sconced Redstone Torch",
+  "block.ancientcurses.sconced_cursed_torch": "Sconced Cursed Torch",
+  "block.ancientcurses.sconced_unlit_torch": "Sconced Unlit Torch",
 
+  "item.ancientcurses.golden_amulet": "Golden Amulet",
   "item.ancientcurses.deprecophobia_music_disc": "Music Disc",
   "item.ancientcurses.deprecophobia_music_disc.desc": "KindaGlumm - Deprecophobia",
   "item.ancientcurses.broken_amethyst": "Broken Amethyst",
@@ -37,5 +44,6 @@
   "item.ancientcurses.perfect_ruby": "Perfect Ruby",
   "item.ancientcurses.perfect_sapphire": "Perfect Sapphire",
   "item.ancientcurses.perfect_topaz": "Perfect Topaz",
+  "item.ancientcurses.ancient_chrysoberyl": "Ancient Chrysoberyl",
   "item.ancientcurses.rotclump": "Rotten clump"
 }

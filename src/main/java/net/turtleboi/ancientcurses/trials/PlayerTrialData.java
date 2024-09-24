@@ -91,7 +91,6 @@ public class PlayerTrialData {
         return null;
     }
 
-    // Method to reset a specific altar's position
     public static void resetAltarAtPos(Player player, BlockPos altarPos) {
         ListTag completedAltarsList = player.getPersistentData().getList(completedAltars, 10);
         ListTag updatedAltarsList = new ListTag();
@@ -162,13 +161,13 @@ public class PlayerTrialData {
         }
 
         if (getCurrentTrialType(player).equals(eliminationTrial)) {
-            nbt.putInt(EliminationTrial.ELIMINATION_COUNT_KEY, EliminationTrial.getEliminationCount(player));
-            nbt.putInt(EliminationTrial.ELIMINATION_REQUIREMENT_KEY, EliminationTrial.getRequiredEliminations(player));
+            nbt.putInt(EliminationTrial.eliminationCount, EliminationTrial.getEliminationCount(player));
+            nbt.putInt(EliminationTrial.eliminationRequirement, EliminationTrial.getRequiredEliminations(player));
         }
 
         if (getCurrentTrialType(player).equals(survivalTrial)) {
-            nbt.putLong(SurvivalTrial.TRIAL_DURATION_KEY, SurvivalTrial.getTrialDuration(player));
-            nbt.putLong(SurvivalTrial.TRIAL_ELAPSED_TIME_KEY, SurvivalTrial.getTrialElapsedTime(player));
+            nbt.putLong(SurvivalTrial.trialDurationTotal, SurvivalTrial.getTrialDuration(player));
+            nbt.putLong(SurvivalTrial.trialDurationElapsed, SurvivalTrial.getTrialElapsedTime(player));
         }
 
         ListTag completedAltarsList = player.getPersistentData().getList(completedAltars, 10);
@@ -187,13 +186,13 @@ public class PlayerTrialData {
         }
 
         if (nbt.getString(currentTrialType).equals(eliminationTrial)) {
-            EliminationTrial.saveEliminationCount(player, nbt.getInt(EliminationTrial.ELIMINATION_COUNT_KEY));
-            EliminationTrial.saveRequiredEliminations(player, nbt.getInt(EliminationTrial.ELIMINATION_REQUIREMENT_KEY));
+            EliminationTrial.saveEliminationCount(player, nbt.getInt(EliminationTrial.eliminationCount));
+            EliminationTrial.saveRequiredEliminations(player, nbt.getInt(EliminationTrial.eliminationRequirement));
         }
 
         if (nbt.getString(currentTrialType).equals(survivalTrial)) {
-            SurvivalTrial.setTrialDuration(player, nbt.getLong(SurvivalTrial.TRIAL_DURATION_KEY));
-            SurvivalTrial.setTrialElapsedTime(player, nbt.getLong(SurvivalTrial.TRIAL_ELAPSED_TIME_KEY));
+            SurvivalTrial.setTrialDuration(player, nbt.getLong(SurvivalTrial.trialDurationTotal));
+            SurvivalTrial.setTrialElapsedTime(player, nbt.getLong(SurvivalTrial.trialDurationElapsed));
         }
 
         ListTag completedAltarsList = nbt.getList(completedAltars, 10);

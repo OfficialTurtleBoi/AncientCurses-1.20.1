@@ -26,7 +26,7 @@ public class ModBlocks {
     public static final RegistryObject<Block> CURSED_ALTAR = registerBlock("cursed_altar",
             () -> new CursedAltarBlock(BlockBehaviour.Properties.copy(Blocks.OBSIDIAN).noOcclusion()));
 
-    public static final RegistryObject<Block> LAPIDARIST_TABLE = registerBlock("jewelers_table",
+    public static final RegistryObject<Block> LAPIDARIST_TABLE = registerBlock("lapidarist_table",
             () -> new LapidaristTableBlock(BlockBehaviour.Properties.copy(Blocks.CRAFTING_TABLE).noOcclusion()));
 
     public static final RegistryObject<Block> SCONCED_TORCH = BLOCKS.register("sconced_torch",
@@ -54,10 +54,10 @@ public class ModBlocks {
             () -> new SconcedWallCursedTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH), ModParticleTypes.CURSED_FLAME_PARTICLE));
 
     public static final RegistryObject<Block> SCONCED_UNLIT_TORCH = BLOCKS.register("sconced_unlit_torch",
-            () -> new SconcedUnlitTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH), ParticleTypes.SOUL_FIRE_FLAME));
+            () -> new SconcedUnlitTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH).lightLevel(state -> 0), ParticleTypes.SOUL_FIRE_FLAME));
 
     public static final RegistryObject<Block> SCONCED_WALL_UNLIT_TORCH = BLOCKS.register("sconced_wall_unlit_torch",
-            () -> new SconcedWallUnlitTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH), ParticleTypes.SOUL_FIRE_FLAME));
+            () -> new SconcedWallUnlitTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH).lightLevel(state -> 0), ParticleTypes.SOUL_FIRE_FLAME));
 
     private static <T extends Block> RegistryObject<T> registerBlock(String name, Supplier<T> block) {
         RegistryObject<T> toReturn = BLOCKS.register(name, block);

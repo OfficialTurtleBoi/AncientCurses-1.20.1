@@ -49,7 +49,7 @@ public class PreciousGemSlot extends SlotItemHandler {
         blockEntity.onSlotChanged();
     }
 
-    private boolean isAmuletPresent() {
+    public boolean isAmuletPresent() {
         ItemStack amulet = blockEntity.getInventory().getStackInSlot(LapidaristTableBlockEntity.amuletSlot);
         return !amulet.isEmpty() && amulet.getItem() instanceof GoldenAmuletItem;
     }

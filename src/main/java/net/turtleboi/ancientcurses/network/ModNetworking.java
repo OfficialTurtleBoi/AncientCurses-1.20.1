@@ -7,10 +7,7 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.turtleboi.ancientcurses.AncientCurses;
-import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
-import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
-import net.turtleboi.ancientcurses.network.packets.SleepPacketS2C;
-import net.turtleboi.ancientcurses.network.packets.VoidPacketS2C;
+import net.turtleboi.ancientcurses.network.packets.*;
 
 public class ModNetworking {
     private static SimpleChannel INSTANCE;
@@ -50,6 +47,12 @@ public class ModNetworking {
                 .decoder(SleepPacketS2C::new)
                 .encoder(SleepPacketS2C::toBytes)
                 .consumerMainThread(SleepPacketS2C::handle)
+                .add();
+
+        net.messageBuilder(SyncTrialDataS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(SyncTrialDataS2C::new)
+                .encoder(SyncTrialDataS2C::toBytes)
+                .consumerMainThread(SyncTrialDataS2C::handle)
                 .add();
     }
     public static <MSG> void sendToServer (MSG message) {

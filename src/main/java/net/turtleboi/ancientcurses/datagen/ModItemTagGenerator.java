@@ -42,7 +42,8 @@ public class ModItemTagGenerator extends ItemTagsProvider {
                 .add(ModItems.PERFECT_EMERALD.get())
                 .add(ModItems.PERFECT_RUBY.get())
                 .add(ModItems.PERFECT_SAPPHIRE.get())
-                .add(ModItems.PERFECT_TOPAZ.get());
+                .add(ModItems.PERFECT_TOPAZ.get())
+                .add(ModItems.ANCIENT_CHRYSOBERYL.get());
 
         this.tag(ModTags.Items.MINOR_GEMS)
                 .add(ModItems.BROKEN_AMETHYST.get())

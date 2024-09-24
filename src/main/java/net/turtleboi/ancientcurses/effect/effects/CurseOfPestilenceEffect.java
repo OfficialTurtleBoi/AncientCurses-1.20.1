@@ -1,5 +1,6 @@
 package net.turtleboi.ancientcurses.effect.effects;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -13,6 +14,7 @@ import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CurseOfPestilenceEffect extends MobEffect {
@@ -45,13 +47,15 @@ public class CurseOfPestilenceEffect extends MobEffect {
             int maxTimeInterval = getMaxTimeInterval(pAmplifier);
             if (pestilenceCooldown <= 0) {
                 applyNewDebuff(player, pAmplifier);
+
                 if (pAmplifier >= 1) {
                     upgradeExistingDebuff(player, pAmplifier);
+
                 }
                 setPestilenceCooldown(player, minTimeInterval + player.getRandom().nextInt(maxTimeInterval - minTimeInterval + 1));
             } else {
                 setPestilenceCooldown(player,pestilenceCooldown - 1);
-                //player.displayClientMessage(Component.literal("Pestilence cooldown: " + pestilenceCooldown), true); //debug code
+                player.displayClientMessage(Component.literal("Pestilence cooldown: " + pestilenceCooldown), true); //debug code
             }
 
             if (pAmplifier >= 2) {
@@ -100,66 +104,80 @@ public class CurseOfPestilenceEffect extends MobEffect {
     }
 
     private void applyNewDebuff(Player player, int amplifier) {
-        MobEffectInstance[] possibleDebuffs = {
-                new MobEffectInstance(MobEffects.WEAKNESS, Integer.MAX_VALUE, 0),
-                new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, Integer.MAX_VALUE, 0),
-                new MobEffectInstance(MobEffects.BLINDNESS, Integer.MAX_VALUE, 0),
-                new MobEffectInstance(MobEffects.POISON, Integer.MAX_VALUE, 0),
-                new MobEffectInstance(MobEffects.WITHER, Integer.MAX_VALUE, 0),
-                new MobEffectInstance(MobEffects.HUNGER, Integer.MAX_VALUE, 0),
-                new MobEffectInstance(MobEffects.UNLUCK, Integer.MAX_VALUE, 0)
-        };
-
+        player.sendSystemMessage(Component.literal("Applying new debuff!")); // Debug code
+        List<MobEffect> possibleDebuffs = Arrays.asList(
+                MobEffects.WEAKNESS,
+                MobEffects.MOVEMENT_SLOWDOWN,
+                MobEffects.BLINDNESS,
+                MobEffects.POISON,
+                MobEffects.WITHER,
+                MobEffects.HUNGER,
+                MobEffects.UNLUCK
+        );
         MobEffectInstance curseEffect = player.getEffect(ModEffects.CURSE_OF_PESTILENCE.get());
         if (curseEffect == null) return;
-
         int curseDuration = curseEffect.getDuration();
-        for (int i = 0; i < amplifier + 1 && i < possibleDebuffs.length; i++) {
-            MobEffectInstance debuff = possibleDebuffs[i];
-            if (player.getEffect(debuff.getEffect()) == null) {
+        List<MobEffect> availableDebuffs = new ArrayList<>(possibleDebuffs);
+        int debuffsToApply = Math.min(amplifier + 1, availableDebuffs.size());
+        for (int i = 0; i < debuffsToApply; ) {
+            if (availableDebuffs.isEmpty()) break;
+            int randomIndex = player.getRandom().nextInt(availableDebuffs.size());
+            MobEffect randomDebuff = availableDebuffs.get(randomIndex);
+            if (player.getEffect(randomDebuff) == null) {
                 player.addEffect(new MobEffectInstance(
-                        debuff.getEffect(),
+                        randomDebuff,
                         curseDuration,
                         0
                 ));
+                player.sendSystemMessage(Component.literal("Applied debuff: " + randomDebuff.getDescriptionId()));  // Debug code
+                i++;
+            } else {
+                player.sendSystemMessage(Component.literal("Already has debuff: " + randomDebuff.getDescriptionId()));  // Debug code
             }
+            availableDebuffs.remove(randomIndex);
         }
     }
 
-    private void upgradeExistingDebuff(Player player, int amplifier) {
-        List<MobEffectInstance> playerDebuffs = new ArrayList<>();
-        MobEffectInstance[] possibleDebuffs = {
-                new MobEffectInstance(MobEffects.WEAKNESS, Integer.MAX_VALUE, 0),
-                new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, Integer.MAX_VALUE, 0),
-                new MobEffectInstance(MobEffects.BLINDNESS, Integer.MAX_VALUE, 0),
-                new MobEffectInstance(MobEffects.POISON, Integer.MAX_VALUE, 0),
-                new MobEffectInstance(MobEffects.WITHER, Integer.MAX_VALUE, 0),
-                new MobEffectInstance(MobEffects.HUNGER, Integer.MAX_VALUE, 0),
-                new MobEffectInstance(MobEffects.UNLUCK, Integer.MAX_VALUE, 0)
-        };
 
-        for (MobEffectInstance debuff : possibleDebuffs) {
-            MobEffectInstance currentEffect = player.getEffect(debuff.getEffect());
+    private void upgradeExistingDebuff(Player player, int amplifier) {
+        player.sendSystemMessage(Component.literal("Upgrading debuff!")); // Debug code
+        List<MobEffect> possibleDebuffs = Arrays.asList(
+                MobEffects.WEAKNESS,
+                MobEffects.MOVEMENT_SLOWDOWN,
+                MobEffects.BLINDNESS,
+                MobEffects.POISON,
+                MobEffects.WITHER,
+                MobEffects.HUNGER,
+                MobEffects.UNLUCK
+        );
+        List<MobEffectInstance> playerDebuffs = new ArrayList<>();
+        for (MobEffect debuff : possibleDebuffs) {
+            MobEffectInstance currentEffect = player.getEffect(debuff);
             if (currentEffect != null) {
                 playerDebuffs.add(currentEffect);
             }
         }
-
         MobEffectInstance curseEffect = player.getEffect(ModEffects.CURSE_OF_PESTILENCE.get());
         if (curseEffect == null) return;
-
         int curseDuration = curseEffect.getDuration();
         if (!playerDebuffs.isEmpty()) {
-            for (int i = 0; i < amplifier; i++) {
-                int debuffIndex = player.getRandom().nextInt(playerDebuffs.size());
-                MobEffectInstance selectedDebuff = playerDebuffs.get(debuffIndex);
-
+            List<MobEffectInstance> debuffsToUpgrade = new ArrayList<>(playerDebuffs);
+            int upgradesToApply = Math.min(amplifier, debuffsToUpgrade.size());
+            for (int i = 0; i < upgradesToApply; ) {
+                if (debuffsToUpgrade.isEmpty()) break;
+                int randomIndex = player.getRandom().nextInt(debuffsToUpgrade.size());
+                MobEffectInstance selectedDebuff = debuffsToUpgrade.get(randomIndex);
                 player.addEffect(new MobEffectInstance(
                         selectedDebuff.getEffect(),
                         curseDuration,
                         selectedDebuff.getAmplifier() + 1
                 ));
+                player.sendSystemMessage(Component.literal("Upgraded debuff: " + selectedDebuff.getEffect().getDescriptionId()));  // Debug code
+                debuffsToUpgrade.remove(randomIndex);
+                i++;
             }
+        } else {
+            player.sendSystemMessage(Component.literal("No debuffs to upgrade."));  // Debug code
         }
     }
 

@@ -1,5 +1,10 @@
 {
   "variants": {
-    "": { "model": "ancientcurses:block/sconced_redstone_torch" }
+    "lit=true": {
+      "model": "ancientcurses:block/sconced_lit_redstone_torch"
+    },
+    "lit=false": {
+      "model": "ancientcurses:block/sconced_unlit_redstone_torch"
+    }
   }
 }

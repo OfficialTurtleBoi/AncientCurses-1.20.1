@@ -133,13 +133,13 @@ public class CursedAltarBlockEntity extends BlockEntity {
         this.isAnimating = true;
         setAnimationStartTime(System.currentTimeMillis());
         setChanged();
-        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3); // Ensure update is sent
+        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
     }
 
     public void stopAnimation() {
         this.isAnimating = false;
         setChanged();
-        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3); // Ensure update is sent
+        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
     }
 
     public boolean isAnimating() {
@@ -192,20 +192,24 @@ public class CursedAltarBlockEntity extends BlockEntity {
         UUID playerUUID = player.getUUID();
         int duration = 6000;
 
-        player.addEffect(new MobEffectInstance(curse, duration, pAmplifier, false, false, true));
         Trial trial = createTrialForCurse(player, curse, duration, pAmplifier, altar);
         altar.addPlayerTrial(playerUUID, trial);
-
-        if (trial instanceof EliminationTrial) {
-            PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.eliminationTrial);
-        }
-
-        if (trial instanceof SurvivalTrial) {
-            PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.survivalTrial);
-        }
-
         PlayerTrialData.setCurseAmplifier(player, pAmplifier);
         PlayerTrialData.addAltarToTrialList(player, altar.worldPosition, false);
+
+        if (trial instanceof EliminationTrial eliminationTrial) {
+            player.addEffect(new MobEffectInstance(curse, MobEffectInstance.INFINITE_DURATION, pAmplifier, false, false, true));
+            PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.eliminationTrial);
+            eliminationTrial.resetEventProgress();
+            trial.trackProgress(player);
+        }
+
+        if (trial instanceof SurvivalTrial survivalTrial) {
+            player.addEffect(new MobEffectInstance(curse, duration, pAmplifier, false, false, true));
+            PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.survivalTrial);
+            survivalTrial.resetEventProgress();
+            trial.trackProgress(player);
+        }
     }
 
     public boolean hasPlayerCompletedTrial(Player player) {

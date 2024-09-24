@@ -6,6 +6,10 @@ public class PlayerClientData {
     public static boolean isVoid = false;
     public static int voidTimer = 0;
     public static int voidTotalTime = 0;
+    public static int eliminationKills = 0;
+    public static int eliminationKillsRequired = 0;
+    private static long trialDurationElapsed = 0;
+    private static long trialDurationTotal = 0;
 
     public static boolean isAsleep() {
         return isAsleep;
@@ -43,7 +47,39 @@ public class PlayerClientData {
         voidTotalTime = totalTime;
     }
 
-    public static Integer getTotalVoidTime(){
+    public static Integer getTotalVoidTime() {
         return voidTotalTime;
+    }
+
+    public static Integer getEliminationKills(){
+        return eliminationKills;
+    }
+
+    public static void setEliminationKills(int kills) {
+        eliminationKills = kills;
+    }
+
+    public static Integer getEliminationKillsRequired(){
+        return eliminationKillsRequired;
+    }
+
+    public static void setEliminationKillsRequired(int killsRequired) {
+        eliminationKillsRequired = killsRequired;
+    }
+
+    public static Long getTrialDurationElapsed(){
+        return trialDurationElapsed;
+    }
+
+    public static void setTrialDurationElapsed(long durationElapsed) {
+        trialDurationElapsed = durationElapsed;
+    }
+
+    public static Long getTrialDurationTotal(){
+        return trialDurationTotal;
+    }
+
+    public static void setTrialDurationTotal(long durationTotal) {
+        trialDurationTotal = durationTotal;
     }
 }

@@ -13,7 +13,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.BossEvent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
@@ -27,8 +26,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
-import net.turtleboi.ancientcurses.client.TrialEvent;
+import net.turtleboi.ancientcurses.client.TrialEventBar;
 import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.trials.PlayerTrialData;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import org.joml.Matrix4f;
 
@@ -61,11 +61,12 @@ public class ModClientEvents {
                     Map<UUID, LerpingBossEvent> events = (Map<UUID, LerpingBossEvent>) eventsField.get(bossOverlay);
                     for (LerpingBossEvent bossEvent : events.values()) {
                         String trialName = bossEvent.getName().getString();
-                        if (trialName.equalsIgnoreCase("Survival Trial")) {
+                        if (trialName.equalsIgnoreCase(PlayerTrialData.survivalTrial) ||
+                                trialName.equalsIgnoreCase(PlayerTrialData.eliminationTrial)) {
                             event.setCanceled(true);
                             int x = minecraft.getWindow().getGuiScaledWidth() / 2 - 96;
                             int y = 12;
-                            TrialEvent.render(event.getGuiGraphics(), x, y, bossEvent, minecraft);
+                            TrialEventBar.render(event.getGuiGraphics(), x, y, bossEvent, minecraft);
                             break;
                         }
                     }
@@ -73,8 +74,6 @@ public class ModClientEvents {
                     //e.printStackTrace();
                 }
             }
-
-
 
             if (player.hasEffect(ModEffects.CURSE_OF_OBESSSION.get())) {
                 renderPinkOverlay(event.getGuiGraphics());

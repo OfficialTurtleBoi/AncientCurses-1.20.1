@@ -62,6 +62,7 @@ import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
+import net.turtleboi.ancientcurses.trials.SurvivalTrial;
 import net.turtleboi.ancientcurses.trials.Trial;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 
@@ -82,6 +83,23 @@ public class ModEvents {
         String trialType = PlayerTrialData.getCurrentTrialType(player);
         if (trialType != null && !trialType.isEmpty()) {
             PlayerTrialData.reconstructTrial(player, trialType);
+        }
+
+        BlockPos altarPos = PlayerTrialData.getAltarPos(player);
+        if (altarPos == null) {
+            return;
+        }
+
+        BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
+        if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
+            return;
+        }
+
+        Trial trial = altar.getPlayerTrial(player.getUUID());
+        if (trial instanceof EliminationTrial eliminationTrial) {
+            eliminationTrial.trackProgress(player);
+        } else if (trial instanceof SurvivalTrial survivalTrial) {
+            survivalTrial.trackProgress(player);
         }
     }
 
@@ -679,7 +697,22 @@ public class ModEvents {
 
             if (PlayerTrialData.isPlayerCursed(player)) {
                 PlayerTrialData.clearPlayerCurse(player);
-                player.sendSystemMessage(Component.literal("You died before completing the trial.").withStyle(ChatFormatting.RED));
+                BlockPos altarPos = PlayerTrialData.getAltarPos(player);
+                if (altarPos == null) {
+                    return;
+                }
+
+                BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
+                if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
+                    return;
+                }
+                //player.sendSystemMessage(Component.literal("You died before completing the trial.").withStyle(ChatFormatting.RED));
+                Trial trial = altar.getPlayerTrial(player.getUUID());
+                if (trial instanceof EliminationTrial eliminationTrial) {
+                    eliminationTrial.removeEventBar(player);
+                } else if (trial instanceof SurvivalTrial survivalTrial) {
+                    survivalTrial.removeEventBar(player);
+                }
             }
         }
     }

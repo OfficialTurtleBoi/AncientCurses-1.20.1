@@ -42,7 +42,10 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
+import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
+import net.turtleboi.ancientcurses.trials.SurvivalTrial;
+import net.turtleboi.ancientcurses.trials.Trial;
 import net.turtleboi.ancientcurses.util.ModTags;
 import org.jetbrains.annotations.Nullable;
 
@@ -233,6 +236,12 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
         if (player instanceof ServerPlayer) {
             rewardPlayerWithLootTable(player, amplifier, level, pos);
+            Trial trial = altarEntity.getPlayerTrial(player.getUUID());
+            if (trial instanceof EliminationTrial eliminationTrial) {
+                eliminationTrial.removeEventBar(player);
+            } else if (trial instanceof SurvivalTrial survivalTrial) {
+                survivalTrial.removeEventBar(player);
+            }
             PlayerTrialData.clearCurseAmplifier(player);
             altarEntity.markRewardCollected(player);
         }
@@ -299,7 +308,6 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
                 LootParams gemLootParams = gemLootParamsBuilder.create(LootContextParamSets.CHEST);
                 ObjectArrayList<ItemStack> gemLoot = gemLootTable.getRandomItems(gemLootParams);
-
 
                 if (!gemLoot.isEmpty()) {
                     totalGeneratedLoot.add(gemLoot.get(0));

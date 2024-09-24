@@ -11,11 +11,11 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "ancientcurses:jewelers_table"
+          "name": "ancientcurses:lapidarist_table"
         }
       ],
       "rolls": 1.0
     }
   ],
-  "random_sequence": "ancientcurses:blocks/jewelers_table"
+  "random_sequence": "ancientcurses:blocks/lapidarist_table"
 }

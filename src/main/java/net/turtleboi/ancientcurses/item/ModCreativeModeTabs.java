@@ -47,6 +47,8 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.PERFECT_RUBY.get());
                         pOutput.accept(ModItems.PERFECT_SAPPHIRE.get());
                         pOutput.accept(ModItems.PERFECT_TOPAZ.get());
+                        pOutput.accept(ModItems.ANCIENT_CHRYSOBERYL.get());
+                        pOutput.accept(ModItems.ROT_CLUMP.get());
                     })
                     .build());
 

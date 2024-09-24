@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "ancientcurses:item/golden_amulet"
+    "layer0": "ancientcurses:item/ancient_chrysoberyl"
   }
 }

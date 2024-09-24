@@ -76,6 +76,9 @@ public class ModItems {
     public static final RegistryObject<Item> PERFECT_TOPAZ = ITEMS.register("perfect_topaz",
             () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC)));
 
+    public static final RegistryObject<Item> ANCIENT_CHRYSOBERYL = ITEMS.register("ancient_chrysoberyl",
+            () -> new PreciousGemItem(new Item.Properties().rarity(ModItems.LEGENDARY)));
+
     public static final RegistryObject<Item> DEPRECOPHOBIA_MUSIC_DISC = ITEMS.register("deprecophobia_music_disc",
             () -> new RecordItem(13, ModSounds.DEPRECOPHOBIA, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC), 2780));
 

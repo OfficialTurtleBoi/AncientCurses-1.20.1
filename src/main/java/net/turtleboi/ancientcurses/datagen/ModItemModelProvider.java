@@ -17,7 +17,6 @@ public class ModItemModelProvider extends ItemModelProvider {
 
     @Override
     protected void registerModels() {
-        simpleItem(ModItems.GOLDEN_AMULET);
         simpleItem(ModItems.DEPRECOPHOBIA_MUSIC_DISC);
         simpleItem(ModItems.SCONCED_TORCH_ITEM);
         simpleItem(ModItems.SCONCED_SOUL_TORCH_ITEM);
@@ -42,6 +41,7 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.PERFECT_RUBY);
         simpleItem(ModItems.PERFECT_SAPPHIRE);
         simpleItem(ModItems.PERFECT_TOPAZ);
+        simpleItem(ModItems.ANCIENT_CHRYSOBERYL);
         simpleItem(ModItems.ROT_CLUMP);
     }
 
