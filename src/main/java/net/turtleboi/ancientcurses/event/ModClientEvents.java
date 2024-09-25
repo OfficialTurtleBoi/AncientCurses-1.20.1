@@ -10,6 +10,7 @@ import net.minecraft.client.gui.components.BossHealthOverlay;
 import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.bossevents.CustomBossEvent;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -33,6 +34,7 @@ import net.turtleboi.ancientcurses.util.ItemValueMap;
 import org.joml.Matrix4f;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -51,38 +53,16 @@ public class ModClientEvents {
                 }
             }
 
-            //if (event.getOverlay() == VanillaGuiOverlay.BOSS_EVENT_PROGRESS.type()) {
-            //    if (!PlayerClientData.hasTrial()) {
-            //        return;
-            //    }
-//
-            //    String trialType = PlayerClientData.trialType;
-            //    if (trialType == null || trialType.equals("None")) {
-            //        return;
-            //    }
-//
-            //    BossHealthOverlay bossOverlay = minecraft.gui.getBossOverlay();
-//
-            //    try {
-            //        Field eventsField = BossHealthOverlay.class.getDeclaredField("events");
-            //        eventsField.setAccessible(true);
-            //        @SuppressWarnings("unchecked")
-            //        Map<UUID, LerpingBossEvent> events = (Map<UUID, LerpingBossEvent>) eventsField.get(bossOverlay);
-            //        for (LerpingBossEvent bossEvent : events.values()) {
-            //            String trialName = bossEvent.getName().getString();
-            //            if (trialName.equalsIgnoreCase(PlayerTrialData.survivalTrial) ||
-            //                    trialName.equalsIgnoreCase(PlayerTrialData.eliminationTrial)) {
-            //                event.setCanceled(true);
-            //                int x = minecraft.getWindow().getGuiScaledWidth() / 2 - 96;
-            //                int y = 12;
-            //                TrialEventBar.render(event.getGuiGraphics(), x, y, bossEvent, minecraft);
-            //                break;
-            //            }
-            //        }
-            //    } catch (NoSuchFieldException | IllegalAccessException e) {
-            //        //e.printStackTrace();
-            //    }
-            //}
+            if (PlayerClientData.hasTrial()) {
+                int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+                TrialEventBar.render(event.getGuiGraphics(), (screenWidth - 192) / 2, 11, minecraft);
+            }
+
+            if (event.getOverlay() == VanillaGuiOverlay.BOSS_EVENT_PROGRESS.type()) {
+                if (PlayerClientData.hasTrial()) {
+                    event.setCanceled(true);
+                }
+            }
 
             if (player.hasEffect(ModEffects.CURSE_OF_OBESSSION.get())) {
                 renderPinkOverlay(event.getGuiGraphics());
@@ -91,6 +71,15 @@ public class ModClientEvents {
             if (player.hasEffect(ModEffects.CURSE_OF_ENDING.get())) {
                 renderPurpleOverlay(event.getGuiGraphics());
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onCustomizeBossEventProgress(CustomizeGuiOverlayEvent.BossEventProgress event) {
+        if (PlayerClientData.hasTrial()) {
+            int originalY = event.getY();
+            //event.setY(originalY + 9 + 5);
+            event.setIncrement(event.getIncrement() + 9 + 5);
         }
     }
 

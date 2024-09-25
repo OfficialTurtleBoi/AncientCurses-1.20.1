@@ -41,7 +41,6 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public float oRot;
     public float tRot;
     private static final RandomSource RANDOM = RandomSource.create();
-    private final Map<UUID, CompoundTag> playerTrialCompletion = new HashMap<>();
     private final Map<UUID, Trial> playerTrials = new HashMap<>();
     private final Map<UUID, Long> playerCooldowns = new HashMap<>();
     private boolean isAnimating;
@@ -207,20 +206,18 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return true;
     }
 
-    public void cursePlayer(Player player, MobEffect curse, int amplifier, CursedAltarBlockEntity altar) {
+    public void cursePlayer(Player player, MobEffect curse, int amplifier) {
         UUID playerUUID = player.getUUID();
         int duration = 6000;
 
-        Trial trial = createTrialForCurse(player, curse, duration, amplifier, altar);
+        Trial trial = createTrialForCurse(player, curse, duration, amplifier);
         addPlayerTrial(playerUUID, trial);
 
-        PlayerTrialData.setCurseAmplifier(player, amplifier);
-        PlayerTrialData.setCurrentTrialType(
-                player, trial instanceof EliminationTrial ? PlayerTrialData.eliminationTrial : PlayerTrialData.survivalTrial);
         PlayerTrialData.setCurseEffect(player, curse);
-        PlayerTrialData.setCurrentAltarPos(player, altar.getBlockPos());
+        PlayerTrialData.setCurseAmplifier(player, amplifier);
+        PlayerTrialData.setCurrentAltarPos(player, this.getBlockPos());
+        PlayerTrialData.addAltarToTrialList(player, this.getBlockPos(), false);
 
-        PlayerTrialData.addAltarToTrialList(player, altar.getBlockPos(), false);
         player.addEffect(new MobEffectInstance(curse, trial instanceof SurvivalTrial ? duration : MobEffectInstance.INFINITE_DURATION, amplifier, false, false, true));
 
         trial.trackProgress(player);
@@ -237,19 +234,9 @@ public class CursedAltarBlockEntity extends BlockEntity {
         if (trial != null) {
             PlayerTrialData.setTrialCompleted(player, this.getBlockPos());
             PlayerTrialData.clearCurrentAltarPos(player);
-            PlayerTrialData.clearCurrentTrialType(player);
             playerTrials.remove(playerUUID);
             setChanged();
         }
-    }
-
-
-    public void setPlayerTrialStatus(UUID playerUUID, boolean completed, boolean rewardCollected) {
-        CompoundTag playerTag = new CompoundTag();
-        playerTag.putBoolean("Completed", completed);
-        playerTag.putBoolean("RewardCollected", rewardCollected);
-        playerTrialCompletion.put(playerUUID, playerTag);
-        setChanged();
     }
 
     public boolean hasCollectedReward(Player player) {
@@ -273,6 +260,17 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public void removePlayerTrial(UUID playerUUID) {
         playerTrials.remove(playerUUID);
     }
+
+    public void removePlayerFromTrial(Player player) {
+        UUID playerUUID = player.getUUID();
+        Trial trial = playerTrials.get(playerUUID);
+        if (trial != null) {
+            trial.onPlayerRemoved(player);
+            removePlayerTrial(playerUUID);
+            setChanged();
+        }
+    }
+
 
     public static MobEffect getRandomCurse() {
         List<MobEffect> curses = Arrays.asList(
@@ -312,37 +310,37 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return weightedAmplifiers;
     }
 
-    public Trial createTrialForCurse(Player player, MobEffect curseType, int curseDuration, int curseAmplifier, CursedAltarBlockEntity altar) {
+    public Trial createTrialForCurse(Player player, MobEffect curseType, int curseDuration, int curseAmplifier) {
         if (curseType == ModEffects.CURSE_OF_AVARICE.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), altar);
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
         } else if (curseType == ModEffects.CURSE_OF_ENDING.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), altar);
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
         } else if (curseType == ModEffects.CURSE_OF_ENVY.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), altar);
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
         } else if (curseType == ModEffects.CURSE_OF_FRAILTY.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), altar);
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
         } else if (curseType == ModEffects.CURSE_OF_GLUTTONY.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), altar);
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
         } else if (curseType == ModEffects.CURSE_OF_NATURE.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), altar);
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
         } else if (curseType == ModEffects.CURSE_OF_OBESSSION.get()) {
-            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), altar);
+            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), this);
         } else if (curseType == ModEffects.CURSE_OF_PESTILENCE.get()) {
-            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), altar);
+            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), this);
         } else if (curseType == ModEffects.CURSE_OF_PRIDE.get()) {
-            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), altar);
+            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), this);
         } else if (curseType == ModEffects.CURSE_OF_SHADOWS.get()) {
-            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), altar);
+            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), this);
         } else if (curseType == ModEffects.CURSE_OF_SLOTH.get()) {
-            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), altar);
+            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), this);
         } else if (curseType == ModEffects.CURSE_OF_WRATH.get()) {
-            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), altar);
+            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), this);
         }
         return null;
     }
@@ -388,16 +386,39 @@ public class CursedAltarBlockEntity extends BlockEntity {
         }
     }
 
+    private Trial reconstructTrialFromNBT(String trialType, CompoundTag trialData) {
+        if (trialType.equals(PlayerTrialData.survivalTrial)) {
+            SurvivalTrial trial = new SurvivalTrial(this);
+            trial.loadFromNBT(trialData);
+            return trial;
+        } else if (trialType.equals(PlayerTrialData.eliminationTrial)) {
+            EliminationTrial trial = new EliminationTrial(this);
+            trial.loadFromNBT(trialData);
+            return trial;
+        }
+        return null;
+    }
+
     @Override
     public void saveAdditional(@NotNull CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putBoolean("IsAnimating", this.isAnimating);
         tag.putLong("AnimationStartTime", this.animationStartTime);
         tag.put("gems", itemStackHandler.serializeNBT());
+
         ListTag activeTrialsList = new ListTag();
-        for (UUID playerUUID : playerTrials.keySet()) {
+        for (Map.Entry<UUID, Trial> entry : playerTrials.entrySet()) {
+            UUID playerUUID = entry.getKey();
+            Trial trial = entry.getValue();
+
             CompoundTag playerTag = new CompoundTag();
             playerTag.putUUID("PlayerUUID", playerUUID);
+            playerTag.putString("TrialType", trial.getType());
+
+            CompoundTag trialData = new CompoundTag();
+            trial.saveToNBT(trialData);
+            playerTag.put("TrialData", trialData);
+
             activeTrialsList.add(playerTag);
         }
         tag.put("ActiveTrials", activeTrialsList);
@@ -411,21 +432,19 @@ public class CursedAltarBlockEntity extends BlockEntity {
         if (tag.contains("gems")) {
             itemStackHandler.deserializeNBT(tag.getCompound("gems"));
         }
+
         ListTag activeTrialsList = tag.getList("ActiveTrials", Tag.TAG_COMPOUND);
         playerTrials.clear();
         for (int i = 0; i < activeTrialsList.size(); i++) {
             CompoundTag playerTag = activeTrialsList.getCompound(i);
             UUID playerUUID = playerTag.getUUID("PlayerUUID");
+            String trialType = playerTag.getString("TrialType");
+            CompoundTag trialData = playerTag.getCompound("TrialData");
 
-            if (level != null) {
-                Player player = level.getPlayerByUUID(playerUUID);
-                if (player != null) {
-                    String trialType = PlayerTrialData.getCurrentTrialType(player);
-                    Trial trial = PlayerTrialData.reconstructTrial(player, trialType, this);
-                    if (trial != null) {
-                        playerTrials.put(playerUUID, trial);
-                    }
-                }
+            Trial trial = reconstructTrialFromNBT(trialType, trialData);
+            if (trial != null) {
+                trial.setAltar(this);
+                playerTrials.put(playerUUID, trial);
             }
         }
     }

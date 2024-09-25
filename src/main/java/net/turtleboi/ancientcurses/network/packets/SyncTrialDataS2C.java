@@ -2,10 +2,12 @@ package net.turtleboi.ancientcurses.network.packets;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkEvent;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
 
+import java.awt.*;
 import java.util.function.Supplier;
 
 public class SyncTrialDataS2C {
@@ -43,11 +45,11 @@ public class SyncTrialDataS2C {
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            Player player = Minecraft.getInstance().player;
+            System.out.println(Component.literal("Sending trial information!"));
+            PlayerClientData.setTrialType(trialType);
             if (trialType == null || trialType.equals("None")) {
                 PlayerClientData.trialType = "None";
             } else {
-                PlayerClientData.setTrialType(trialType);
                 PlayerClientData.setEliminationKills(eliminationKills);
                 PlayerClientData.setEliminationKillsRequired(eliminationKillsRequired);
                 PlayerClientData.setTrialDurationElapsed(trialDurationElapsed);

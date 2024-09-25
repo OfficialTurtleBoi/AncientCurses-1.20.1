@@ -1,5 +1,7 @@
 package net.turtleboi.ancientcurses.client;
 
+import net.turtleboi.ancientcurses.trials.PlayerTrialData;
+
 public class PlayerClientData {
     public static boolean isAsleep = false;
     public static boolean isLusted = false;
@@ -59,7 +61,6 @@ public class PlayerClientData {
         return !trialType.equals("None");
     }
 
-
     public static String getTrialType(){
         return trialType;
     }
@@ -99,4 +100,21 @@ public class PlayerClientData {
     public static void setTrialDurationTotal(long durationTotal) {
         trialDurationTotal = durationTotal;
     }
+
+    public static float getTrialProgress() {
+        String trialType = getTrialType();
+        if (trialType.equalsIgnoreCase(PlayerTrialData.survivalTrial)) {
+            long elapsedTime = getTrialDurationElapsed();
+            long totalDuration = getTrialDurationTotal();
+            if (totalDuration == 0) return 0.0F;
+            return Math.min(1.0F, (float) elapsedTime / (float) totalDuration);
+        } else if (trialType.equalsIgnoreCase(PlayerTrialData.eliminationTrial)) {
+            int kills = getEliminationKills();
+            int requiredKills = getEliminationKillsRequired();
+            if (requiredKills == 0) return 0.0F;
+            return Math.min(1.0F, (float) kills / (float) requiredKills);
+        }
+        return 0.0F;
+    }
+
 }

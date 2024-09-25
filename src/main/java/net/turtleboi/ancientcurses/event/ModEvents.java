@@ -14,6 +14,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -76,10 +77,8 @@ public class ModEvents {
     private static int tickCounter = random.nextInt(11) + 10;
 
     @SubscribeEvent
-    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event){
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         Player player = event.getEntity();
-        PlayerTrialData.loadTrialData(player);
-
         BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
         if (altarPos == null) {
             return;
@@ -90,20 +89,15 @@ public class ModEvents {
             return;
         }
 
-        String trialType = PlayerTrialData.getCurrentTrialType(player);
-        if (trialType != null && !trialType.isEmpty()) {
-            Trial trial = PlayerTrialData.reconstructTrial(player, trialType, altar);
-            if (trial != null) {
-                altar.addPlayerTrial(player.getUUID(), trial);
-                trial.trackProgress(player);
-            }
+        altar.removePlayerFromTrial(player);
+        MobEffect curseEffect = PlayerTrialData.getCurseEffect(player);
+        if (curseEffect != null) {
+            player.removeEffect(curseEffect);
+            player.addEffect(new MobEffectInstance(curseEffect, 6000, PlayerTrialData.getCurseAmplifier(player)));
         }
-    }
-
-    @SubscribeEvent
-    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event){
-        Player player = event.getEntity();
-        PlayerTrialData.saveTrialData(player);
+        PlayerTrialData.clearCurrentAltarPos(player);
+        PlayerTrialData.clearCurseEffect(player);
+        PlayerTrialData.clearCurseAmplifier(player);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -662,7 +656,7 @@ public class ModEvents {
         if (source instanceof ServerPlayer player) {
             UUID playerUUID = player.getUUID();
             if (PlayerTrialData.isPlayerCursed(player)) {
-                BlockPos altarPos = PlayerTrialData.getAltarPos(player);
+                BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
                 if (altarPos == null) {
                     return;
                 }
@@ -673,13 +667,10 @@ public class ModEvents {
                 }
 
                 Trial trial = altar.getPlayerTrial(playerUUID);
-                if (trial instanceof EliminationTrial eliminationTrial) {
-                    eliminationTrial.incrementEliminationCount(player);
-                    if (eliminationTrial.isTrialCompleted(player)) {
-                        eliminationTrial.concludeTrial(player);
-                    } else {
-                        trial.trackProgress(player);
-                    }
+                if (trial != null) {
+                    trial.onEntityKilled(player, entity);
+                } else {
+                    System.out.println("Trial is null for player: " + player.getName().getString());
                 }
             }
         }
@@ -694,7 +685,7 @@ public class ModEvents {
 
             if (PlayerTrialData.isPlayerCursed(player)) {
                 PlayerTrialData.clearPlayerCurse(player);
-                BlockPos altarPos = PlayerTrialData.getAltarPos(player);
+                BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
                 if (altarPos == null) {
                     return;
                 }
@@ -900,7 +891,7 @@ public class ModEvents {
 
         if (event.phase == TickEvent.Phase.END && !player.level().isClientSide()) {
             if (PlayerTrialData.isPlayerCursed(player)) {
-                BlockPos altarPos = PlayerTrialData.getAltarPos(player);
+                BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
                 if (altarPos == null) return;
 
                 BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
@@ -908,13 +899,7 @@ public class ModEvents {
 
                 Trial trial = altar.getPlayerTrial(player.getUUID());
                 if (trial != null) {
-                    if (PlayerTrialData.getCurrentTrialType(player).equals(PlayerTrialData.survivalTrial)) {
-                        trial.trackProgress(player);
-
-                        if (trial.isTrialCompleted(player)) {
-                            trial.concludeTrial(player);
-                        }
-                    }
+                    trial.onPlayerTick(player);
                 }
             }
         }

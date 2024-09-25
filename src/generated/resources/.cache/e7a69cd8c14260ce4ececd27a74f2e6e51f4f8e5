@@ -1,4 +1,5 @@
-// 1.20.1	2024-09-24T16:56:36.3108913	Tags for minecraft:item mod id ancientcurses
+// 1.20.1	2024-09-25T14:11:20.4580884	Tags for minecraft:item mod id ancientcurses
+3462660b14760a2919cf2ab89302fc85a916603d data/ancientcurses/tags/items/major_gems.json
 147858b39105a231cf89a9003b4d35b1fa0e9c2b data/ancientcurses/tags/items/minor_gems.json
 834ad33cc5efe3709a3172f4cfe724894744e294 data/ancientcurses/tags/items/precious_gems.json
 9e3267c3995450879261b5c09dee746ea5ebda06 data/minecraft/tags/items/music_discs.json

@@ -42,6 +42,8 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
+import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
 import net.turtleboi.ancientcurses.trials.SurvivalTrial;
@@ -126,7 +128,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 }
 
                 for (Player player : level.players()) {
-                    BlockPos playerAltarPos = PlayerTrialData.getAltarPos(player);
+                    BlockPos playerAltarPos = PlayerTrialData.getCurrentAltarPos(player);
                     if (playerAltarPos != null && playerAltarPos.equals(pos)) {
                         PlayerTrialData.resetAltarAtPos(player, playerAltarPos);
                     }
@@ -186,7 +188,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                         ItemStack gemSlot1 = altarEntity.getGemInSlot(1);
                         ItemStack gemSlot2 = altarEntity.getGemInSlot(2);
 
-                        if (!gemSlot0.isEmpty() && gemSlot0.is(gemSlot1.getItem()) && gemSlot0.is(gemSlot2.getItem())) {
+                        if (!gemSlot0.isEmpty() && gemSlot0.is(gemSlot1.getItem()) && gemSlot0.is(gemSlot2.getItem()) && !gemSlot0.is(ModTags.Items.MAJOR_GEMS)) {
                             player.sendSystemMessage(Component.literal("3 Matching gems! Upgrading..."));
                             altarEntity.startAnimation();
                             level.sendBlockUpdated(pos, state, state, 3);
@@ -218,9 +220,8 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
         MobEffect randomCurse = CursedAltarBlockEntity.getRandomCurse();
         int randomAmplifier = CursedAltarBlockEntity.getRandomAmplifier(player);
-        UUID playerUUID = player.getUUID();
-        altarEntity.setPlayerTrialStatus(playerUUID, false, false);
-        altarEntity.cursePlayer(player, randomCurse, randomAmplifier, altarEntity);
+
+        altarEntity.cursePlayer(player, randomCurse, randomAmplifier);
         //player.displayClientMessage(Component.literal(
         //        "You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE), true); //debug code
     }
@@ -242,8 +243,19 @@ public class CursedAltarBlock extends BaseEntityBlock {
             rewardPlayerWithLootTable(player, amplifier, level, pos);
             Trial trial = altarEntity.getPlayerTrial(player.getUUID());
             if (trial != null) {
+                System.out.println("Trial is not null. Proceeding to remove event bar.");
                 trial.removeEventBar(player);
+            } else {
+                System.out.println("Trial is null for player: " + player.getName().getString());
             }
+            ModNetworking.sendToPlayer(
+                    new SyncTrialDataS2C(
+                            "None",
+                            0,
+                            0,
+                            0,
+                            0),
+                    (ServerPlayer) player);
             PlayerTrialData.clearCurseAmplifier(player);
             altarEntity.markRewardCollected(player);
         }
