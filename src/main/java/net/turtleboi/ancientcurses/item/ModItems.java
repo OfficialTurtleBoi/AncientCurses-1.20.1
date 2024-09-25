@@ -76,6 +76,9 @@ public class ModItems {
     public static final RegistryObject<Item> PERFECT_TOPAZ = ITEMS.register("perfect_topaz",
             () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC)));
 
+    public static final RegistryObject<Item> ANCIENT_ALEXANDRITE = ITEMS.register("ancient_alexandrite",
+            () -> new PreciousGemItem(new Item.Properties().rarity(ModItems.LEGENDARY)));
+
     public static final RegistryObject<Item> ANCIENT_CHRYSOBERYL = ITEMS.register("ancient_chrysoberyl",
             () -> new PreciousGemItem(new Item.Properties().rarity(ModItems.LEGENDARY)));
 

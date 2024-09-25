@@ -12,12 +12,14 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.items.ItemStackHandler;
 import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
 import net.turtleboi.ancientcurses.trials.SurvivalTrial;
@@ -39,11 +41,28 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public float oRot;
     public float tRot;
     private static final RandomSource RANDOM = RandomSource.create();
-    private static final Map<UUID, CompoundTag> playerTrialCompletion = new HashMap<>();
-    private static final Map<UUID, Trial> playerTrials = new HashMap<>();
+    private final Map<UUID, CompoundTag> playerTrialCompletion = new HashMap<>();
+    private final Map<UUID, Trial> playerTrials = new HashMap<>();
     private final Map<UUID, Long> playerCooldowns = new HashMap<>();
     private boolean isAnimating;
     private long animationStartTime;
+    private static final Map<Item, Item> gemUpgradeMap = new HashMap<>();
+
+    static {
+        gemUpgradeMap.put(ModItems.BROKEN_AMETHYST.get(), ModItems.POLISHED_AMETHYST.get());
+        gemUpgradeMap.put(ModItems.POLISHED_AMETHYST.get(), ModItems.PERFECT_AMETHYST.get());
+        gemUpgradeMap.put(ModItems.BROKEN_DIAMOND.get(), ModItems.POLISHED_DIAMOND.get());
+        gemUpgradeMap.put(ModItems.POLISHED_DIAMOND.get(), ModItems.PERFECT_DIAMOND.get());
+        gemUpgradeMap.put(ModItems.BROKEN_EMERALD.get(), ModItems.POLISHED_EMERALD.get());
+        gemUpgradeMap.put(ModItems.POLISHED_EMERALD.get(), ModItems.PERFECT_EMERALD.get());
+        gemUpgradeMap.put(ModItems.BROKEN_RUBY.get(), ModItems.POLISHED_RUBY.get());
+        gemUpgradeMap.put(ModItems.POLISHED_RUBY.get(), ModItems.PERFECT_RUBY.get());
+        gemUpgradeMap.put(ModItems.BROKEN_SAPPHIRE.get(), ModItems.POLISHED_SAPPHIRE.get());
+        gemUpgradeMap.put(ModItems.POLISHED_SAPPHIRE.get(), ModItems.PERFECT_SAPPHIRE.get());
+        gemUpgradeMap.put(ModItems.BROKEN_TOPAZ.get(), ModItems.POLISHED_TOPAZ.get());
+        gemUpgradeMap.put(ModItems.POLISHED_TOPAZ.get(), ModItems.PERFECT_TOPAZ.get());
+    }
+
 
     public final ItemStackHandler itemStackHandler = new ItemStackHandler(3){
         @Override
@@ -188,28 +207,23 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return true;
     }
 
-    public void cursePlayer(Player player, MobEffect curse, int pAmplifier, CursedAltarBlockEntity altar) {
+    public void cursePlayer(Player player, MobEffect curse, int amplifier, CursedAltarBlockEntity altar) {
         UUID playerUUID = player.getUUID();
         int duration = 6000;
 
-        Trial trial = createTrialForCurse(player, curse, duration, pAmplifier, altar);
-        altar.addPlayerTrial(playerUUID, trial);
-        PlayerTrialData.setCurseAmplifier(player, pAmplifier);
-        PlayerTrialData.addAltarToTrialList(player, altar.worldPosition, false);
+        Trial trial = createTrialForCurse(player, curse, duration, amplifier, altar);
+        addPlayerTrial(playerUUID, trial);
 
-        if (trial instanceof EliminationTrial eliminationTrial) {
-            player.addEffect(new MobEffectInstance(curse, MobEffectInstance.INFINITE_DURATION, pAmplifier, false, false, true));
-            PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.eliminationTrial);
-            eliminationTrial.resetEventProgress();
-            trial.trackProgress(player);
-        }
+        PlayerTrialData.setCurseAmplifier(player, amplifier);
+        PlayerTrialData.setCurrentTrialType(
+                player, trial instanceof EliminationTrial ? PlayerTrialData.eliminationTrial : PlayerTrialData.survivalTrial);
+        PlayerTrialData.setCurseEffect(player, curse);
+        PlayerTrialData.setCurrentAltarPos(player, altar.getBlockPos());
 
-        if (trial instanceof SurvivalTrial survivalTrial) {
-            player.addEffect(new MobEffectInstance(curse, duration, pAmplifier, false, false, true));
-            PlayerTrialData.setCurrentTrialType(player, PlayerTrialData.survivalTrial);
-            survivalTrial.resetEventProgress();
-            trial.trackProgress(player);
-        }
+        PlayerTrialData.addAltarToTrialList(player, altar.getBlockPos(), false);
+        player.addEffect(new MobEffectInstance(curse, trial instanceof SurvivalTrial ? duration : MobEffectInstance.INFINITE_DURATION, amplifier, false, false, true));
+
+        trial.trackProgress(player);
     }
 
     public boolean hasPlayerCompletedTrial(Player player) {
@@ -218,9 +232,17 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     public void setPlayerTrialCompleted(Player player) {
-        BlockPos altarPos = this.getBlockPos();
-        PlayerTrialData.setTrialCompleted(player, altarPos);
+        UUID playerUUID = player.getUUID();
+        Trial trial = playerTrials.get(playerUUID);
+        if (trial != null) {
+            PlayerTrialData.setTrialCompleted(player, this.getBlockPos());
+            PlayerTrialData.clearCurrentAltarPos(player);
+            PlayerTrialData.clearCurrentTrialType(player);
+            playerTrials.remove(playerUUID);
+            setChanged();
+        }
     }
+
 
     public void setPlayerTrialStatus(UUID playerUUID, boolean completed, boolean rewardCollected) {
         CompoundTag playerTag = new CompoundTag();
@@ -231,22 +253,13 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     public boolean hasCollectedReward(Player player) {
-        UUID playerUUID = player.getUUID();
-        if (playerTrialCompletion.containsKey(playerUUID)) {
-            CompoundTag playerTag = playerTrialCompletion.get(playerUUID);
-            return playerTag.getBoolean("RewardCollected");
-        }
-        return false;
+        BlockPos altarPos = this.getBlockPos();
+        return PlayerTrialData.hasCollectedReward(player, altarPos);
     }
 
     public void markRewardCollected(Player player) {
-        UUID playerUUID = player.getUUID();
-        if (playerTrialCompletion.containsKey(playerUUID)) {
-            CompoundTag playerTag = playerTrialCompletion.get(playerUUID);
-            playerTag.putBoolean("RewardCollected", true);
-            playerTrialCompletion.put(playerUUID, playerTag);
-            setChanged();
-        }
+        PlayerTrialData.setRewardCollected(player, this.getBlockPos());
+        setChanged();
     }
 
     public Trial getPlayerTrial(UUID playerUUID) {
@@ -334,20 +347,60 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return null;
     }
 
+    public void performGemUpgrade() {
+        ItemStack gem1 = getGemInSlot(0);
+        ItemStack gem2 = getGemInSlot(1);
+        ItemStack gem3 = getGemInSlot(2);
+        if (!gem1.isEmpty() && gem1.is(gem2.getItem()) && gem1.is(gem3.getItem())) {
+            ItemStack upgradedGem = getUpgradedGem(gem1);
+            if (upgradedGem != null) {
+                setGemInSlot(0, ItemStack.EMPTY);
+                setGemInSlot(1, ItemStack.EMPTY);
+                setGemInSlot(2, ItemStack.EMPTY);
+                setGemInSlot(0, upgradedGem);
+                setChanged();
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            }
+        }
+    }
+
+    public ItemStack getUpgradedGem(ItemStack gem) {
+        Item upgradedItem = gemUpgradeMap.get(gem.getItem());
+        if (upgradedItem != null) {
+            return new ItemStack(upgradedItem);
+        } else {
+            return null;
+        }
+    }
+
+    public static void serverTick(Level level, BlockPos pos, BlockState state, CursedAltarBlockEntity blockEntity) {
+        blockEntity.serverTick();
+    }
+
+    public void serverTick() {
+        if (isAnimating) {
+            long currentTime = System.currentTimeMillis();
+            long animationDuration = 7800;
+            if (currentTime - getAnimationStartTime() >= animationDuration) {
+                performGemUpgrade();
+                stopAnimation();
+            }
+        }
+    }
+
     @Override
     public void saveAdditional(@NotNull CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putBoolean("IsAnimating", this.isAnimating);
         tag.putLong("AnimationStartTime", this.animationStartTime);
         tag.put("gems", itemStackHandler.serializeNBT());
-        ListTag completedPlayerList = new ListTag();
-        for (UUID playerUUID : playerTrialCompletion.keySet()) {
+        ListTag activeTrialsList = new ListTag();
+        for (UUID playerUUID : playerTrials.keySet()) {
             CompoundTag playerTag = new CompoundTag();
             playerTag.putUUID("PlayerUUID", playerUUID);
-            playerTag.put("TrialStatus", playerTrialCompletion.get(playerUUID));
-            completedPlayerList.add(playerTag);
+            activeTrialsList.add(playerTag);
         }
-        tag.put("PlayerTrialCompletion", completedPlayerList);
+        tag.put("ActiveTrials", activeTrialsList);
     }
 
     @Override
@@ -358,12 +411,22 @@ public class CursedAltarBlockEntity extends BlockEntity {
         if (tag.contains("gems")) {
             itemStackHandler.deserializeNBT(tag.getCompound("gems"));
         }
-        ListTag completedPlayerList = tag.getList("PlayerTrialCompletion", Tag.TAG_COMPOUND);
-        for (int i = 0; i < completedPlayerList.size(); i++) {
-            CompoundTag playerTag = completedPlayerList.getCompound(i);
+        ListTag activeTrialsList = tag.getList("ActiveTrials", Tag.TAG_COMPOUND);
+        playerTrials.clear();
+        for (int i = 0; i < activeTrialsList.size(); i++) {
+            CompoundTag playerTag = activeTrialsList.getCompound(i);
             UUID playerUUID = playerTag.getUUID("PlayerUUID");
-            CompoundTag trialStatus = playerTag.getCompound("TrialStatus");
-            playerTrialCompletion.put(playerUUID, trialStatus);
+
+            if (level != null) {
+                Player player = level.getPlayerByUUID(playerUUID);
+                if (player != null) {
+                    String trialType = PlayerTrialData.getCurrentTrialType(player);
+                    Trial trial = PlayerTrialData.reconstructTrial(player, trialType, this);
+                    if (trial != null) {
+                        playerTrials.put(playerUUID, trial);
+                    }
+                }
+            }
         }
     }
 

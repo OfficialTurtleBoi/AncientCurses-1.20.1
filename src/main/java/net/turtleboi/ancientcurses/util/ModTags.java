@@ -17,6 +17,7 @@ public class ModTags {
 
     public static class Items {
         public static final TagKey<Item> PRECIOUS_GEMS = tag("precious_gems");
+        public static final TagKey<Item> MAJOR_GEMS = tag("major_gems");
         public static final TagKey<Item> MINOR_GEMS = tag("minor_gems");
 
         private static TagKey<Item> tag(String name){

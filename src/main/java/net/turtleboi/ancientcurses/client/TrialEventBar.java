@@ -21,6 +21,15 @@ public class TrialEventBar extends BossEvent{
     }
 
     public static void render(GuiGraphics guiGraphics, int x, int y, BossEvent bossEvent, Minecraft minecraft) {
+        if (bossEvent == null) {
+            return;
+        }
+
+        String trialName = bossEvent.getName().getString();
+        if (!trialName.equalsIgnoreCase(PlayerTrialData.survivalTrial) && !trialName.equalsIgnoreCase(PlayerTrialData.eliminationTrial) || trialName.equalsIgnoreCase("None")) {
+            return;
+        }
+
         RenderSystem.setShaderTexture(0, TRIAL_BOSS_BAR);
 
         int barWidth = 192;
@@ -39,7 +48,6 @@ public class TrialEventBar extends BossEvent{
             guiGraphics.blit(TRIAL_BOSS_BAR, x + barBuffer, y, barBuffer, 18, barWidth - (barBuffer * 2), barHeight, barWidth, barHeight * 3);
         }
 
-        String trialName = bossEvent.getName().getString();
         if (trialName.equalsIgnoreCase(PlayerTrialData.survivalTrial)){
             int percentComplete = (int) ((bossEvent.getProgress() * 100));
             String percentText = "Survive: " + percentComplete + "%";

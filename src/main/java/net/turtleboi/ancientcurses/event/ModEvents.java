@@ -80,12 +80,7 @@ public class ModEvents {
         Player player = event.getEntity();
         PlayerTrialData.loadTrialData(player);
 
-        String trialType = PlayerTrialData.getCurrentTrialType(player);
-        if (trialType != null && !trialType.isEmpty()) {
-            PlayerTrialData.reconstructTrial(player, trialType);
-        }
-
-        BlockPos altarPos = PlayerTrialData.getAltarPos(player);
+        BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
         if (altarPos == null) {
             return;
         }
@@ -95,11 +90,13 @@ public class ModEvents {
             return;
         }
 
-        Trial trial = altar.getPlayerTrial(player.getUUID());
-        if (trial instanceof EliminationTrial eliminationTrial) {
-            eliminationTrial.trackProgress(player);
-        } else if (trial instanceof SurvivalTrial survivalTrial) {
-            survivalTrial.trackProgress(player);
+        String trialType = PlayerTrialData.getCurrentTrialType(player);
+        if (trialType != null && !trialType.isEmpty()) {
+            Trial trial = PlayerTrialData.reconstructTrial(player, trialType, altar);
+            if (trial != null) {
+                altar.addPlayerTrial(player.getUUID(), trial);
+                trial.trackProgress(player);
+            }
         }
     }
 
@@ -679,7 +676,7 @@ public class ModEvents {
                 if (trial instanceof EliminationTrial eliminationTrial) {
                     eliminationTrial.incrementEliminationCount(player);
                     if (eliminationTrial.isTrialCompleted(player)) {
-                        eliminationTrial.rewardPlayer(player);
+                        eliminationTrial.concludeTrial(player);
                     } else {
                         trial.trackProgress(player);
                     }
@@ -706,13 +703,10 @@ public class ModEvents {
                 if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
                     return;
                 }
+
                 //player.sendSystemMessage(Component.literal("You died before completing the trial.").withStyle(ChatFormatting.RED));
                 Trial trial = altar.getPlayerTrial(player.getUUID());
-                if (trial instanceof EliminationTrial eliminationTrial) {
-                    eliminationTrial.removeEventBar(player);
-                } else if (trial instanceof SurvivalTrial survivalTrial) {
-                    survivalTrial.removeEventBar(player);
-                }
+                trial.removeEventBar(player);
             }
         }
     }
@@ -918,7 +912,7 @@ public class ModEvents {
                         trial.trackProgress(player);
 
                         if (trial.isTrialCompleted(player)) {
-                            trial.rewardPlayer(player);
+                            trial.concludeTrial(player);
                         }
                     }
                 }

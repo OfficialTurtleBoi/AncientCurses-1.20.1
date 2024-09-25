@@ -60,9 +60,9 @@ public class EliminationTrial implements Trial {
         int eliminations = getEliminationCount(player);
         int requiredEliminations = getRequiredEliminations(player);
         float progressPercentage = Math.min((float) eliminations / requiredEliminations, 1.0f);
-        //player.displayClientMessage(Component.literal("Eliminations: " + eliminations + "/" + requiredEliminations).withStyle(ChatFormatting.YELLOW), true);
+        player.displayClientMessage(Component.literal("Eliminations: " + eliminations + "/" + requiredEliminations).withStyle(ChatFormatting.YELLOW), true);
 
-        ModNetworking.sendToPlayer(new SyncTrialDataS2C(eliminations,requiredEliminations, 0, 0), (ServerPlayer) player);
+        ModNetworking.sendToPlayer(new SyncTrialDataS2C(PlayerTrialData.eliminationTrial, eliminations,requiredEliminations, 0, 0), (ServerPlayer) player);
 
         if (this.bossEvent != null) {
             this.bossEvent.setProgress(progressPercentage);
@@ -70,9 +70,9 @@ public class EliminationTrial implements Trial {
     }
 
     @Override
-    public void rewardPlayer(Player player) {
+    public void concludeTrial(Player player) {
         UUID playerUUID = player.getUUID();
-        //player.displayClientMessage(Component.literal("You have completed the elimination trial!").withStyle(ChatFormatting.GREEN), true);
+        player.displayClientMessage(Component.literal("You have completed the elimination trial! Collect your reward").withStyle(ChatFormatting.GREEN), true);
         player.removeEffect(this.effect);
         resetEliminationData(player);
 
@@ -83,20 +83,27 @@ public class EliminationTrial implements Trial {
 
         altar.setPlayerTrialStatus(playerUUID, true, false);
         altar.setPlayerTrialCompleted(player);
+        altar.removePlayerTrial(playerUUID);
     }
 
     public void resetEventProgress(){
         this.bossEvent.setProgress(0.0f);
     }
 
-    public void removeEventBar(Player player){
-        UUID playerUUID = player.getUUID();
-        altar.removePlayerTrial(playerUUID);
-        if (player instanceof ServerPlayer serverPlayer) {
-            this.bossEvent.removePlayer(serverPlayer);
+    @Override
+    public void removeEventBar(Player player) {
+        if (this.bossEvent != null) {
+            if (player instanceof ServerPlayer serverPlayer) {
+                this.bossEvent.removePlayer(serverPlayer);
+                ModNetworking.sendToPlayer(new SyncTrialDataS2C("None", 0, 0, 0, 0), serverPlayer);
+                System.out.println("Boss bar removed for player: " + player.getName().getString());
+            }
+            this.bossEvent = null;
+        } else {
+            System.out.println("No boss bar to remove for player: " + player.getName().getString());
         }
-        this.bossEvent = null;
     }
+
 
     public void incrementEliminationCount(Player player) {
         int eliminations = getEliminationCount(player);

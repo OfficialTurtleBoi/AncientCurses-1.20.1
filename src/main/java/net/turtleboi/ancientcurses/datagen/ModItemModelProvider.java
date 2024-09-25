@@ -41,6 +41,7 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.PERFECT_RUBY);
         simpleItem(ModItems.PERFECT_SAPPHIRE);
         simpleItem(ModItems.PERFECT_TOPAZ);
+        simpleItem(ModItems.ANCIENT_ALEXANDRITE);
         simpleItem(ModItems.ANCIENT_CHRYSOBERYL);
         simpleItem(ModItems.ROT_CLUMP);
     }

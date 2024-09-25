@@ -6,6 +6,7 @@ public class PlayerClientData {
     public static boolean isVoid = false;
     public static int voidTimer = 0;
     public static int voidTotalTime = 0;
+    public static String trialType = "None";
     public static int eliminationKills = 0;
     public static int eliminationKillsRequired = 0;
     private static long trialDurationElapsed = 0;
@@ -49,6 +50,22 @@ public class PlayerClientData {
 
     public static Integer getTotalVoidTime() {
         return voidTotalTime;
+    }
+
+    public static boolean hasTrial() {
+        if (trialType == null) {
+            return false;
+        }
+        return !trialType.equals("None");
+    }
+
+
+    public static String getTrialType(){
+        return trialType;
+    }
+
+    public static void setTrialType(String trialString){
+        trialType = trialString;
     }
 
     public static Integer getEliminationKills(){

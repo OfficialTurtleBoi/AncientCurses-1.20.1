@@ -142,6 +142,10 @@ public class CursedAltarBlock extends BaseEntityBlock {
             BlockEntity blockEntity = level.getBlockEntity(pos);
 
             if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
+                if (altarEntity.isAnimating()) {
+                    return InteractionResult.FAIL;
+                }
+
                 if (PlayerTrialData.isPlayerCursed(player)) {
                     //player.sendSystemMessage(Component.literal("You are already cursed! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
                     return InteractionResult.FAIL;
@@ -183,7 +187,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                         ItemStack gemSlot2 = altarEntity.getGemInSlot(2);
 
                         if (!gemSlot0.isEmpty() && gemSlot0.is(gemSlot1.getItem()) && gemSlot0.is(gemSlot2.getItem())) {
-                            player.sendSystemMessage(Component.literal("3 Matching gems!"));
+                            player.sendSystemMessage(Component.literal("3 Matching gems! Upgrading..."));
                             altarEntity.startAnimation();
                             level.sendBlockUpdated(pos, state, state, 3);
                             return InteractionResult.SUCCESS;
@@ -217,8 +221,8 @@ public class CursedAltarBlock extends BaseEntityBlock {
         UUID playerUUID = player.getUUID();
         altarEntity.setPlayerTrialStatus(playerUUID, false, false);
         altarEntity.cursePlayer(player, randomCurse, randomAmplifier, altarEntity);
-        player.displayClientMessage(Component.literal(
-                "You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE), true); //debug code
+        //player.displayClientMessage(Component.literal(
+        //        "You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE), true); //debug code
     }
 
     private boolean isPreciousGem(ItemStack itemStack){
@@ -237,10 +241,8 @@ public class CursedAltarBlock extends BaseEntityBlock {
         if (player instanceof ServerPlayer) {
             rewardPlayerWithLootTable(player, amplifier, level, pos);
             Trial trial = altarEntity.getPlayerTrial(player.getUUID());
-            if (trial instanceof EliminationTrial eliminationTrial) {
-                eliminationTrial.removeEventBar(player);
-            } else if (trial instanceof SurvivalTrial survivalTrial) {
-                survivalTrial.removeEventBar(player);
+            if (trial != null) {
+                trial.removeEventBar(player);
             }
             PlayerTrialData.clearCurseAmplifier(player);
             altarEntity.markRewardCollected(player);
@@ -258,7 +260,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
         LootTable lootTable = serverLevel.getServer().getLootData().getElement(LootDataType.TABLE, lootTableLocations[lootIndex]);
 
         if (lootTable == null) {
-            player.sendSystemMessage(Component.literal("No loot table found for this trial reward.").withStyle(ChatFormatting.RED));
+            //player.sendSystemMessage(Component.literal("No loot table found for this trial reward.").withStyle(ChatFormatting.RED));
             return;
         }
 
@@ -343,10 +345,12 @@ public class CursedAltarBlock extends BaseEntityBlock {
         return new CursedAltarBlockEntity(blockPos, blockState);
     }
 
-    @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, BlockState pState, BlockEntityType<T> pBlockEntityType) {
-        return pLevel.isClientSide ? createTickerHelper(pBlockEntityType, ModBlockEntities.CURSED_ALTAR_BE.get(), CursedAltarBlockEntity::bookAnimationTick) : null;
+    public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, BlockState pState, BlockEntityType<T> pBlockEntityType) {
+        if (pLevel.isClientSide) {
+            return createTickerHelper(pBlockEntityType, ModBlockEntities.CURSED_ALTAR_BE.get(), CursedAltarBlockEntity::bookAnimationTick);
+        } else {
+            return createTickerHelper(pBlockEntityType, ModBlockEntities.CURSED_ALTAR_BE.get(), CursedAltarBlockEntity::serverTick);
+        }
     }
-
 }
