@@ -11,6 +11,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -21,6 +22,11 @@ import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.entity.client.CursedPortalModel;
 import net.turtleboi.ancientcurses.entity.client.renderer.CursedPortalRenderer;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
+import net.turtleboi.ancientcurses.particle.custom.CursedFlameParticle;
+import net.turtleboi.ancientcurses.particle.custom.CursedParticle;
+import net.turtleboi.ancientcurses.particle.custom.HealParticle;
+import net.turtleboi.ancientcurses.particle.custom.SleepParticle;
 import net.turtleboi.ancientcurses.screen.LapidaristTableContainerScreen;
 import net.turtleboi.ancientcurses.screen.ModMenuTypes;
 
@@ -60,5 +66,17 @@ public class ModClientBusEvents {
     @SubscribeEvent
     public static void registerBER(EntityRenderersEvent.RegisterRenderers event){
         event.registerBlockEntityRenderer(ModBlockEntities.CURSED_ALTAR_BE.get(), CursedAltarRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void registerParticleFactories(RegisterParticleProvidersEvent event){
+        event.registerSpriteSet(ModParticleTypes.HEAL_PARTICLE.get(),
+                HealParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.CURSED_PARTICLE.get(),
+                CursedParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.SLEEP_PARTICLE.get(),
+                SleepParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
+                CursedFlameParticle.Provider::new);
     }
 }
