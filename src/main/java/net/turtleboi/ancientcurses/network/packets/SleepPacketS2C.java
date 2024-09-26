@@ -26,10 +26,7 @@ public class SleepPacketS2C {
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            Player player = Minecraft.getInstance().player;
-            if (player != null) {
-                PlayerClientData.setAsleep(isAsleep);
-            }
+            PlayerClientData.setAsleep(isAsleep);
         });
         context.setPacketHandled(true);
         return true;

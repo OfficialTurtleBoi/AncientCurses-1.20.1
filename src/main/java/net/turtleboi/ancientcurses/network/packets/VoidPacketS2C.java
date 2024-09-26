@@ -34,12 +34,9 @@ public class VoidPacketS2C {
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            Player player = Minecraft.getInstance().player;
-            if (player != null) {
-                PlayerClientData.setVoid(isVoid);
-                PlayerClientData.setVoidTimer(voidTimer);
-                PlayerClientData.setTotalVoidTime(voidTotalTime);
-            }
+            PlayerClientData.setVoid(isVoid);
+            PlayerClientData.setVoidTimer(voidTimer);
+            PlayerClientData.setTotalVoidTime(voidTotalTime);
         });
         context.setPacketHandled(true);
         return true;

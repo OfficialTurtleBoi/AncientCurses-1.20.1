@@ -45,7 +45,7 @@ public class SyncTrialDataS2C {
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            System.out.println(Component.literal("Sending trial information!"));
+            //System.out.println(Component.literal("Sending trial information!"));
             PlayerClientData.setTrialType(trialType);
             if (trialType == null || trialType.equals("None")) {
                 PlayerClientData.trialType = "None";

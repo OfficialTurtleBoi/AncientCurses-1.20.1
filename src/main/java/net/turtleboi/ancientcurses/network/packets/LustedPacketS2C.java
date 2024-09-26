@@ -12,7 +12,7 @@ import net.turtleboi.ancientcurses.client.PlayerClientData;
 import java.util.function.Supplier;
 
 public class LustedPacketS2C {
-    private final boolean isLusted;
+    public final boolean isLusted;
 
     public LustedPacketS2C(boolean isLusted) {
         this.isLusted = isLusted;
@@ -29,10 +29,7 @@ public class LustedPacketS2C {
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            Player player = Minecraft.getInstance().player;
-            if (player != null) {
-                PlayerClientData.setLusted(isLusted);
-            }
+            PlayerClientData.setLusted(isLusted);
         });
         context.setPacketHandled(true);
         return true;

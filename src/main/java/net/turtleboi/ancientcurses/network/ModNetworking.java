@@ -55,11 +55,12 @@ public class ModNetworking {
                 .consumerMainThread(SyncTrialDataS2C::handle)
                 .add();
     }
-    public static <MSG> void sendToServer (MSG message) {
-        INSTANCE.sendToServer(message);
-    }
 
     public static <MSG> void sendToPlayer (MSG message, ServerPlayer player) {
         INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), message);
+    }
+
+    public static <MSG> void sendToServer (MSG message) {
+        INSTANCE.sendToServer(message);
     }
 }

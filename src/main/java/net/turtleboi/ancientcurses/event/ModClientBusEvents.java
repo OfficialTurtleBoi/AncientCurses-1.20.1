@@ -35,7 +35,6 @@ import net.turtleboi.ancientcurses.screen.ModMenuTypes;
 public class ModClientBusEvents {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
-        ModNetworking.register();
         EntityRenderers.register(ModEntities.CURSED_PORTAL.get(), CursedPortalRenderer::new);
         MenuScreens.register(ModMenuTypes.LAPIDARIST_MENU.get(), LapidaristTableContainerScreen::new);
 

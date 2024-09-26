@@ -59,6 +59,7 @@ public class AncientCurses {
         event.enqueueWork(() -> {
 
         });
+        ModNetworking.register();
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
