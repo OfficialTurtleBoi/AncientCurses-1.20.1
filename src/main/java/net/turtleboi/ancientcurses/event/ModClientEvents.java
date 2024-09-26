@@ -4,11 +4,15 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.BossHealthOverlay;
 import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.bossevents.CustomBossEvent;
 import net.minecraft.util.FastColor;
@@ -92,6 +96,39 @@ public class ModClientEvents {
             int itemValue = ItemValueMap.getItemValue(itemStack, level);
             int itemStackValue = itemValue * itemStack.getCount();
             //event.getToolTip().add(Component.literal("Item Value: " + itemStackValue));
+        }
+
+        if (level != null && itemStack.hasTag()) {
+            CompoundTag itemTag = itemStack.getTag();
+
+            if (itemTag != null && itemTag.getBoolean("Socketable")) {
+                if (itemTag != null) {
+                    if (itemTag.contains("MainGem")) {
+                        ItemStack mainGemStack = ItemStack.of(itemTag.getCompound("MainGem"));
+                        event.getToolTip().add(Component.literal("Main Gem: " + mainGemStack.getHoverName().getString()).withStyle(ChatFormatting.GOLD));
+                    } else {
+                        event.getToolTip().add(Component.literal("Main Gem: None").withStyle(ChatFormatting.GRAY));
+                    }
+
+                    if (itemTag.contains("MinorGems")) {
+                        ListTag minorGems = itemTag.getList("MinorGems", CompoundTag.TAG_COMPOUND);
+                        if (!minorGems.isEmpty()) {
+                            event.getToolTip().add(Component.literal("Minor Gems:").withStyle(ChatFormatting.GREEN));
+                            for (int i = 0; i < minorGems.size(); i++) {
+                                ItemStack minorGemStack = ItemStack.of(minorGems.getCompound(i));
+                                event.getToolTip().add(Component.literal("  - " + minorGemStack.getHoverName().getString()).withStyle(ChatFormatting.YELLOW));
+                            }
+                        } else {
+                            event.getToolTip().add(Component.literal("Minor Gems: None").withStyle(ChatFormatting.GRAY));
+                        }
+                    } else {
+                        event.getToolTip().add(Component.literal("Minor Gems: None").withStyle(ChatFormatting.GRAY));
+                    }
+                } else {
+                    event.getToolTip().add(Component.literal("Main Gem: None").withStyle(ChatFormatting.GRAY));
+                    event.getToolTip().add(Component.literal("Minor Gems: None").withStyle(ChatFormatting.GRAY));
+                }
+            }
         }
     }
 

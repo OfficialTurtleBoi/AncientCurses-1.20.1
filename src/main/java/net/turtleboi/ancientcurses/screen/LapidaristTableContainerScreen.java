@@ -29,10 +29,18 @@ public class LapidaristTableContainerScreen extends AbstractContainerScreen<Lapi
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShaderTexture(0, TEXTURE);
-        int x = (width - imageWidth) / 2;
-        int y = (height - imageWidth) / 2;
+        int x = (width - 176) / 2;
+        int y = (height - 166) / 2;
 
-        pGuiGraphics.blit(TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
+        pGuiGraphics.blit(TEXTURE, x, y, 0, 0, 176, 166);
+
+        pGuiGraphics.blit(TEXTURE, x + 79, y + 8, 176, 0, 18, 18);
+        pGuiGraphics.blit(TEXTURE, x + 52, y + 28, 176, 0, 18, 18);
+        pGuiGraphics.blit(TEXTURE, x + 106, y + 28, 176, 0, 18, 18);
+        pGuiGraphics.blit(TEXTURE, x + 61, y + 58, 176, 0, 18, 18);
+        pGuiGraphics.blit(TEXTURE, x + 97, y + 58, 176, 0, 18, 18);
+
+        pGuiGraphics.blit(TEXTURE, x + 76, y + 30, 176, 18, 24, 24);
     }
 
     @Override

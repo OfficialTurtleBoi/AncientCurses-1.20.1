@@ -1,7 +1,6 @@
 package net.turtleboi.ancientcurses.screen;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
@@ -12,8 +11,6 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.SlotItemHandler;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.LapidaristTableBlockEntity;
-import net.turtleboi.ancientcurses.item.ModItems;
-import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.util.ModTags;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +19,7 @@ public class LapidaristTableContainerMenu extends AbstractContainerMenu {
     public final LapidaristTableBlockEntity blockEntity;
     private final Level level;
     private final ContainerData data;
+    private static final int MAX_SOCKETS = 6;
 
     public LapidaristTableContainerMenu(int pContainerId, Inventory pPlayerInventory, FriendlyByteBuf pData) {
         this(pContainerId, pPlayerInventory, pPlayerInventory.player.level().getBlockEntity(pData.readBlockPos()), new SimpleContainerData(7));
@@ -38,10 +36,16 @@ public class LapidaristTableContainerMenu extends AbstractContainerMenu {
         addPlayerHotbar(pPlayerInventory);
 
         this.blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(iItemHandler -> {
-            this.addSlot(new SlotItemHandler(iItemHandler, 0, 18, 29) {
+            this.addSlot(new SlotItemHandler(iItemHandler, 0, 18, 34) {
                 @Override
                 public boolean mayPlace(@NotNull ItemStack stack) {
-                    return stack.getItem() instanceof GoldenAmuletItem;
+                    if (stack.hasTag()) {
+                        assert stack.getTag() != null;
+                        if (stack.getTag().getBoolean("Socketable")) {
+                            return true;
+                        }
+                    }
+                    return false;
                 }
 
                 @Override
@@ -57,17 +61,19 @@ public class LapidaristTableContainerMenu extends AbstractContainerMenu {
                 }
             });
 
-            this.addSlot(new PreciousGemSlot(iItemHandler, 2, 80, 4, blockEntity));
-            this.addSlot(new PreciousGemSlot(iItemHandler, 3, 53, 24, blockEntity));
-            this.addSlot(new PreciousGemSlot(iItemHandler, 4, 107, 24, blockEntity));
-            this.addSlot(new PreciousGemSlot(iItemHandler, 1, 80, 29, blockEntity) {
+            this.addSlot(new PreciousGemSlot(iItemHandler, 2, 80, 9, blockEntity));
+            this.addSlot(new PreciousGemSlot(iItemHandler, 3, 53, 29, blockEntity));
+            this.addSlot(new PreciousGemSlot(iItemHandler, 4, 107, 29, blockEntity));
+            this.addSlot(new PreciousGemSlot(iItemHandler, 5, 62, 59, blockEntity));
+            this.addSlot(new PreciousGemSlot(iItemHandler, 6, 98, 59, blockEntity));
+
+            this.addSlot(new PreciousGemSlot(iItemHandler, 1, 80, 34, blockEntity) {
                 @Override
                 public boolean mayPlace(@NotNull ItemStack stack) {
-                    return isAmuletPresent() && super.mayPlace(stack) && stack.getItem() instanceof PreciousGemItem && !stack.is(ModTags.Items.MINOR_GEMS);
+                    ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
+                    return !socketableItem.isEmpty() && super.mayPlace(stack) && stack.getItem() instanceof PreciousGemItem && !stack.is(ModTags.Items.MINOR_GEMS);
                 }
             });
-            this.addSlot(new PreciousGemSlot(iItemHandler, 5, 62, 54, blockEntity));
-            this.addSlot(new PreciousGemSlot(iItemHandler, 6, 98, 54, blockEntity));
         });
 
         addDataSlots(pData);
@@ -76,14 +82,14 @@ public class LapidaristTableContainerMenu extends AbstractContainerMenu {
     private void addPlayerInventory(Inventory playerInventory) {
         for (int i = 0; i < 3; ++i) {
             for (int l = 0; l < 9; ++l) {
-                this.addSlot(new Slot(playerInventory, l + i * 9 + 9, 8 + l * 18, 79 + i * 18));
+                this.addSlot(new Slot(playerInventory, l + i * 9 + 9, 8 + l * 18, 84 + i * 18));
             }
         }
     }
 
     private void addPlayerHotbar(Inventory playerInventory) {
         for (int i = 0; i < 9; ++i) {
-            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 137));
+            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 142));
         }
     }
 

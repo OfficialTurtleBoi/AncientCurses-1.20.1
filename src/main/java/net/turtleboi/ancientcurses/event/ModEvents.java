@@ -4,6 +4,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -35,9 +36,11 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.event.AnvilUpdateEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
@@ -45,6 +48,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
 import net.minecraftforge.event.level.BlockEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -60,6 +64,7 @@ import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
+import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
@@ -439,7 +444,7 @@ public class ModEvents {
             MobEffectInstance prideCurse = player.getEffect(ModEffects.CURSE_OF_PRIDE.get());
             if (prideCurse != null) {
                 event.setCanceled(true);
-                player.displayClientMessage(Component.literal("You're better than them!"), true);
+                player.displayClientMessage(Component.literal("You're better than them!").withStyle(ChatFormatting.RED), true);
             }
         }
     }
@@ -698,6 +703,14 @@ public class ModEvents {
                 //player.sendSystemMessage(Component.literal("You died before completing the trial.").withStyle(ChatFormatting.RED));
                 Trial trial = altar.getPlayerTrial(player.getUUID());
                 trial.removeEventBar(player);
+                ModNetworking.sendToPlayer(
+                        new SyncTrialDataS2C(
+                                "None",
+                                0,
+                                0,
+                                0,
+                                0),
+                        (ServerPlayer) player);
             }
         }
     }
@@ -744,15 +757,14 @@ public class ModEvents {
     }
 
     @SubscribeEvent
-    public static void onMobEffected(MobEffectEvent event) {
+    public static void onMobEffectApplicable(MobEffectEvent.Applicable event) {
         if (event.getEntity() instanceof Player player) {
             MobEffectInstance prideCurse = player.getEffect(ModEffects.CURSE_OF_PRIDE.get());
             if (prideCurse != null && prideCurse.getAmplifier() >= 1) {
                 MobEffectInstance addedEffect = event.getEffectInstance();
-                if (addedEffect != null && addedEffect.getEffect().getCategory() == MobEffectCategory.BENEFICIAL) {
-                    player.removeEffect(addedEffect.getEffect());
-                    event.setCanceled(true);
-                    player.displayClientMessage(Component.literal("Help is for the weak!"), true);
+                if (addedEffect.getEffect().getCategory() == MobEffectCategory.BENEFICIAL) {
+                    event.setResult(Event.Result.DENY);
+                    player.displayClientMessage(Component.literal("Help is for the weak!").withStyle(ChatFormatting.RED), true);
                 }
             }
         }
@@ -793,6 +805,40 @@ public class ModEvents {
                     newEffect.update(new MobEffectInstance(newEffect.getEffect(), increasedDuration, newEffect.getAmplifier(),
                             newEffect.isAmbient(), newEffect.isVisible(), newEffect.showIcon()));
                 }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onAnvilUpdate(AnvilUpdateEvent event) {
+        ItemStack leftStack = event.getLeft();
+        ItemStack rightStack = event.getRight();
+        if (rightStack.getItem() == Items.DIAMOND) {
+            ItemStack resultStack = leftStack.copy();
+            CompoundTag nbt = resultStack.getOrCreateTag();
+            int currentSockets = nbt.getInt("SocketCount");
+            boolean isSocketable = nbt.getBoolean("Socketable");
+
+            if (!isSocketable || (isSocketable && currentSockets < 3)) {
+                if (!isSocketable) {
+                    nbt.putBoolean("Socketable", true);
+                    currentSockets = 0;
+                }
+
+                if (currentSockets < 3) {
+                    nbt.putInt("SocketCount", currentSockets + 1);
+                    ListTag socketsList = nbt.getList("Sockets", CompoundTag.TAG_COMPOUND);
+                    CompoundTag newSocket = new CompoundTag();
+                    newSocket.putInt("SlotIndex", currentSockets);
+                    newSocket.putString("SocketType", "General");
+                    socketsList.add(newSocket);
+                    nbt.put("Sockets", socketsList);
+                }
+
+                resultStack.setTag(nbt);
+                event.setOutput(resultStack);
+                event.setCost(5);
+                event.setMaterialCost(1);
             }
         }
     }
@@ -859,7 +905,7 @@ public class ModEvents {
                 player.setSprinting(false);
                 if (prideCurse.getAmplifier() >= 1) {
                     player.hurt(player.level().damageSources().generic(), 1.0F);
-                    player.displayClientMessage(Component.literal("Running is for the pathetic!"), true);
+                    player.displayClientMessage(Component.literal("Running is for the pathetic!").withStyle(ChatFormatting.RED), true);
                 }
             }
 

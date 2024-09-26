@@ -19,12 +19,12 @@ public class PreciousGemSlot extends SlotItemHandler {
 
     @Override
     public boolean mayPlace(@NotNull ItemStack stack) {
-        return isAmuletPresent() && super.mayPlace(stack) && stack.getItem() instanceof PreciousGemItem;
+        return isSocketableItemPresent() && super.mayPlace(stack) && stack.getItem() instanceof PreciousGemItem;
     }
 
     @Override
     public boolean mayPickup(Player player) {
-        return isAmuletPresent() && super.mayPickup(player);
+        return isSocketableItemPresent() && super.mayPickup(player);
     }
 
     @Override
@@ -49,8 +49,8 @@ public class PreciousGemSlot extends SlotItemHandler {
         blockEntity.onSlotChanged();
     }
 
-    public boolean isAmuletPresent() {
-        ItemStack amulet = blockEntity.getInventory().getStackInSlot(LapidaristTableBlockEntity.amuletSlot);
-        return !amulet.isEmpty() && amulet.getItem() instanceof GoldenAmuletItem;
+    public boolean isSocketableItemPresent() {
+        ItemStack itemStack = blockEntity.getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
+        return !itemStack.isEmpty() && itemStack.hasTag() && itemStack.getTag().getBoolean("Socketable");
     }
 }
