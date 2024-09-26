@@ -22,6 +22,7 @@ import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.entity.client.CursedPortalModel;
 import net.turtleboi.ancientcurses.entity.client.renderer.CursedPortalRenderer;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.particle.custom.CursedFlameParticle;
 import net.turtleboi.ancientcurses.particle.custom.CursedParticle;
@@ -34,6 +35,7 @@ import net.turtleboi.ancientcurses.screen.ModMenuTypes;
 public class ModClientBusEvents {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
+        ModNetworking.register();
         EntityRenderers.register(ModEntities.CURSED_PORTAL.get(), CursedPortalRenderer::new);
         MenuScreens.register(ModMenuTypes.LAPIDARIST_MENU.get(), LapidaristTableContainerScreen::new);
 

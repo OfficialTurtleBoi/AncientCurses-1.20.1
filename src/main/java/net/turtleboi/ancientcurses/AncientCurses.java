@@ -56,7 +56,9 @@ public class AncientCurses {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        ModNetworking.register();
+        event.enqueueWork(() -> {
+
+        });
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
