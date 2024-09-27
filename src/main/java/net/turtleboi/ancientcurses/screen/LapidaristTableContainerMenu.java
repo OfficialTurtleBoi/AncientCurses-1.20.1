@@ -36,7 +36,7 @@ public class LapidaristTableContainerMenu extends AbstractContainerMenu {
         addPlayerHotbar(pPlayerInventory);
 
         this.blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(iItemHandler -> {
-            this.addSlot(new SlotItemHandler(iItemHandler, 0, 18, 34) {
+            this.addSlot(new SlotItemHandler(iItemHandler, 0, 14, 32) {
                 @Override
                 public boolean mayPlace(@NotNull ItemStack stack) {
                     if (stack.hasTag()) {
