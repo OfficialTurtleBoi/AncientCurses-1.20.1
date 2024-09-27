@@ -17,6 +17,12 @@ public class ModEntities {
                     .sized(0.25F, 2.625F)
                     .build("cursed_portal"));
 
+    public static final RegistryObject<EntityType<ThrownCursedPearl>> CURSED_PEARL =
+            ENTITY_TYPES.register("cursed_pearl" , () -> EntityType.Builder.<ThrownCursedPearl>of(ThrownCursedPearl::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(10)
+                    .build("cursed_pearl"));
+
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);
     }

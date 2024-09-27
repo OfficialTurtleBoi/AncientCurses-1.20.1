@@ -3,6 +3,7 @@ package net.turtleboi.ancientcurses.event;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -36,6 +37,7 @@ public class ModClientBusEvents {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         EntityRenderers.register(ModEntities.CURSED_PORTAL.get(), CursedPortalRenderer::new);
+        EntityRenderers.register(ModEntities.CURSED_PEARL.get(), ThrownItemRenderer::new);
         MenuScreens.register(ModMenuTypes.LAPIDARIST_MENU.get(), LapidaristTableContainerScreen::new);
 
         event.enqueueWork(() -> ItemProperties.register(ModItems.GOLDEN_AMULET.get(), new ResourceLocation(AncientCurses.MOD_ID, "main_gem"),

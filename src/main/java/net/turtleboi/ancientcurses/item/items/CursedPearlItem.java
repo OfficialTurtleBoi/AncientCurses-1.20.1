@@ -24,7 +24,7 @@ public class CursedPearlItem extends Item {
         pLevel.playSound(null, pPlayer.getX(), pPlayer.getY(), pPlayer.getZ(), SoundEvents.ENDER_PEARL_THROW, SoundSource.NEUTRAL, 0.5F, 0.4F / (pLevel.getRandom().nextFloat() * 0.4F + 0.8F));
         pPlayer.getCooldowns().addCooldown(this, 20);
         if (!pLevel.isClientSide) {
-            ThrownEnderpearl thrownCursedPearl = new ThrownEnderpearl(pLevel, pPlayer);
+            ThrownCursedPearl thrownCursedPearl = new ThrownCursedPearl(pLevel, pPlayer);
             thrownCursedPearl.setItem(itemstack);
             thrownCursedPearl.shootFromRotation(pPlayer, pPlayer.getXRot(), pPlayer.getYRot(), 0.0F, 1.5F, 1.0F);
             pLevel.addFreshEntity(thrownCursedPearl);

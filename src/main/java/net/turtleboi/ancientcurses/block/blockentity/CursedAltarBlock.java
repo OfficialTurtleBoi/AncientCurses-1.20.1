@@ -10,6 +10,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
@@ -221,6 +224,27 @@ public class CursedAltarBlock extends BaseEntityBlock {
         MobEffect randomCurse = CursedAltarBlockEntity.getRandomCurse();
         int randomAmplifier = CursedAltarBlockEntity.getRandomAmplifier(player);
 
+        BlockPos playerPos = player.blockPosition();
+        Level level = player.level();
+
+        level.playSound(
+                null,
+                playerPos,
+                SoundEvents.ELDER_GUARDIAN_CURSE,
+                SoundSource.AMBIENT,
+                1.0F,
+                0.25F
+        );
+
+        level.playSound(
+                null,
+                playerPos,
+                SoundEvents.AMBIENT_SOUL_SAND_VALLEY_MOOD.get(),
+                SoundSource.AMBIENT,
+                1.0F,
+                0.5F
+        );
+
         altarEntity.cursePlayer(player, randomCurse, randomAmplifier);
         //player.displayClientMessage(Component.literal(
         //        "You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE), true); //debug code
@@ -305,29 +329,41 @@ public class CursedAltarBlock extends BaseEntityBlock {
         }
 
         ResourceLocation[] gemLootLocations = {
-                new ResourceLocation("ancientcurses", "broken_gems"),
+                new ResourceLocation("ancientcurses", "ancient_gems"),
+                new ResourceLocation("ancientcurses", "perfect_gems"),
                 new ResourceLocation("ancientcurses", "polished_gems"),
-                new ResourceLocation("ancientcurses", "perfect_gems")};
-        int gemIndex = Math.min(pAmplifier, gemLootLocations.length - 1);
+                new ResourceLocation("ancientcurses", "broken_gems")
+        };
 
-        LootTable gemLootTable = serverLevel.getServer().getLootData().getElement(LootDataType.TABLE, gemLootLocations[gemIndex]);
+        int[][] lootChances = {
+                {0, 0, 10, 100},
+                {0, 10, 75, 100},
+                {10, 66, 100, 100}
+        };
 
-        if (gemLootTable != null) {
-            int[] gemLootChance = {100, 80, 60};
-            int gemLootIndex = Math.min(pAmplifier, gemLootChance.length - 1);
-            if (random.nextInt(100) < gemLootChance[gemLootIndex]) {
-                LootParams.Builder gemLootParamsBuilder = new LootParams.Builder(serverLevel)
-                        .withParameter(LootContextParams.THIS_ENTITY, player)
-                        .withParameter(LootContextParams.ORIGIN, player.position());
+        int ampIndex = Math.min(pAmplifier, lootChances.length - 1);
+        for (int tier = 0; tier < gemLootLocations.length; tier++) {
+            ResourceLocation gemLootLocation = gemLootLocations[tier];
+            LootTable gemLootTable = serverLevel.getServer().getLootData().getElement(LootDataType.TABLE, gemLootLocation);
 
-                LootParams gemLootParams = gemLootParamsBuilder.create(LootContextParamSets.CHEST);
-                ObjectArrayList<ItemStack> gemLoot = gemLootTable.getRandomItems(gemLootParams);
+            if (gemLootTable != null) {
+                int gemLootChance = lootChances[ampIndex][tier];
+                if (random.nextInt(100) < gemLootChance) {
+                    LootParams.Builder gemLootParamsBuilder = new LootParams.Builder(serverLevel)
+                            .withParameter(LootContextParams.THIS_ENTITY, player)
+                            .withParameter(LootContextParams.ORIGIN, player.position());
 
-                if (!gemLoot.isEmpty()) {
-                    totalGeneratedLoot.add(gemLoot.get(0));
+                    LootParams gemLootParams = gemLootParamsBuilder.create(LootContextParamSets.CHEST);
+                    ObjectArrayList<ItemStack> gemLoot = gemLootTable.getRandomItems(gemLootParams);
+
+                    if (!gemLoot.isEmpty()) {
+                        totalGeneratedLoot.add(gemLoot.get(0));
+                        break;
+                    }
                 }
             }
         }
+
 
         for (ItemStack item : totalGeneratedLoot) {
             if (!item.isEmpty()) {

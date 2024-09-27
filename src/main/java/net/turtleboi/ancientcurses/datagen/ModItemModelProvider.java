@@ -44,6 +44,7 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.ANCIENT_ALEXANDRITE);
         simpleItem(ModItems.ANCIENT_CHRYSOBERYL);
         simpleItem(ModItems.ROT_CLUMP);
+        simpleItem(ModItems.CURSED_PEARL);
     }
 
     private ItemModelBuilder simpleItem(RegistryObject<Item> item) {

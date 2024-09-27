@@ -686,6 +686,16 @@
               "chance": 0.75
             }
           ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "ancientcurses:deprecophobia_music_disc",
+          "conditions": [
+            {
+              "condition": "minecraft:random_chance",
+              "chance": 0.5
+            }
+          ]
         }
       ]
     }
