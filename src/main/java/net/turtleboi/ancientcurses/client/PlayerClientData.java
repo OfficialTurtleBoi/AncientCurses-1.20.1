@@ -13,6 +13,7 @@ public class PlayerClientData {
     public static int eliminationKillsRequired = 0;
     private static long trialDurationElapsed = 0;
     private static long trialDurationTotal = 0;
+    private static float portalOverlayAlpha = 0;
 
     public static boolean isAsleep() {
         return isAsleep;
@@ -115,6 +116,14 @@ public class PlayerClientData {
             return Math.min(1.0F, (float) kills / (float) requiredKills);
         }
         return 0.0F;
+    }
+
+    public static Float getPortalOverlayAlpha(){
+        return portalOverlayAlpha;
+    }
+
+    public static void setPortalOverlayAlpha(float overlayAlpha) {
+        portalOverlayAlpha = overlayAlpha;
     }
 
 }

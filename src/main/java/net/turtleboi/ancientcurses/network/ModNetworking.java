@@ -54,6 +54,12 @@ public class ModNetworking {
                 .encoder(SyncTrialDataS2C::toBytes)
                 .consumerMainThread(SyncTrialDataS2C::handle)
                 .add();
+
+        net.messageBuilder(PortalOverlayPacketS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(PortalOverlayPacketS2C::new)
+                .encoder(PortalOverlayPacketS2C::toBytes)
+                .consumerMainThread(PortalOverlayPacketS2C::handle)
+                .add();
     }
 
     public static <MSG> void sendToPlayer (MSG message, ServerPlayer player) {

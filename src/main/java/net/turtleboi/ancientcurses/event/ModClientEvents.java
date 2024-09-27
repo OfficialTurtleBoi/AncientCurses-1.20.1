@@ -1,8 +1,7 @@
 package net.turtleboi.ancientcurses.event;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -10,6 +9,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.BossHealthOverlay;
 import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
@@ -74,6 +74,10 @@ public class ModClientEvents {
 
             if (player.hasEffect(ModEffects.CURSE_OF_ENDING.get())) {
                 renderPurpleOverlay(event.getGuiGraphics());
+            }
+
+            if (PlayerClientData.getPortalOverlayAlpha() > 0){
+                renderCursedPortalOverlay(minecraft);
             }
         }
     }
@@ -287,4 +291,48 @@ public class ModClientEvents {
     private static void vertex4(VertexConsumer pConsumer, Matrix4f pMatrix, float pX, float pZ) {
         pConsumer.vertex(pMatrix, 0.0F, pX, pZ).color(255, 0, 255, 0).endVertex();
     }
+
+    public static void renderCursedPortalOverlay(Minecraft minecraft) {
+        // Get the current alpha from player data
+        float alpha = PlayerClientData.getPortalOverlayAlpha();
+
+        if (alpha <= 0) {
+            return; // No need to render if alpha is zero or less
+        }
+
+        // Setup the pose stack for rendering
+        PoseStack poseStack = new PoseStack();
+
+        // Get the screen dimensions
+        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+        int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+
+        // Enable blending for transparency
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc(); // Use default blending
+        RenderSystem.setShaderColor(1.0F, 0.0F, 0.0F, alpha); // Red color with alpha
+
+        // Get the texture (this can be your custom texture or the vanilla nether portal texture)
+        ResourceLocation portalTexture = new ResourceLocation("textures/block/nether_portal.png");
+
+        // Render the red-tinted portal overlay
+        RenderSystem.setShaderTexture(0, portalTexture); // Set the texture for rendering
+        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+
+        // Define the quad to fill the screen
+        buffer.vertex(0.0D, screenHeight, -90.0D).uv(0.0F, 1.0F).endVertex();
+        buffer.vertex(screenWidth, screenHeight, -90.0D).uv(1.0F, 1.0F).endVertex();
+        buffer.vertex(screenWidth, 0.0D, -90.0D).uv(1.0F, 0.0F).endVertex();
+        buffer.vertex(0.0D, 0.0D, -90.0D).uv(0.0F, 0.0F).endVertex();
+
+        Tesselator.getInstance().end();
+
+        // Disable blending after rendering
+        RenderSystem.disableBlend();
+    }
+
+
+
 }

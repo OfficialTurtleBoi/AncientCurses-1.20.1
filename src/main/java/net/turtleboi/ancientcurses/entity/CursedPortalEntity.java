@@ -21,6 +21,10 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.turtleboi.ancientcurses.effect.effects.CurseOfObessionEffect;
+import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
+import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketS2C;
 import org.joml.Vector3f;
 
 import java.util.*;
@@ -58,6 +62,7 @@ public class CursedPortalEntity extends Entity {
         }
 
         if (!this.level().isClientSide) {
+            detectAndApplyScreenEffect();
             decrementCooldowns();
             textureTickCounter++;
             int ticksPerFrame = 2;
@@ -84,6 +89,7 @@ public class CursedPortalEntity extends Entity {
             }
 
             if (age >= 620){
+                detectAndRemoveScreenEffect();
                 this.discard();
             }
         }
@@ -263,6 +269,30 @@ public class CursedPortalEntity extends Entity {
     private static boolean isFarEnoughFromPlayer(BlockPos playerPos, BlockPos portalPos) {
         double distanceSquared = playerPos.distSqr(portalPos);
         return distanceSquared >= 4.0;
+    }
+
+    private void detectAndApplyScreenEffect() {
+        List<Player> players = this.level().getEntitiesOfClass(Player.class, this.getBoundingBox().inflate(2.0));
+        for (Player player : players) {
+            if (player instanceof ServerPlayer serverPlayer) {
+                double distance = player.distanceTo(this);
+                float alpha = (float) Math.max(0, 0.5 - (distance / 2.0));
+                sendPortalScreenEffectPacket(serverPlayer, alpha);
+            }
+        }
+    }
+
+    private void detectAndRemoveScreenEffect() {
+        List<Player> players = this.level().getEntitiesOfClass(Player.class, this.getBoundingBox().inflate(2.0));
+        for (Player player : players) {
+            if (player instanceof ServerPlayer serverPlayer) {
+                sendPortalScreenEffectPacket(serverPlayer, 0);
+            }
+        }
+    }
+
+    private void sendPortalScreenEffectPacket(ServerPlayer player, float alpha) {
+        ModNetworking.sendToPlayer(new PortalOverlayPacketS2C(alpha), player);
     }
 
     @Override
