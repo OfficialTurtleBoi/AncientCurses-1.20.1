@@ -46,7 +46,7 @@ public class SconcedWallUnlitTorchBlock extends WallTorchBlock {
                 }
                 level.playSound((Player) null, blockPos, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F, 1.0F);
                 level.gameEvent(player, GameEvent.BLOCK_CHANGE, blockPos);
-                Block newBlock = ModBlocks.SCONCED_TORCH.get();
+                Block newBlock = ModBlocks.SCONCED_WALL_TORCH.get();
                 BlockState newState = newBlock.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, state.getValue(BlockStateProperties.HORIZONTAL_FACING));
 
                 level.setBlock(blockPos, newState, 3);
