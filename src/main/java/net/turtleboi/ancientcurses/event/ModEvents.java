@@ -554,6 +554,30 @@ public class ModEvents {
                     CurseOfObessionEffect.resetLustCooldown(player, lustCurse.getAmplifier());
                 }
             }
+        } else if (target instanceof Player player){
+            AttributeInstance dodgeChanceAttribute = player.getAttribute(ModAttributes.DODGE_CHANCE.get());
+            if (dodgeChanceAttribute != null) {
+                double hitChance = dodgeChanceAttribute.getValue();
+                double randomValue = player.getRandom().nextDouble();
+                if (randomValue > hitChance) {
+                    event.setCanceled(true);
+                }
+
+                Level level = player.level();
+                if (event.isCanceled() && player != null) {
+                    double x = player.getX();
+                    double y = player.getY() + player.getBbHeight() / 2.0;
+                    double z = player.getZ();
+                    for (int i = 0; i < 10; i++) {
+                        level.addParticle(ParticleTypes.CLOUD,
+                                x + (player.getRandom().nextDouble() - 0.5),
+                                y + (player.getRandom().nextDouble() - 0.5),
+                                z + (player.getRandom().nextDouble() - 0.5),
+                                0.0, 0.0, 0.0);
+                    }
+                    //player.sendSystemMessage(Component.literal("Missed!")); //debug code
+                }
+            }
         }
     }
 
@@ -688,21 +712,8 @@ public class ModEvents {
                 }
             }
 
-            if (PlayerTrialData.isPlayerCursed(player)) {
-                PlayerTrialData.clearPlayerCurse(player);
-                BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
-                if (altarPos == null) {
-                    return;
-                }
-
-                BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
-                if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
-                    return;
-                }
-
-                //player.sendSystemMessage(Component.literal("You died before completing the trial.").withStyle(ChatFormatting.RED));
-                Trial trial = altar.getPlayerTrial(player.getUUID());
-                trial.removeEventBar(player);
+            PlayerTrialData.clearPlayerCurse(player);
+            if (player instanceof ServerPlayer serverPlayer) {
                 ModNetworking.sendToPlayer(
                         new SyncTrialDataS2C(
                                 "None",
@@ -710,7 +721,7 @@ public class ModEvents {
                                 0,
                                 0,
                                 0),
-                        (ServerPlayer) player);
+                        serverPlayer);
             }
         }
     }
@@ -824,7 +835,6 @@ public class ModEvents {
                     nbt.putBoolean("Socketable", true);
                     currentSockets = 0;
                 }
-
                 if (currentSockets < 3) {
                     nbt.putInt("SocketCount", currentSockets + 1);
                     ListTag socketsList = nbt.getList("Sockets", CompoundTag.TAG_COMPOUND);

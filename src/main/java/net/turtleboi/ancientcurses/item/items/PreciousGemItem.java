@@ -1,5 +1,8 @@
 package net.turtleboi.ancientcurses.item.items;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -7,6 +10,8 @@ import net.minecraft.world.item.Item;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
+
+import java.util.Objects;
 
 public class PreciousGemItem extends Item {
     public PreciousGemItem(Properties pProperties) {
@@ -124,6 +129,105 @@ public class PreciousGemItem extends Item {
                     amulet + "perfect_topaz_movementspeed_bonus" + slotName,
                     0.67,
                     AttributeModifier.Operation.MULTIPLY_BASE);
+        } else if (this == ModItems.ANCIENT_ALEXANDRITE.get()) {
+            if (!player.level().isDay()) {
+                AttributeModifierUtil.removeModifier(
+                        player,
+                        Attributes.ARMOR,
+                        "ancient_alexandrite_armor_bonus"
+                );
+                AttributeModifierUtil.removeModifier(
+                        player,
+                        Attributes.ARMOR_TOUGHNESS,
+                        "ancient_alexandrite_armortoughness_bonus"
+                );
+                if (!player.hasEffect(MobEffects.NIGHT_VISION) ||
+                        (player.hasEffect(MobEffects.NIGHT_VISION) && Objects.requireNonNull(player.getEffect(MobEffects.NIGHT_VISION)).getDuration() <= 220)) {
+                    player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 300, 0, true, true));
+                }
+                AttributeModifierUtil.applyPermanentModifier(
+                        player,
+                        Attributes.ATTACK_DAMAGE,
+                        amulet + "ancient_alexandrite_attackdamage_bonus" + slotName,
+                        0.25,
+                        AttributeModifier.Operation.MULTIPLY_TOTAL);
+                AttributeModifierUtil.applyPermanentModifier(
+                        player,
+                        Attributes.ATTACK_SPEED,
+                        amulet + "ancient_alexandrite_attackspeed_bonus" + slotName,
+                        0.25,
+                        AttributeModifier.Operation.MULTIPLY_TOTAL);
+                AttributeModifierUtil.applyPermanentModifier(
+                        player,
+                        ModAttributes.DODGE_CHANCE.get(),
+                        amulet + "ancient_alexandrite_dodgechance_bonus" + slotName,
+                        -0.33,
+                        AttributeModifier.Operation.ADDITION);
+            } else {
+                AttributeModifierUtil.removeModifier(
+                        player,
+                        Attributes.ATTACK_DAMAGE,
+                        "ancient_alexandrite_attackdamage_bonus"
+                );
+                AttributeModifierUtil.removeModifier(
+                        player,
+                        Attributes.ATTACK_SPEED,
+                        "ancient_alexandrite_attackspeed_bonus"
+                );
+                AttributeModifierUtil.removeModifier(
+                        player,
+                        ModAttributes.DODGE_CHANCE.get(),
+                        "ancient_alexandrite_dodgechance_bonus"
+                );
+                if (!player.hasEffect(MobEffects.REGENERATION)) {
+                    player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 0, true, true));
+                }
+                AttributeModifierUtil.applyPermanentModifier(
+                        player,
+                        Attributes.ARMOR,
+                        amulet + "ancient_alexandrite_armor_bonus" + slotName,
+                        0.25,
+                        AttributeModifier.Operation.MULTIPLY_TOTAL);
+                AttributeModifierUtil.applyPermanentModifier(
+                        player,
+                        Attributes.ARMOR_TOUGHNESS,
+                        amulet + "ancient_alexandrite_armortoughness_bonus" + slotName,
+                        0.25,
+                        AttributeModifier.Operation.MULTIPLY_TOTAL);
+                if (player.level().canSeeSky(BlockPos.containing(player.getX(), player.getEyeY(), player.getZ()))) {
+                    if (player.tickCount % 60 == 0) {
+                        player.getFoodData().eat(1, 0.5F);
+                    }
+                } else {
+                    if (player.tickCount % 180 == 0) {
+                        player.getFoodData().eat(1, 0.5F);
+                    }
+                }
+            }
+        } else if (this == ModItems.ANCIENT_CHRYSOBERYL.get()) {
+            AttributeModifierUtil.applyPermanentModifier(
+                    player,
+                    Attributes.ATTACK_SPEED,
+                    amulet + "ancient_chrysoberyl_attackspeed_bonus" + slotName,
+                    0.5,
+                    AttributeModifier.Operation.MULTIPLY_TOTAL);
+            AttributeModifierUtil.applyPermanentModifier(
+                    player,
+                    Attributes.MOVEMENT_SPEED,
+                    amulet + "ancient_chrysoberyl_movementspeed_bonus" + slotName,
+                    0.5,
+                    AttributeModifier.Operation.MULTIPLY_TOTAL);
+            AttributeModifierUtil.applyPermanentModifier(
+                    player,
+                    Attributes.LUCK,
+                    amulet + "ancient_chrysoberyl_luck_bonus" + slotName,
+                    3,
+                    AttributeModifier.Operation.ADDITION);
+
+            if(!player.isCreative() && !player.getAbilities().mayfly) {
+                player.getAbilities().mayfly = true;
+                player.onUpdateAbilities();
+            }
         }
     }
 
@@ -298,5 +402,12 @@ public class PreciousGemItem extends Item {
         AttributeModifierUtil.removeModifiersByPrefix(player, ModAttributes.MAGIC_AMP.get(), "amulet");
         AttributeModifierUtil.removeModifiersByPrefix(player, Attributes.MAX_HEALTH, "amulet");
         AttributeModifierUtil.removeModifiersByPrefix(player, Attributes.MOVEMENT_SPEED, "amulet");
+        AttributeModifierUtil.removeModifiersByPrefix(player, ModAttributes.DODGE_CHANCE.get(), "amulet");
+
+        if(!player.isCreative()) {
+            player.getAbilities().mayfly = false;
+            player.getAbilities().flying = false;
+            player.onUpdateAbilities();
+        }
     }
 }

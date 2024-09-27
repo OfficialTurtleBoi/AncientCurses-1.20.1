@@ -25,8 +25,6 @@ public class CurseOfNatureEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
-
-        // Particle effect logic (no changes needed)
         if (pLivingEntity.level().isClientSide) {
             if (pLivingEntity.tickCount % 20 == 0) {
                 int effectColor = this.getColor();
@@ -44,10 +42,23 @@ public class CurseOfNatureEffect extends MobEffect {
             }
         }
 
-        // Server-side lightning strike logic
         if (!pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
+            if (pLivingEntity.tickCount % 20 == 0) {
+                int effectColor = this.getColor();
+                float red = ((effectColor >> 16) & 0xFF) / 255.0F;
+                float green = ((effectColor >> 8) & 0xFF) / 255.0F;
+                float blue = (effectColor & 0xFF) / 255.0F;
+                for (int i = 0; i < 5; i++) {
+                    pLivingEntity.level().addParticle(
+                            ModParticleTypes.CURSED_PARTICLE.get(),
+                            pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
+                            pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
+                            pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
+                            red, green, blue);
+                }
+            }
 
-            // Fire effect logic (no changes needed)
+
             if (pAmplifier >= 2) {
                 if (player.level().isDay() && !player.level().isClientSide) {
                     float lightLevel = player.level().getMaxLocalRawBrightness(player.blockPosition());

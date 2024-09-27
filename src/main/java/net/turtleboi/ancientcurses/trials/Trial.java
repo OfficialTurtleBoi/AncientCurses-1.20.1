@@ -10,7 +10,7 @@ public interface Trial {
     void trackProgress(Player player);
     boolean isTrialCompleted(Player player);
     void concludeTrial(Player player);
-    void removeEventBar(Player player);
+    //void removeEventBar(Player player);
 
     void onEntityKilled(Player player, Entity entity);
     void onPlayerTick(Player player);

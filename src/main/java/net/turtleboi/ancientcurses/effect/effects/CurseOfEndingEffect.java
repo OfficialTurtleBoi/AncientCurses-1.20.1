@@ -50,62 +50,72 @@ public class CurseOfEndingEffect extends MobEffect {
         }
 
         if (!pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
-            if (!player.level().isClientSide) {
-                int teleportCooldown = getTeleportCooldown(player);
-                if (pAmplifier >= 1 && teleportCooldown <= 0) {
-                    randomTeleport(player, pAmplifier);
-                    giveConfusion(player, 100);
-
-                    int minTeleportTime = getMinTeleportTime(pAmplifier);
-                    int maxTeleportTime = getMaxTeleportTime(pAmplifier);
-                    teleportCooldown = minTeleportTime + player.getRandom().nextInt(maxTeleportTime - minTeleportTime + 1);
-                    setTeleportCooldown(player, teleportCooldown);
-                } else {
-                    teleportCooldown--;
-                    setTeleportCooldown(player, teleportCooldown);
+            if (pLivingEntity.tickCount % 20 == 0) {
+                int effectColor = this.getColor();
+                float red = ((effectColor >> 16) & 0xFF) / 255.0F;
+                float green = ((effectColor >> 8) & 0xFF) / 255.0F;
+                float blue = (effectColor & 0xFF) / 255.0F;
+                for (int i = 0; i < 5; i++) {
+                    pLivingEntity.level().addParticle(
+                            ModParticleTypes.CURSED_PARTICLE.get(),
+                            pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
+                            pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
+                            pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
+                            red, green, blue);
                 }
+            }
 
-                int voidTimer = getVoidTimer(player);
-                int voidCooldown = getVoidCooldown(player);
-                if (pAmplifier >= 2 && voidCooldown <= 0) {
-                    if (voidTimer > 0) {
-                        MobEffectInstance levitationEffect = player.getEffect(MobEffects.LEVITATION);
-                        if (levitationEffect == null){
-                            giveLevitation(player, voidTimer);
-                        }
-                        attractEntities(player);
-                        setVoidTimer(player,voidTimer - 1);
-                        //player.sendSystemMessage(Component.literal("Void timer: " + getVoidTimer(player))); //debug code
-                    } else if (voidTimer == 0) {
-                        resetVoid(player);
-                    } else {
-                        startVoidEffect(player);
+            int teleportCooldown = getTeleportCooldown(player);
+            if (pAmplifier >= 1 && teleportCooldown <= 0) {
+                randomTeleport(player, pAmplifier);
+                giveConfusion(player, 100);
+                int minTeleportTime = getMinTeleportTime(pAmplifier);
+                int maxTeleportTime = getMaxTeleportTime(pAmplifier);
+                teleportCooldown = minTeleportTime + player.getRandom().nextInt(maxTeleportTime - minTeleportTime + 1);
+                setTeleportCooldown(player, teleportCooldown);
+            } else {
+                teleportCooldown--;
+                setTeleportCooldown(player, teleportCooldown);
+            }
+            int voidTimer = getVoidTimer(player);
+            int voidCooldown = getVoidCooldown(player);
+            if (pAmplifier >= 2 && voidCooldown <= 0) {
+                if (voidTimer > 0) {
+                    MobEffectInstance levitationEffect = player.getEffect(MobEffects.LEVITATION);
+                    if (levitationEffect == null){
+                        giveLevitation(player, voidTimer);
                     }
+                    attractEntities(player);
+                    setVoidTimer(player,voidTimer - 1);
+                    //player.sendSystemMessage(Component.literal("Void timer: " + getVoidTimer(player))); //debug code
+                } else if (voidTimer == 0) {
+                    resetVoid(player);
                 } else {
-                    setVoidCooldown(player,voidCooldown - 1);
-                    //player.displayClientMessage(Component.literal("Void cooldown: " + getVoidCooldown(player)), true); //debug code
+                    startVoidEffect(player);
                 }
-
-                if (player instanceof ServerPlayer serverPlayer) {
-                    if (isVoid(player)) {
-                        ModNetworking.sendToPlayer(
-                                new VoidPacketS2C(
-                                        true,
-                                        getVoidTimer(player),
-                                        getTotalVoidLifetime(player)
-                                ),
-                                serverPlayer
-                        );
-                    } else {
-                        ModNetworking.sendToPlayer(
-                                new VoidPacketS2C(
-                                        false,
-                                        0,
-                                        0
-                                ),
-                                serverPlayer
-                        );
-                    }
+            } else {
+                setVoidCooldown(player,voidCooldown - 1);
+                //player.displayClientMessage(Component.literal("Void cooldown: " + getVoidCooldown(player)), true); //debug code
+            }
+            if (player instanceof ServerPlayer serverPlayer) {
+                if (isVoid(player)) {
+                    ModNetworking.sendToPlayer(
+                            new VoidPacketS2C(
+                                    true,
+                                    getVoidTimer(player),
+                                    getTotalVoidLifetime(player)
+                            ),
+                            serverPlayer
+                    );
+                } else {
+                    ModNetworking.sendToPlayer(
+                            new VoidPacketS2C(
+                                    false,
+                                    0,
+                                    0
+                            ),
+                            serverPlayer
+                    );
                 }
             }
         }

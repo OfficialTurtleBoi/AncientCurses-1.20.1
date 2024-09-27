@@ -115,9 +115,9 @@ public class CursedAltarRenderer implements BlockEntityRenderer<CursedAltarBlock
 
             orbitSpeedMultiplier = 0.05F + (-(96.0F * (animationProgress * animationProgress)));
 
-            if (animationProgress >= 1.0F) {
-                pBlockEntity.stopAnimation();
-            }
+            //if (animationProgress >= 1.0F) {
+            //    pBlockEntity.stopAnimation();
+            //}
         } else {
             //System.out.println("Rendering without animation.");
         }

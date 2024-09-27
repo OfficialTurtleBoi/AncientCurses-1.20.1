@@ -38,15 +38,15 @@ public class EliminationTrial implements Trial {
         this.eliminationKills = 0;
         PlayerTrialData.setCurseEffect(player, effect);
 
-        this.bossEvent = new ServerBossEvent(
-                Component.literal(PlayerTrialData.eliminationTrial),
-                BossEvent.BossBarColor.RED,
-                BossEvent.BossBarOverlay.PROGRESS
-        );
-        this.bossEvent.setProgress(0.0f);
-        if (player instanceof ServerPlayer serverPlayer) {
-            this.bossEvent.addPlayer(serverPlayer);
-        }
+        //this.bossEvent = new ServerBossEvent(
+        //        Component.literal(PlayerTrialData.eliminationTrial),
+        //        BossEvent.BossBarColor.RED,
+        //        BossEvent.BossBarOverlay.PROGRESS
+        //);
+        //this.bossEvent.setProgress(0.0f);
+        //if (player instanceof ServerPlayer serverPlayer) {
+        //    this.bossEvent.addPlayer(serverPlayer);
+        //}
     }
 
     public EliminationTrial(CursedAltarBlockEntity altar) {
@@ -136,9 +136,9 @@ public class EliminationTrial implements Trial {
                             0,
                             0),
                     (ServerPlayer) player);
-            if (this.bossEvent != null) {
-                this.bossEvent.setProgress(progressPercentage);
-            }
+            //if (this.bossEvent != null) {
+            //    this.bossEvent.setProgress(progressPercentage);
+            //}
         }
     }
 
@@ -158,27 +158,27 @@ public class EliminationTrial implements Trial {
         PlayerTrialData.clearCurseEffect(player);
 
         CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel());
-        removeEventBar(player);
+        //removeEventBar(player);
         altar.setPlayerTrialCompleted(player);
         altar.removePlayerTrial(playerUUID);
     }
 
-    @Override
-    public void removeEventBar(Player player) {
-        System.out.println("removeEventBar called for player: " + player.getName().getString());
-
-        if (this.bossEvent != null) {
-            System.out.println("Boss event is not null. Removing boss bar for player: " + player.getName().getString());
-
-            if (player instanceof ServerPlayer serverPlayer) {
-                this.bossEvent.removePlayer(serverPlayer);
-                System.out.println("Boss bar removed for player: " + player.getName().getString());
-            }
-            this.bossEvent = null;
-        } else {
-            System.out.println("No boss bar to remove for player: " + player.getName().getString());
-        }
-    }
+    //@Override
+    //public void removeEventBar(Player player) {
+        //System.out.println("removeEventBar called for player: " + player.getName().getString());
+//
+        //if (this.bossEvent != null) {
+        //    System.out.println("Boss event is not null. Removing boss bar for player: " + player.getName().getString());
+//
+        //    if (player instanceof ServerPlayer serverPlayer) {
+        //        this.bossEvent.removePlayer(serverPlayer);
+        //        System.out.println("Boss bar removed for player: " + player.getName().getString());
+        //    }
+        //    this.bossEvent = null;
+        //} else {
+        //    System.out.println("No boss bar to remove for player: " + player.getName().getString());
+        //}
+    //}
 
 
     public void incrementEliminationCount() {
@@ -187,6 +187,6 @@ public class EliminationTrial implements Trial {
 
     @Override
     public void onPlayerRemoved(Player player) {
-        removeEventBar(player);
+        //removeEventBar(player);
     }
 }

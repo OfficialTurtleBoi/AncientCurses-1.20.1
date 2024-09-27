@@ -189,7 +189,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                         ItemStack gemSlot2 = altarEntity.getGemInSlot(2);
 
                         if (!gemSlot0.isEmpty() && gemSlot0.is(gemSlot1.getItem()) && gemSlot0.is(gemSlot2.getItem()) && !gemSlot0.is(ModTags.Items.MAJOR_GEMS)) {
-                            player.sendSystemMessage(Component.literal("3 Matching gems! Upgrading..."));
+                            //player.sendSystemMessage(Component.literal("3 Matching gems! Upgrading..."));
                             altarEntity.startAnimation();
                             level.sendBlockUpdated(pos, state, state, 3);
                             return InteractionResult.SUCCESS;
@@ -237,17 +237,17 @@ public class CursedAltarBlock extends BaseEntityBlock {
             return;
         }
 
-        System.out.println(Component.literal("Giving player loot of amplifier: " + amplifier));
+        //System.out.println(Component.literal("Giving player loot of amplifier: " + amplifier));
 
         if (player instanceof ServerPlayer) {
             rewardPlayerWithLootTable(player, amplifier, level, pos);
-            Trial trial = altarEntity.getPlayerTrial(player.getUUID());
-            if (trial != null) {
-                System.out.println("Trial is not null. Proceeding to remove event bar.");
-                trial.removeEventBar(player);
-            } else {
-                System.out.println("Trial is null for player: " + player.getName().getString());
-            }
+            //Trial trial = altarEntity.getPlayerTrial(player.getUUID());
+            //if (trial != null) {
+            //    System.out.println("Trial is not null. Proceeding to remove event bar.");
+            //    //trial.removeEventBar(player);
+            //} else {
+            //    System.out.println("Trial is null for player: " + player.getName().getString());
+            //}
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
                             "None",

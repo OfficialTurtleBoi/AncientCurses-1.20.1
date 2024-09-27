@@ -151,13 +151,17 @@ public class CursedAltarBlockEntity extends BlockEntity {
         this.isAnimating = true;
         setAnimationStartTime(System.currentTimeMillis());
         setChanged();
+        if (level != null){
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
     }
 
     public void stopAnimation() {
         this.isAnimating = false;
         setChanged();
-        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        if (level != null){
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
     }
 
     public boolean isAnimating() {
@@ -357,7 +361,9 @@ public class CursedAltarBlockEntity extends BlockEntity {
                 setGemInSlot(2, ItemStack.EMPTY);
                 setGemInSlot(0, upgradedGem);
                 setChanged();
-                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+                if (level != null){
+                    level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+                }
             }
         }
     }
@@ -461,7 +467,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
+    public @NotNull CompoundTag getUpdateTag() {
         return saveWithoutMetadata();
     }
 }

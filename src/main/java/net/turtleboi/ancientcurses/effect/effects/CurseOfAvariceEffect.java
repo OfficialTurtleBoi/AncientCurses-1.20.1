@@ -43,6 +43,21 @@ public class CurseOfAvariceEffect extends MobEffect {
 
         Level level = pLivingEntity.level();
         if (!level.isClientSide && pLivingEntity instanceof Player player) {
+            if (pLivingEntity.tickCount % 20 == 0) {
+                int effectColor = this.getColor();
+                float red = ((effectColor >> 16) & 0xFF) / 255.0F;
+                float green = ((effectColor >> 8) & 0xFF) / 255.0F;
+                float blue = (effectColor & 0xFF) / 255.0F;
+                for (int i = 0; i < 5; i++) {
+                    pLivingEntity.level().addParticle(
+                            ModParticleTypes.CURSED_PARTICLE.get(),
+                            pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
+                            pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
+                            pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
+                            red, green, blue);
+                }
+            }
+
             if (pAmplifier >= 2) {
                 int currentInventoryValue = calculatePlayerInventoryValue(player, level);
                 int lastInventoryValue = getLastInventoryValue(player);

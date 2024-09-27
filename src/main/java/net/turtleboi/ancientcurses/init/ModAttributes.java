@@ -19,6 +19,9 @@ public class ModAttributes {
     public static final RegistryObject<Attribute> HIT_CHANCE =
             create("hit_chance", 1D, 0D);
 
+    public static final RegistryObject<Attribute> DODGE_CHANCE =
+            create("dodge_chance", 1D, 0D);
+
     public static final RegistryObject<Attribute> MAGIC_AMP =
             create("magic_amp", 1D, 0D);
 
