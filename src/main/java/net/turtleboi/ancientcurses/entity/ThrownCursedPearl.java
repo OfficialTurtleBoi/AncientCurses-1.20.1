@@ -58,8 +58,8 @@ public class ThrownCursedPearl extends ThrowableItemProjectile {
 
             if (owner instanceof ServerPlayer player) {
                 if (player.connection.isAcceptingMessages() && player.level() == this.level()) {
-                    CursedPortalEntity startPortal = CursedPortalEntity.spawnPortal(this.level(), player.blockPosition());
-                    CursedPortalEntity endPortal = CursedPortalEntity.spawnPortal(this.level(), this.blockPosition());
+                    CursedPortalEntity startPortal = CursedPortalEntity.spawnPortal(this.level(), player.blockPosition(), player);
+                    CursedPortalEntity endPortal = CursedPortalEntity.spawnPortal(this.level(), this.blockPosition(), player);
                     startPortal.setLinkedPortal(endPortal);
                     endPortal.setLinkedPortal(startPortal);
                     this.discard();

@@ -32,7 +32,6 @@ public class SurvivalTrial implements Trial {
     private MobEffect effect;
     public static final String trialDurationTotal = "TrialDuration";
     public static final String trialDurationElapsed = "TrialElapsedTime";
-    //private ServerBossEvent bossEvent;
 
     public SurvivalTrial(Player player, MobEffect effect, long trialDuration, CursedAltarBlockEntity altar) {
         this.playerUUID = player.getUUID();
@@ -42,16 +41,6 @@ public class SurvivalTrial implements Trial {
         this.elapsedTime = 0;
 
         PlayerTrialData.setCurseEffect(player, effect);
-
-        //this.bossEvent = new ServerBossEvent(
-        //        Component.literal(PlayerTrialData.survivalTrial),
-        //        BossEvent.BossBarColor.RED,
-        //        BossEvent.BossBarOverlay.PROGRESS);
-//
-        //this.bossEvent.setProgress(0.0f);
-        //if (player instanceof ServerPlayer serverPlayer) {
-        //    this.bossEvent.addPlayer(serverPlayer);
-        //}
     }
 
     public SurvivalTrial(CursedAltarBlockEntity altar) {
@@ -131,9 +120,6 @@ public class SurvivalTrial implements Trial {
                             elapsedTime,
                             trialDuration),
                     (ServerPlayer) player);
-            //if (this.bossEvent != null) {
-            //    this.bossEvent.setProgress(progressPercentage);
-            //}
             //player.displayClientMessage(Component.literal(String.format("Trial progress: %.2f%% complete", progressPercentage * 100))
             //        .withStyle(ChatFormatting.YELLOW), true);
         }
@@ -154,29 +140,10 @@ public class SurvivalTrial implements Trial {
 
         PlayerTrialData.clearCurseEffect(player);
 
-        CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel());
-        //removeEventBar(player);
+        CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel(), altar);
         altar.setPlayerTrialCompleted(player);
         altar.removePlayerTrial(playerUUID);
     }
-
-    //@Override
-    //public void removeEventBar(Player player) {
-        //System.out.println("removeEventBar called for player: " + player.getName().getString());
-//
-        //if (this.bossEvent != null) {
-        //    System.out.println("Boss event is not null. Removing boss bar for player: " + player.getName().getString());
-//
-        //    if (player instanceof ServerPlayer serverPlayer) {
-        //        this.bossEvent.removePlayer(serverPlayer);
-        //        System.out.println("Boss bar removed for player: " + player.getName().getString());
-        //    }
-        //    this.bossEvent = null;
-        //} else {
-        //    System.out.println("No boss bar to remove for player: " + player.getName().getString());
-        //}
-    //}
-
 
     @Override
     public void onEntityKilled(Player player, Entity entity) {
@@ -185,6 +152,6 @@ public class SurvivalTrial implements Trial {
 
     @Override
     public void onPlayerRemoved(Player player) {
-        //removeEventBar(player);
+
     }
 }

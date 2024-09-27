@@ -6,15 +6,11 @@ import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.BossHealthOverlay;
-import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.bossevents.CustomBossEvent;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -33,15 +29,12 @@ import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.client.TrialEventBar;
 import net.turtleboi.ancientcurses.effect.ModEffects;
-import net.turtleboi.ancientcurses.trials.PlayerTrialData;
+import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import org.joml.Matrix4f;
 
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID, value = Dist.CLIENT)
 public class ModClientEvents {
@@ -77,6 +70,7 @@ public class ModClientEvents {
             }
 
             if (PlayerClientData.getPortalOverlayAlpha() > 0){
+                ModNetworking.sendToServer(new PortalOverlayPacketC2S(PlayerClientData.getPortalOverlayAlpha()));
                 renderCursedPortalOverlay(minecraft);
             }
         }
@@ -313,19 +307,27 @@ public class ModClientEvents {
         RenderSystem.setShaderColor(1.0F, 0.0F, 0.0F, alpha); // Red color with alpha
 
         // Get the texture (this can be your custom texture or the vanilla nether portal texture)
-        ResourceLocation portalTexture = new ResourceLocation("textures/block/nether_portal.png");
+        ResourceLocation portalTexture = new ResourceLocation("minecraft", "textures/block/nether_portal.png");
+        RenderSystem.setShaderTexture(0, portalTexture);
 
-        // Render the red-tinted portal overlay
-        RenderSystem.setShaderTexture(0, portalTexture); // Set the texture for rendering
+        long time = minecraft.level.getGameTime();
+        int totalFrames = 32; // The Nether portal has 16 frames in its animation
+        int frame = (int) (time % totalFrames); // Loop over the frames based on the game time
+
+        // Each frame is stacked vertically in the texture, so calculate the UV coordinates for the current frame
+        float frameHeight = 1.0f / totalFrames; // Height of each frame in the texture
+        float vMin = frame * frameHeight; // Start of the current frame (v)
+        float vMax = vMin + frameHeight; // End of the current frame (v)
+
+        // Start rendering the quad with the selected frame
         BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
 
-        // Define the quad to fill the screen
-        buffer.vertex(0.0D, screenHeight, -90.0D).uv(0.0F, 1.0F).endVertex();
-        buffer.vertex(screenWidth, screenHeight, -90.0D).uv(1.0F, 1.0F).endVertex();
-        buffer.vertex(screenWidth, 0.0D, -90.0D).uv(1.0F, 0.0F).endVertex();
-        buffer.vertex(0.0D, 0.0D, -90.0D).uv(0.0F, 0.0F).endVertex();
+        // Render the full-screen quad with the current frame of the portal texture
+        buffer.vertex(0.0D, screenHeight, -90.0D).uv(0.0F, vMax).endVertex();
+        buffer.vertex(screenWidth, screenHeight, -90.0D).uv(1.0F, vMax).endVertex();
+        buffer.vertex(screenWidth, 0.0D, -90.0D).uv(1.0F, vMin).endVertex();
+        buffer.vertex(0.0D, 0.0D, -90.0D).uv(0.0F, vMin).endVertex();
 
         Tesselator.getInstance().end();
 

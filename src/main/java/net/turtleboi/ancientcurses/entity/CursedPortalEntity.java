@@ -1,6 +1,7 @@
 package net.turtleboi.ancientcurses.entity;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.nbt.CompoundTag;
@@ -20,6 +21,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.turtleboi.ancientcurses.effect.effects.CurseOfObessionEffect;
 import net.turtleboi.ancientcurses.network.ModNetworking;
@@ -32,11 +34,15 @@ import java.util.*;
 public class CursedPortalEntity extends Entity {
     private static final EntityDataAccessor<Integer> TEXTURE_INDEX = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> TELEPORT_ENABLED = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<BlockPos> ALTAR_POS = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.BLOCK_POS);
+    private static final EntityDataAccessor<Optional<UUID>> LINKED_PORTAL_UUID = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+
     private static final int teleportCooldown = 100;
     private Map<UUID, Integer> playerCooldowns = new HashMap<>();
 
     private BlockPos altarPos;
     private CursedPortalEntity linkedPortal;
+    private Object owner;
     private int textureTickCounter = 0;
     protected int age;
 
@@ -48,6 +54,8 @@ public class CursedPortalEntity extends Entity {
     protected void defineSynchedData() {
         this.entityData.define(TEXTURE_INDEX, 0);
         this.entityData.define(TELEPORT_ENABLED, false);
+        this.entityData.define(ALTAR_POS, BlockPos.ZERO);
+        this.entityData.define(LINKED_PORTAL_UUID, Optional.empty());
     }
 
     @Override
@@ -89,10 +97,23 @@ public class CursedPortalEntity extends Entity {
             }
 
             if (age >= 620){
-                detectAndRemoveScreenEffect();
+                this.discard();
+            }
+
+            if (getOwner() == null){
                 this.discard();
             }
         }
+    }
+
+    public void setOwner(Object pOwner) {
+        if (pOwner instanceof Entity || pOwner instanceof BlockEntity) {
+            this.owner = pOwner;
+        }
+    }
+
+    public Object getOwner() {
+        return this.owner;
     }
 
     private void spawnPortalParticles() {
@@ -103,7 +124,7 @@ public class CursedPortalEntity extends Entity {
         int numParticles = 8;
 
         for (int i = 0; i < numParticles; i++) {
-            double randomY = portalHeightStart + random.nextDouble() * 2.0;
+            double randomY = portalHeightStart + random.nextDouble() * 2.5;
             double randomX = portalX + (random.nextDouble() - 0.5) * 1.25;
             double randomZ = portalZ + (random.nextDouble() - 0.5) * 1.25;
             double velocityX = (random.nextDouble() - 0.5) * 0.05;
@@ -129,7 +150,7 @@ public class CursedPortalEntity extends Entity {
     }
 
     private void playPortalTravelSound(Player player) {
-        this.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PORTAL_TRAVEL, SoundSource.BLOCKS, 0.25F, 1.0F);
+        this.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PORTAL_TRAVEL, SoundSource.BLOCKS, 0.25F, this.level().random.nextFloat() * 0.2F + 0.5F);
     }
 
     private void decrementCooldowns() {
@@ -148,8 +169,8 @@ public class CursedPortalEntity extends Entity {
                     continue;
                 }
                 if (this.linkedPortal != null && this.linkedPortal.isTeleportEnabled()) {
-                    teleportPlayerToPortal(serverPlayer, this.linkedPortal.blockPosition(), this.level());
-                } else {
+                    teleportPlayerToPortal(serverPlayer, this.getLinkedPortal().blockPosition(), this.level());
+                } else if (this.altarPos != null) {
                     teleportPlayerToAltar(serverPlayer, altarPos, this.level());
                 }
                 playerCooldowns.put(playerUUID, teleportCooldown);
@@ -164,14 +185,29 @@ public class CursedPortalEntity extends Entity {
 
     public void setLinkedPortal(CursedPortalEntity linkedPortal) {
         this.linkedPortal = linkedPortal;
+        if (linkedPortal != null) {
+            this.entityData.set(LINKED_PORTAL_UUID, Optional.of(linkedPortal.getUUID()));
+        } else {
+            this.entityData.set(LINKED_PORTAL_UUID, Optional.empty());
+        }
     }
 
     public CursedPortalEntity getLinkedPortal() {
+        if (this.linkedPortal == null) {
+            Optional<UUID> optionalUUID = this.entityData.get(LINKED_PORTAL_UUID);
+            if (optionalUUID.isPresent() && this.level() instanceof ServerLevel serverLevel) {
+                Entity entity = serverLevel.getEntity(optionalUUID.get());
+                if (entity instanceof CursedPortalEntity) {
+                    this.linkedPortal = (CursedPortalEntity) entity;
+                }
+            }
+        }
         return this.linkedPortal;
     }
 
-    public static CursedPortalEntity spawnPortal(Level level, BlockPos altarPos) {
+    public static CursedPortalEntity spawnPortal(Level level, BlockPos altarPos, Object owner) {
         CursedPortalEntity portal = new CursedPortalEntity(ModEntities.CURSED_PORTAL.get(), level);
+        portal.setOwner(owner);
         portal.setPos(altarPos.getX() + 0.5, altarPos.getY(), altarPos.getZ() + 0.5);
         portal.setTeleportEnabled(true);
         level.addFreshEntity(portal);
@@ -228,11 +264,12 @@ public class CursedPortalEntity extends Entity {
         this.altarPos = pos;
     }
 
-    public static CursedPortalEntity spawnPortalNearPlayer(Player player, BlockPos altarPos, Level level) {
+    public static CursedPortalEntity spawnPortalNearPlayer(Player player, BlockPos altarPos, Level level, Object owner) {
         BlockPos portalPos = findRandomValidLocationNearPlayer(player, level);
 
         if (portalPos != null) {
             CursedPortalEntity portal = new CursedPortalEntity(ModEntities.CURSED_PORTAL.get(), level);
+            portal.setOwner(owner);
             portal.setPos(portalPos.getX() + 0.5, portalPos.getY() + 0.5, portalPos.getZ() + 0.5);
             portal.setAltarPos(altarPos);
             portal.setTeleportEnabled(true);
@@ -272,24 +309,25 @@ public class CursedPortalEntity extends Entity {
     }
 
     private void detectAndApplyScreenEffect() {
-        List<Player> players = this.level().getEntitiesOfClass(Player.class, this.getBoundingBox().inflate(2.0));
+        double distanceThreshold = 4.0;
+        List<Player> players = this.level().getEntitiesOfClass(Player.class, this.getBoundingBox().inflate(distanceThreshold));
+
         for (Player player : players) {
             if (player instanceof ServerPlayer serverPlayer) {
                 double distance = player.distanceTo(this);
-                float alpha = (float) Math.max(0, 0.5 - (distance / 2.0));
+                float alpha;
+                if (distance <= 1.0) {
+                    alpha = 0.1F;
+                } else if (distance <= distanceThreshold) {
+                    alpha = 0.1F * (float) (1.0 - (distance - 1.0) / (distanceThreshold - 1.0));
+                } else {
+                    alpha = 0.0F;
+                }
                 sendPortalScreenEffectPacket(serverPlayer, alpha);
             }
         }
     }
 
-    private void detectAndRemoveScreenEffect() {
-        List<Player> players = this.level().getEntitiesOfClass(Player.class, this.getBoundingBox().inflate(2.0));
-        for (Player player : players) {
-            if (player instanceof ServerPlayer serverPlayer) {
-                sendPortalScreenEffectPacket(serverPlayer, 0);
-            }
-        }
-    }
 
     private void sendPortalScreenEffectPacket(ServerPlayer player, float alpha) {
         ModNetworking.sendToPlayer(new PortalOverlayPacketS2C(alpha), player);
@@ -299,17 +337,14 @@ public class CursedPortalEntity extends Entity {
     protected void readAdditionalSaveData(CompoundTag pCompound) {
         this.setTeleportEnabled(pCompound.getBoolean("TeleportEnabled"));
         if (pCompound.contains("AltarPos")) {
-            this.altarPos = BlockPos.of(pCompound.getLong("AltarPos"));
+            BlockPos pos = BlockPos.of(pCompound.getLong("AltarPos"));
+            this.setAltarPos(pos);
         }
         if (pCompound.hasUUID("LinkedPortalUUID")) {
-            if (linkedPortal != null) {
-                if (this.linkedPortal.getUUID() != null && this.level() instanceof ServerLevel serverLevel) {
-                    Entity linkedEntity = serverLevel.getEntity(this.linkedPortal.getUUID());
-                    if (linkedEntity instanceof CursedPortalEntity) {
-                        this.linkedPortal = (CursedPortalEntity) linkedEntity;
-                    }
-                }
-            }
+            UUID uuid = pCompound.getUUID("LinkedPortalUUID");
+            this.entityData.set(LINKED_PORTAL_UUID, Optional.of(uuid));
+        } else {
+            this.entityData.set(LINKED_PORTAL_UUID, Optional.empty());
         }
     }
 
@@ -319,9 +354,8 @@ public class CursedPortalEntity extends Entity {
         if (this.altarPos != null) {
             pCompound.putLong("AltarPos", this.altarPos.asLong());
         }
-        if (this.linkedPortal != null) {
-            pCompound.putUUID("LinkedPortalUUID", this.linkedPortal.getUUID());
-        }
+        Optional<UUID> linkedPortalUUID = this.entityData.get(LINKED_PORTAL_UUID);
+        linkedPortalUUID.ifPresent(uuid -> pCompound.putUUID("LinkedPortalUUID", uuid));
     }
 
     @Override
