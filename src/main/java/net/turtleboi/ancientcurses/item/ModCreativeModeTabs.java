@@ -23,6 +23,7 @@ public class ModCreativeModeTabs {
 
                         pOutput.accept(ModBlocks.SCONCED_TORCH.get());
                         pOutput.accept(ModBlocks.SCONCED_SOUL_TORCH.get());
+                        pOutput.accept(ModBlocks.SCONCED_UNLIT_SOUL_TORCH.get());
                         pOutput.accept(ModBlocks.SCONCED_REDSTONE_TORCH.get());
                         pOutput.accept(ModBlocks.SCONCED_CURSED_TORCH.get());
                         pOutput.accept(ModBlocks.SCONCED_UNLIT_TORCH.get());

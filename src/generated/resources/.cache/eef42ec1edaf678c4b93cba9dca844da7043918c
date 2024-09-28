@@ -1,4 +1,4 @@
-// 1.20.1	2024-09-28T13:46:33.342853	Item Models: ancientcurses
+// 1.20.1	2024-09-28T23:44:50.1662984	Item Models: ancientcurses
 c259e04cfd455124bbe16bcae46bef82eb223f0a assets/ancientcurses/models/item/ancient_alexandrite.json
 88cf4211890a0d1e9c58b4accd605061eb521cb3 assets/ancientcurses/models/item/ancient_bismuth.json
 5c626940676a1a23241b8db4cd269b5783223ccb assets/ancientcurses/models/item/ancient_chrysoberyl.json
@@ -27,4 +27,5 @@ c2475accbf2d321769a30295de8654dd0e4afdde assets/ancientcurses/models/item/polish
 272d4ce0a8951a2fe850c9cc7e9ea45b70469c6b assets/ancientcurses/models/item/sconced_redstone_torch.json
 74971304f08267d37694150301041de5ec4c68b4 assets/ancientcurses/models/item/sconced_soul_torch.json
 d800f09186e85573e403ea8a2f8bbf9cb6923749 assets/ancientcurses/models/item/sconced_torch.json
+b93e46a60f9172b35358398e6618f18f4147f391 assets/ancientcurses/models/item/sconced_unlit_soul_torch.json
 f6e8834e539a4237db71a343200aaf84e4b5d149 assets/ancientcurses/models/item/sconced_unlit_torch.json

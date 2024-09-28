@@ -22,6 +22,8 @@
   "block.ancientcurses.sconced_redstone_torch": "Sconced Redstone Torch",
   "block.ancientcurses.sconced_cursed_torch": "Sconced Cursed Torch",
   "block.ancientcurses.sconced_unlit_torch": "Sconced Unlit Torch",
+  "block.ancientcurses.sconced_unlit_soul_torch": "Sconced Unlit Soul Torch",
+
 
   "item.ancientcurses.golden_amulet": "Golden Amulet",
   "item.ancientcurses.deprecophobia_music_disc": "Music Disc",

@@ -108,7 +108,8 @@ public class ModItems {
 
     public static final RegistryObject<Item> CURSED_PEARL = ITEMS.register("cursed_pearl",
             () -> new CursedPearlItem(new Item.Properties()));
-
+    public static final RegistryObject<Item> SCONCED_UNLIT_SOUL_TORCH_ITEM = ITEMS.register("sconced_unlit_soul_torch",
+            () -> new SconcedUnlitSoulTorchItem(ModBlocks.SCONCED_UNLIT_SOUL_TORCH.get(), new Item.Properties()));
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }
