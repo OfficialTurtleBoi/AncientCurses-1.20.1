@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PreciousGemSlot extends SlotItemHandler {
     private final LapidaristTableBlockEntity blockEntity;
+    private boolean active = false;
 
     public PreciousGemSlot(IItemHandler itemHandler, int index, int xPosition, int yPosition, LapidaristTableBlockEntity blockEntity) {
         super(itemHandler, index, xPosition, yPosition);
@@ -19,12 +20,12 @@ public class PreciousGemSlot extends SlotItemHandler {
 
     @Override
     public boolean mayPlace(@NotNull ItemStack stack) {
-        return isSocketableItemPresent() && super.mayPlace(stack) && stack.getItem() instanceof PreciousGemItem;
+        return active && isSocketableItemPresent() && super.mayPlace(stack) && stack.getItem() instanceof PreciousGemItem;
     }
 
     @Override
     public boolean mayPickup(Player player) {
-        return isSocketableItemPresent() && super.mayPickup(player);
+        return active && isSocketableItemPresent() && super.mayPickup(player);
     }
 
     @Override
@@ -43,6 +44,15 @@ public class PreciousGemSlot extends SlotItemHandler {
     public void setChanged() {
         super.setChanged();
         onSlotChanged();
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    @Override
+    public boolean isActive() {
+        return active;
     }
 
     private void onSlotChanged() {

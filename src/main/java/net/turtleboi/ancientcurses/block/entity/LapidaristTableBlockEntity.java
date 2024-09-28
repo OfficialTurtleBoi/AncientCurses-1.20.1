@@ -12,6 +12,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,7 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LapidaristTableBlockEntity extends BlockEntity implements MenuProvider {
-    private final ItemStackHandler itemStackHandler = new ItemStackHandler(7){
+    public static final int totalSlots = 13;
+    private final ItemStackHandler itemStackHandler = new ItemStackHandler(totalSlots){
         @Override
         public int getSlotLimit(int slot) {
             return 1;
@@ -40,28 +42,22 @@ public class LapidaristTableBlockEntity extends BlockEntity implements MenuProvi
     public static final int minorGem4 = 5;
     public static final int minorGem5 = 6;
 
+    public static final int minorgem6 = 7;
+
+    public static final int minorGem7 = 8;
+    public static final int minorGem8 = 9;
+
+    public static final int minorGem9 = 10;
+    public static final int minorGem10 = 11;
+    public static final int minorGem11 = 12;
+
     private LazyOptional<IItemHandler> lazyItemHandler = LazyOptional.empty();
 
     protected final ContainerData pData;
 
     public LapidaristTableBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(ModBlockEntities.LAPIDARIST_TABLE_BE.get(), pPos, pBlockState);
-        this.pData = new ContainerData() {
-            @Override
-            public int get(int pIndex) {
-                return 0;
-            }
-
-            @Override
-            public void set(int pIndex, int pValue) {
-
-            }
-
-            @Override
-            public int getCount() {
-                return 7;
-            }
-        };
+        this.pData = new SimpleContainerData(1);
     }
 
     @Override
@@ -132,7 +128,7 @@ public class LapidaristTableBlockEntity extends BlockEntity implements MenuProvi
     }
 
     public void clearGemSlots() {
-        for (int i = mainGem; i <= minorGem5; i++) {
+        for (int i = mainGem; i <= minorGem11; i++) {
             getInventory().setStackInSlot(i, ItemStack.EMPTY);
         }
     }
@@ -149,7 +145,7 @@ public class LapidaristTableBlockEntity extends BlockEntity implements MenuProvi
                 amuletTag.remove("MainGem");
             }
             ListTag minorGems = new ListTag();
-            for (int i = minorGem1; i <= minorGem5; i++) {
+            for (int i = minorGem1; i <= minorGem11; i++) {
                 ItemStack minorGemStack = getInventory().getStackInSlot(i);
                 if (!minorGemStack.isEmpty()) {
                     minorGems.add(minorGemStack.serializeNBT());
@@ -187,7 +183,7 @@ public class LapidaristTableBlockEntity extends BlockEntity implements MenuProvi
                     getInventory().setStackInSlot(minorGem1 + i, ItemStack.EMPTY);
                 }
             } else {
-                for (int i = minorGem1; i <= minorGem5; i++) {
+                for (int i = minorGem1; i <= minorGem11; i++) {
                     getInventory().setStackInSlot(i, ItemStack.EMPTY);
                 }
             }

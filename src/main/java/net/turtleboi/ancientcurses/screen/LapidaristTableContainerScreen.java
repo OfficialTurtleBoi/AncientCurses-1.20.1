@@ -34,13 +34,23 @@ public class LapidaristTableContainerScreen extends AbstractContainerScreen<Lapi
 
         pGuiGraphics.blit(TEXTURE, x, y, 0, 0, 176, 166);
 
-        pGuiGraphics.blit(TEXTURE, x + 79, y + 8, 176, 0, 18, 18);
-        pGuiGraphics.blit(TEXTURE, x + 52, y + 28, 176, 0, 18, 18);
-        pGuiGraphics.blit(TEXTURE, x + 106, y + 28, 176, 0, 18, 18);
-        pGuiGraphics.blit(TEXTURE, x + 61, y + 58, 176, 0, 18, 18);
-        pGuiGraphics.blit(TEXTURE, x + 97, y + 58, 176, 0, 18, 18);
 
-        pGuiGraphics.blit(TEXTURE, x + 76, y + 30, 176, 18, 24, 24);
+        //pGuiGraphics.blit(TEXTURE, x + 79, y + 8, 176, 0, 18, 18);
+        //pGuiGraphics.blit(TEXTURE, x + 52, y + 28, 176, 0, 18, 18);
+        //pGuiGraphics.blit(TEXTURE, x + 106, y + 28, 176, 0, 18, 18);
+        //pGuiGraphics.blit(TEXTURE, x + 61, y + 58, 176, 0, 18, 18);
+        //pGuiGraphics.blit(TEXTURE, x + 97, y + 58, 176, 0, 18, 18);
+//
+        //pGuiGraphics.blit(TEXTURE, x + 76, y + 30, 176, 18, 24, 24);
+
+        int activeGemSlotCount = menu.data.get(0);
+
+        for (int i = 0; i < activeGemSlotCount && i < menu.getAllGemSlots().size(); i++) {
+            PreciousGemSlot slot = menu.getAllGemSlots().get(i);
+            int slotX = x + slot.x - 1;
+            int slotY = y + slot.y - 1;
+            pGuiGraphics.blit(TEXTURE, slotX, slotY, 176, 0, 18, 18);
+        }
     }
 
     @Override
