@@ -696,6 +696,25 @@
               "chance": 0.5
             }
           ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "ancientcurses:cursed_pearl",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "min": 1,
+                "max": 8
+              }
+            }
+          ],
+          "conditions": [
+            {
+              "condition": "minecraft:random_chance",
+              "chance": 0.75
+            }
+          ]
         }
       ]
     }

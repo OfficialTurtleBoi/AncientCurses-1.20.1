@@ -1,27 +1,23 @@
 package net.turtleboi.ancientcurses.trials;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
-import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.CameraShakeS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -68,9 +64,9 @@ public class FetchTrial implements Trial {
                 ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "iron_ingot")),
                 ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "gold_ingot")),
                 ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "copper_ingot")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "iron_ore")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "gold_ore")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "copper_ore")),
+                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "raw_iron")),
+                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "raw_gold")),
+                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "raw_copper")),
                 ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "lapis_lazuli")),
                 ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "redstone")),
                 ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "rotten_flesh")),
@@ -88,7 +84,7 @@ public class FetchTrial implements Trial {
                 .toArray(Item[]::new);
 
         if (filteredItems.length == 0) {
-            System.err.println("FetchTrial: No valid items found in possibleItems list.");
+            System.err.println("Fetch Trial: No valid items found in possibleItems list.");
             return Items.AIR;
         }
 
@@ -99,7 +95,7 @@ public class FetchTrial implements Trial {
     private int calculateRequiredCount(int amplifier) {
         int effectiveAmplifier = Math.max(amplifier, 1);
         Random random = new Random();
-        int base = random.nextInt(13) + 12;
+        int base = random.nextInt(9) + 8;
         return base * (effectiveAmplifier * 2);
     }
 
@@ -180,6 +176,7 @@ public class FetchTrial implements Trial {
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
                             PlayerTrialData.fetchTrial,
+                            "",
                             0,
                             0,
                             0,
@@ -201,6 +198,7 @@ public class FetchTrial implements Trial {
         ModNetworking.sendToPlayer(
                 new SyncTrialDataS2C(
                         PlayerTrialData.fetchTrial,
+                        "",
                         0,
                         0,
                         0,
@@ -213,6 +211,20 @@ public class FetchTrial implements Trial {
         player.removeEffect(this.effect);
 
         PlayerTrialData.clearCurseEffect(player);
+
+        ModNetworking.sendToPlayer(new CameraShakeS2C(0.125F, 1000), (ServerPlayer) player);
+        if (player.level() instanceof ServerLevel serverLevel) {
+            serverLevel.playSound(
+                    null,
+                    player.getX(),
+                    player.getY() + 1,
+                    player.getZ(),
+                    SoundEvents.AMBIENT_SOUL_SAND_VALLEY_MOOD.get(),
+                    SoundSource.AMBIENT,
+                    1.00f,
+                    0.25f
+            );
+        }
 
         PlayerTrialData.setTrialCompleted(player, altar.getBlockPos());
         this.completed = true;

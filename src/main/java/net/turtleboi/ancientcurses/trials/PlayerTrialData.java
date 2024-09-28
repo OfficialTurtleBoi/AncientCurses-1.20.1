@@ -83,7 +83,7 @@ public class PlayerTrialData {
             if (existingRecord.getAltarPos().equals(altarPos)) {
                 existingRecord.setCompleted(true);
                 trialRecordsList.set(i, existingRecord.serializeNBT());
-                System.out.println("Player " + player.getName().getString() + " completed trial at altar " + altarPos);
+                //System.out.println("Player " + player.getName().getString() + " completed trial at altar " + altarPos);
                 break;
             }
         }
@@ -112,7 +112,7 @@ public class PlayerTrialData {
             if (existingRecord.getAltarPos().equals(altarPos)) {
                 existingRecord.setRewardCollected(true);
                 trialRecordsList.set(i, existingRecord.serializeNBT());
-                System.out.println("Player " + player.getName().getString() + " collected reward at altar " + altarPos);
+                //System.out.println("Player " + player.getName().getString() + " collected reward at altar " + altarPos);
                 break;
             }
         }

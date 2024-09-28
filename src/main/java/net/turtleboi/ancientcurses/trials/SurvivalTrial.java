@@ -7,6 +7,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
@@ -17,6 +19,7 @@ import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.effect.effects.CurseOfObessionEffect;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.CameraShakeS2C;
 import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 import org.apache.logging.log4j.core.jmx.Server;
@@ -119,6 +122,7 @@ public class SurvivalTrial implements Trial {
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
                             PlayerTrialData.survivalTrial,
+                            "",
                             0,
                             0,
                             elapsedTime,
@@ -138,6 +142,7 @@ public class SurvivalTrial implements Trial {
         ModNetworking.sendToPlayer(
                 new SyncTrialDataS2C(
                         PlayerTrialData.survivalTrial,
+                        "",
                         0,
                         0,
                         trialDuration,
@@ -149,6 +154,20 @@ public class SurvivalTrial implements Trial {
         player.removeEffect(this.effect);
 
         PlayerTrialData.clearCurseEffect(player);
+
+        ModNetworking.sendToPlayer(new CameraShakeS2C(0.125F, 1000), (ServerPlayer) player);
+        if (player.level() instanceof ServerLevel serverLevel) {
+            serverLevel.playSound(
+                    null,
+                    player.getX(),
+                    player.getY() + 1,
+                    player.getZ(),
+                    SoundEvents.AMBIENT_SOUL_SAND_VALLEY_MOOD.get(),
+                    SoundSource.AMBIENT,
+                    1.00f,
+                    0.25f
+            );
+        }
 
         CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel(), altar);
         altar.setPlayerTrialCompleted(player);

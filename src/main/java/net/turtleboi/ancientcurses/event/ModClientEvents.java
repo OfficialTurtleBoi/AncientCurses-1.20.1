@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -18,9 +19,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -43,6 +46,11 @@ public class ModClientEvents {
         Player player = Minecraft.getInstance().player;
         Minecraft minecraft = Minecraft.getInstance();
         if (player != null){
+            if (PlayerClientData.getPortalOverlayAlpha() > 0){
+                ModNetworking.sendToServer(new PortalOverlayPacketC2S(PlayerClientData.getPortalOverlayAlpha()));
+                renderCursedPortalOverlay(minecraft);
+            }
+
             if (event.getOverlay() == VanillaGuiOverlay.FOOD_LEVEL.type()) {
                 if (player.hasEffect(ModEffects.CURSE_OF_GLUTTONY.get())) {
                     event.setCanceled(true);
@@ -67,11 +75,6 @@ public class ModClientEvents {
 
             if (player.hasEffect(ModEffects.CURSE_OF_ENDING.get())) {
                 renderPurpleOverlay(event.getGuiGraphics());
-            }
-
-            if (PlayerClientData.getPortalOverlayAlpha() > 0){
-                ModNetworking.sendToServer(new PortalOverlayPacketC2S(PlayerClientData.getPortalOverlayAlpha()));
-                renderCursedPortalOverlay(minecraft);
             }
         }
     }
@@ -141,6 +144,44 @@ public class ModClientEvents {
             renderLightBeams(player, poseStack, bufferSource, event.getPartialTick());
         }
         bufferSource.endBatch();
+    }
+
+    @SubscribeEvent
+    public static void onRenderTick(RenderLevelStageEvent event) {
+        if (PlayerClientData.getCameraShakeDuration() > 0) {
+            applyShake(event);
+        }
+    }
+
+    private static final Random random = new Random();
+    private static int ticksElapsed = 0;
+    private static void applyShake(RenderLevelStageEvent event) {
+        if (PlayerClientData.getCameraShakeDuration() <= 0) {
+            return;
+        }
+
+        ticksElapsed++;
+
+        if (ticksElapsed > PlayerClientData.getCameraShakeDuration()) {
+            PlayerClientData.setCameraShakeIntensity(0.0F);
+            PlayerClientData.setCameraShakeDuration(0);
+            ticksElapsed = 0;
+            return;
+        }
+
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || minecraft.level == null) {
+            return;
+        }
+
+        float currentIntensity = PlayerClientData.getCameraShakeIntensity() * (1.0f - ((float) ticksElapsed / PlayerClientData.getCameraShakeDuration()));
+
+        double offsetX = (random.nextDouble() - 0.5) * 2 * currentIntensity;
+        double offsetY = (random.nextDouble() - 0.5) * 2 * currentIntensity;
+
+        // Apply the shake by translating the MatrixStack
+        PoseStack poseStack = event.getPoseStack();
+        poseStack.translate(offsetX, offsetY, 0.0);
     }
 
     private static final ResourceLocation HUNGER_ICONS = new ResourceLocation(AncientCurses.MOD_ID, "textures/gui/hunger_icons.png");
@@ -295,37 +336,47 @@ public class ModClientEvents {
 
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
         int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+        PoseStack poseStack = new PoseStack();
+        poseStack.pushPose();
 
-        RenderSystem.disableDepthTest();
-        RenderSystem.depthMask(false);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShaderColor(1.0F, 0.0F, 0.0F, alpha);
-        ResourceLocation portalTexture = new ResourceLocation("minecraft", "textures/block/nether_portal.png");
-        RenderSystem.setShaderTexture(0, portalTexture);
+        try {
+            RenderSystem.disableDepthTest();
+            RenderSystem.depthMask(false);
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.setShaderColor(1.0F, 0.0F, 0.0F, alpha);
 
-        long time = minecraft.level.getGameTime();
-        int totalFrames = 32;
-        int frame = (int) (time % totalFrames);
+            ResourceLocation portalTexture = new ResourceLocation("minecraft", "textures/block/nether_portal.png");
+            RenderSystem.setShaderTexture(0, portalTexture);
 
-        float frameHeight = 1.0f / totalFrames;
-        float vMin = frame * frameHeight;
-        float vMax = vMin + frameHeight;
+            long time = minecraft.level.getGameTime();
+            int totalFrames = 32;
+            int frame = (int) (time % totalFrames);
 
-        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+            float frameHeight = 1.0f / totalFrames;
+            float vMin = frame * frameHeight;
+            float vMax = vMin + frameHeight;
 
-        buffer.vertex(0.0D, screenHeight, -90.0D).uv(0.0F, vMax).endVertex();
-        buffer.vertex(screenWidth, screenHeight, -90.0D).uv(1.0F, vMax).endVertex();
-        buffer.vertex(screenWidth, 0.0D, -90.0D).uv(1.0F, vMin).endVertex();
-        buffer.vertex(0.0D, 0.0D, -90.0D).uv(0.0F, vMin).endVertex();
+            BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+            buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
 
-        Tesselator.getInstance().end();
+            buffer.vertex(0.0D, screenHeight, -90.0D).uv(0.0F, vMax).endVertex();
+            buffer.vertex(screenWidth, screenHeight, -90.0D).uv(1.0F, vMax).endVertex();
+            buffer.vertex(screenWidth, 0.0D, -90.0D).uv(1.0F, vMin).endVertex();
+            buffer.vertex(0.0D, 0.0D, -90.0D).uv(0.0F, vMin).endVertex();
 
-        RenderSystem.disableBlend();
-        RenderSystem.depthMask(true);
-        RenderSystem.enableDepthTest();
+            Tesselator.getInstance().end();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.disableBlend();
+            RenderSystem.depthMask(true);
+            RenderSystem.enableDepthTest();
+            poseStack.popPose();
+        }
     }
+
 
 
 

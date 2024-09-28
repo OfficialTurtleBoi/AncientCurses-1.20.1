@@ -1,27 +1,33 @@
 package net.turtleboi.ancientcurses.trials;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.BossEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.CameraShakeS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class EliminationTrial implements Trial {
     private UUID playerUUID;
+    private EntityType<?> eliminationTarget;
+    private String eliminationTargetString;
     private int eliminationKills;
     private int eliminationKillsRequired;
     public static final String eliminationCount = "EliminationCount";
@@ -30,11 +36,12 @@ public class EliminationTrial implements Trial {
     private MobEffect effect;
     private boolean completed;
 
-    public EliminationTrial(Player player, MobEffect effect, int requiredEliminations, CursedAltarBlockEntity altar) {
+    public EliminationTrial(Player player, MobEffect effect, int amplifier, CursedAltarBlockEntity altar) {
         this.playerUUID = player.getUUID();
         this.altar = altar;
         this.effect = effect;
-        this.eliminationKillsRequired = requiredEliminations;
+        this.eliminationTarget = selectRandomTargetMob();
+        this.eliminationKillsRequired = calculateRequiredKillCount(amplifier);
         this.eliminationKills = 0;
         this.completed = false;
         PlayerTrialData.setCurseEffect(player, effect);
@@ -53,6 +60,7 @@ public class EliminationTrial implements Trial {
     public void saveToNBT(CompoundTag tag) {
         tag.putUUID("PlayerUUID", playerUUID);
         tag.putString("Effect", Objects.requireNonNull(ForgeRegistries.MOB_EFFECTS.getKey(effect)).toString());
+        tag.putString("EliminationTarget", Objects.requireNonNull(ForgeRegistries.ENTITY_TYPES.getKey(eliminationTarget)).toString());
         tag.putInt(eliminationCount, eliminationKills);
         tag.putInt(eliminationRequirement, eliminationKillsRequired);
         tag.putBoolean("Completed", completed);
@@ -63,6 +71,8 @@ public class EliminationTrial implements Trial {
         this.playerUUID = tag.getUUID("PlayerUUID");
         String effectName = tag.getString("Effect");
         this.effect = ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(effectName));
+        String targetName = tag.getString("EliminationTarget");
+        this.eliminationTarget = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(targetName));
         this.eliminationKills = tag.getInt(eliminationCount);
         this.eliminationKillsRequired = tag.getInt(eliminationRequirement);
         this.completed = tag.getBoolean("Completed");
@@ -101,17 +111,56 @@ public class EliminationTrial implements Trial {
             return;
         }
 
-        incrementEliminationCount();
-        if (isTrialCompleted(player)) {
-            concludeTrial(player);
-        } else {
-            trackProgress(player);
+        if (entity.getType() == eliminationTarget) {
+            incrementEliminationCount();
+            if (isTrialCompleted(player)) {
+                concludeTrial(player);
+            } else {
+                trackProgress(player);
+            }
         }
     }
 
     @Override
     public void onPlayerTick(Player player) {
 
+    }
+
+    private EntityType<?> selectRandomTargetMob() {
+        List<WeightedMob> mobList = MobList.ELIMINATION_TRIAL_MOBS;
+        double totalWeight = mobList.stream().mapToDouble(WeightedMob::getWeight).sum();
+        double randomValue = ThreadLocalRandom.current().nextDouble(totalWeight);
+        double cumulativeWeight = 0.0;
+        for (WeightedMob wm : mobList) {
+            cumulativeWeight += wm.getWeight();
+            if (randomValue <= cumulativeWeight) {
+                this.eliminationTargetString = wm.getMobType().getDescription().getString();
+                return wm.getMobType();
+            }
+        }
+        return mobList.get(mobList.size() - 1).getMobType();
+    }
+
+    private int calculateRequiredKillCount(int amplifier) {
+        int randomMultiplier = ThreadLocalRandom.current().nextInt(8, 13);
+        int baseKillCount = randomMultiplier * (amplifier + 1);
+        if (eliminationTarget.equals(EntityType.GHAST) ||
+                eliminationTarget.equals(EntityType.WITHER_SKELETON) ||
+                eliminationTarget.equals(EntityType.WITCH) ||
+                eliminationTarget.equals(EntityType.EVOKER)) {
+            baseKillCount = Math.max(1, baseKillCount / 2);
+        } else if (eliminationTarget.equals(EntityType.CAVE_SPIDER) ||
+                eliminationTarget.equals(EntityType.SLIME) ||
+                eliminationTarget.equals(EntityType.MAGMA_CUBE)) {
+            baseKillCount = baseKillCount * 2;
+        }
+
+        if (ThreadLocalRandom.current().nextDouble() <= 0.01) {
+            eliminationTarget = EntityType.VILLAGER;
+            baseKillCount = baseKillCount * 2;
+        }
+
+        return baseKillCount;
     }
 
     @Override
@@ -124,6 +173,7 @@ public class EliminationTrial implements Trial {
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
                             PlayerTrialData.eliminationTrial,
+                            eliminationTargetString,
                             eliminationKills,
                             eliminationKillsRequired,
                             0,
@@ -141,6 +191,7 @@ public class EliminationTrial implements Trial {
         ModNetworking.sendToPlayer(
                 new SyncTrialDataS2C(
                         PlayerTrialData.eliminationTrial,
+                        eliminationTargetString,
                         eliminationKillsRequired,
                         eliminationKillsRequired,
                         0,
@@ -152,6 +203,20 @@ public class EliminationTrial implements Trial {
         player.removeEffect(this.effect);
 
         PlayerTrialData.clearCurseEffect(player);
+
+        ModNetworking.sendToPlayer(new CameraShakeS2C(0.05F, 1000), (ServerPlayer) player);
+        if (player.level() instanceof ServerLevel serverLevel) {
+            serverLevel.playSound(
+                    null,
+                    player.getX(),
+                    player.getY() + 1,
+                    player.getZ(),
+                    SoundEvents.AMBIENT_SOUL_SAND_VALLEY_MOOD.get(),
+                    SoundSource.AMBIENT,
+                    1.0f,
+                    0.25f
+            );
+        }
 
         CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel(), altar);
         altar.setPlayerTrialCompleted(player);
@@ -170,5 +235,51 @@ public class EliminationTrial implements Trial {
     @Override
     public void setCompleted(boolean completed) {
         this.completed = completed;
+    }
+
+    public static class WeightedMob {
+        private final EntityType<?> mobType;
+        private final double weight;
+
+        public WeightedMob(EntityType<?> mobType, double weight) {
+            this.mobType = mobType;
+            this.weight = weight;
+        }
+
+        public EntityType<?> getMobType() {
+            return mobType;
+        }
+
+        public double getWeight() {
+            return weight;
+        }
+    }
+
+    public static class MobList {
+        public static final List<WeightedMob> ELIMINATION_TRIAL_MOBS = Arrays.asList(
+                new WeightedMob(EntityType.ZOMBIE, 20.0),
+                new WeightedMob(EntityType.SKELETON, 20.0),
+                new WeightedMob(EntityType.CREEPER, 15.0),
+                new WeightedMob(EntityType.SPIDER, 15.0),
+                new WeightedMob(EntityType.PILLAGER, 10.0),
+                new WeightedMob(EntityType.VINDICATOR, 10.0),
+                new WeightedMob(EntityType.HOGLIN, 10.0),
+                new WeightedMob(EntityType.ZOMBIFIED_PIGLIN, 10.0),
+                new WeightedMob(EntityType.PIGLIN_BRUTE, 10.0),
+                new WeightedMob(EntityType.DROWNED, 10.0),
+                new WeightedMob(EntityType.GUARDIAN, 5.0),
+                new WeightedMob(EntityType.PHANTOM, 5.0),
+                new WeightedMob(EntityType.SLIME, 15.0),
+                new WeightedMob(EntityType.MAGMA_CUBE, 15.0),
+                new WeightedMob(EntityType.CAVE_SPIDER, 5.0),
+                new WeightedMob(EntityType.WITCH, 3.0),
+                new WeightedMob(EntityType.EVOKER, 3.0),
+                new WeightedMob(EntityType.WITHER_SKELETON, 2.0),
+                new WeightedMob(EntityType.GHAST, 1.0),
+                new WeightedMob(EntityType.BLAZE, 2.0),
+                new WeightedMob(EntityType.HUSK, 3.0),
+                new WeightedMob(EntityType.STRAY, 3.0),
+                new WeightedMob(EntityType.VILLAGER, 0.01)
+        );
     }
 }

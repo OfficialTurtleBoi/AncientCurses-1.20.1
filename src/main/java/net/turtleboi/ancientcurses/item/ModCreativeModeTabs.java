@@ -48,6 +48,7 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.PERFECT_SAPPHIRE.get());
                         pOutput.accept(ModItems.PERFECT_TOPAZ.get());
                         pOutput.accept(ModItems.ANCIENT_CHRYSOBERYL.get());
+                        pOutput.accept(ModItems.ANCIENT_BISMUTH.get());
                         pOutput.accept(ModItems.ANCIENT_ALEXANDRITE.get());
                         pOutput.accept(ModItems.CURSED_PEARL.get());
                         pOutput.accept(ModItems.ROT_CLUMP.get());

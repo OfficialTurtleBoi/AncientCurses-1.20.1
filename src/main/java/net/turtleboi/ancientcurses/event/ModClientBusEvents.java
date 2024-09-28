@@ -53,7 +53,7 @@ public class ModClientBusEvents {
                             if (mainGemStack.getItem() == ModItems.PERFECT_SAPPHIRE.get() || mainGemStack.getItem() == ModItems.POLISHED_SAPPHIRE.get()) return 5.0F;
                             if (mainGemStack.getItem() == ModItems.PERFECT_TOPAZ.get() || mainGemStack.getItem() == ModItems.POLISHED_TOPAZ.get()) return 6.0F;
                             if (mainGemStack.getItem() == ModItems.ANCIENT_ALEXANDRITE.get()) return 7.0F;
-                            if (mainGemStack.getItem() == ModItems.PERFECT_AMETHYST.get()) return 8.0F;
+                            if (mainGemStack.getItem() == ModItems.ANCIENT_BISMUTH.get()) return 8.0F;
                             if (mainGemStack.getItem() == ModItems.ANCIENT_CHRYSOBERYL.get()) return 9.0F;
                         }
                     }

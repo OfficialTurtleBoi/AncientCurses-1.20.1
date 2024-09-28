@@ -108,6 +108,7 @@ public class ModEvents {
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
                             "None",
+                            "",
                             0,
                             0,
                             0,
@@ -713,7 +714,7 @@ public class ModEvents {
                 if (trial != null) {
                     trial.onEntityKilled(player, entity);
                 } else {
-                    System.out.println("Trial is null for player: " + player.getName().getString());
+                    //System.out.println("Trial is null for player: " + player.getName().getString());
                 }
             }
         }
@@ -740,15 +741,12 @@ public class ModEvents {
                 altar.removePlayerFromTrial(player);
             }
 
-            PlayerTrialData.clearCurrentAltarPos(player);
-            PlayerTrialData.clearCurseEffect(player);
-            PlayerTrialData.clearCurseAmplifier(player);
-
             PlayerTrialData.clearPlayerCurse(player);
             if (player instanceof ServerPlayer serverPlayer) {
                 ModNetworking.sendToPlayer(
                         new SyncTrialDataS2C(
                                 "None",
+                                "",
                                 0,
                                 0,
                                 0,
@@ -758,6 +756,8 @@ public class ModEvents {
                                 0),
                         serverPlayer);
             }
+
+            player.displayClientMessage(Component.literal("The Altars Feed on your soul...").withStyle(ChatFormatting.DARK_RED), true);
         }
     }
 
@@ -956,7 +956,7 @@ public class ModEvents {
                             fetchTrial.concludeTrial(player);
                         }
 
-                        System.out.println("Player " + player.getName().getString() + " has thrown " + tossedItem.getDescriptionId() + " at altar " + altarPos + ". Collected: " + fetchTrial.getCollectedCount() + "/" + fetchTrial.getRequiredCount());
+                        //System.out.println("Player " + player.getName().getString() + " has thrown " + tossedItem.getDescriptionId() + " at altar " + altarPos + ". Collected: " + fetchTrial.getCollectedCount() + "/" + fetchTrial.getRequiredCount());
                         break;
                     }
                 }

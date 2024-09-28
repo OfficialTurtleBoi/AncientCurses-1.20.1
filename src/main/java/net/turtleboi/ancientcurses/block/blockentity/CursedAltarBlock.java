@@ -45,8 +45,12 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
+import net.turtleboi.ancientcurses.effect.effects.CurseOfObessionEffect;
 import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.CameraShakeS2C;
+import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
 import net.turtleboi.ancientcurses.trials.SurvivalTrial;
@@ -58,8 +62,10 @@ import java.util.*;
 
 public class CursedAltarBlock extends BaseEntityBlock {
     public static final VoxelShape SHAPE = BaseEntityBlock.box(0, 0, 0, 16, 12, 16);
-    public static final List<BlockPos> SOUL_TORCH_OFFSETS = BlockPos.betweenClosedStream(-2, 0, -2, 2, 1, 2).filter((p_207914_) ->
-            Math.abs(p_207914_.getX()) == 2 || Math.abs(p_207914_.getZ()) == 2).map(BlockPos::immutable).toList();
+    public static final List<BlockPos> SOUL_TORCH_OFFSETS = BlockPos.betweenClosedStream(-2, 0, -2, 2, 1, 2)
+            .filter((p_207914_) -> Math.abs(p_207914_.getX()) == 2 || Math.abs(p_207914_.getZ()) == 2)
+            .map(BlockPos::immutable)
+            .toList();
 
     public CursedAltarBlock(Properties pProperties) {
         super(pProperties);
@@ -105,6 +111,53 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
     private boolean isSoulTorch(Level level, BlockPos pos) {
         return level.getBlockState(pos).is(ModBlocks.SCONCED_SOUL_TORCH.get()) || level.getBlockState(pos).is(ModBlocks.SCONCED_WALL_SOUL_TORCH.get());
+    }
+
+    private void convertSoulTorches(CursedAltarBlockEntity altarEntity, Level level) {
+        BlockPos altarPos = altarEntity.getBlockPos();
+
+        for (BlockPos offset : SOUL_TORCH_OFFSETS) {
+            BlockPos torchPos = altarPos.offset(offset);
+            if (isSoulTorch(level, torchPos)) {
+                BlockState torchState = level.getBlockState(torchPos);
+                BlockState cursedTorchState;
+
+                if (torchState.getBlock() instanceof WallTorchBlock) {
+                    Direction direction = torchState.getValue(WallTorchBlock.FACING);
+                    cursedTorchState = ModBlocks.SCONCED_WALL_CURSED_TORCH.get().defaultBlockState()
+                            .setValue(WallTorchBlock.FACING, direction);
+                } else {
+                    cursedTorchState = ModBlocks.SCONCED_CURSED_TORCH.get().defaultBlockState();
+                }
+
+                level.setBlock(torchPos, cursedTorchState, 3);
+
+                if (level instanceof ServerLevel serverLevel) {
+                    serverLevel.sendParticles(
+                            ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
+                            torchPos.getX() + 0.5,
+                            torchPos.getY() + 0.7,
+                            torchPos.getZ() + 0.5,
+                            20,
+                            0.05,
+                            0.05,
+                            0.05,
+                            0.01
+                    );
+
+                    serverLevel.playSound(
+                            null,
+                            torchPos.getX() + 0.5,
+                            torchPos.getY() + 0.7,
+                            torchPos.getZ() + 0.5,
+                            SoundEvents.GHAST_SHOOT,
+                            SoundSource.HOSTILE,
+                            0.25f,
+                            0.5f
+                    );
+                }
+            }
+        }
     }
 
     @Override
@@ -203,6 +256,8 @@ public class CursedAltarBlock extends BaseEntityBlock {
                     }
                 } else {
                     if (!altarEntity.hasPlayerCompletedTrial(player) && altarEntity.canPlayerUse(player)) {
+                        convertSoulTorches(altarEntity, level);
+                        ModNetworking.sendToPlayer(new CameraShakeS2C(0.125F, 1000), (ServerPlayer) player);
                         startTrial(player, altarEntity);
                         return InteractionResult.SUCCESS;
                     } else if (!altarEntity.hasPlayerCompletedTrial(player) && !altarEntity.canPlayerUse(player)){
@@ -264,17 +319,12 @@ public class CursedAltarBlock extends BaseEntityBlock {
         //System.out.println(Component.literal("Giving player loot of amplifier: " + amplifier));
 
         if (player instanceof ServerPlayer) {
+            ModNetworking.sendToPlayer(new CameraShakeS2C(0.125F, 1000), (ServerPlayer) player);
             rewardPlayerWithLootTable(player, amplifier, level, pos);
-            //Trial trial = altarEntity.getPlayerTrial(player.getUUID());
-            //if (trial != null) {
-            //    System.out.println("Trial is not null. Proceeding to remove event bar.");
-            //    //trial.removeEventBar(player);
-            //} else {
-            //    System.out.println("Trial is null for player: " + player.getName().getString());
-            //}
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
                             "None",
+                            "",
                             0,
                             0,
                             0,
@@ -285,6 +335,30 @@ public class CursedAltarBlock extends BaseEntityBlock {
                     (ServerPlayer) player);
             PlayerTrialData.clearCurseAmplifier(player);
             altarEntity.markRewardCollected(player);
+        }
+
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.playSound(
+                    null,
+                    altarEntity.getBlockPos().getX() + 0.5,
+                    altarEntity.getBlockPos().getY() + 1,
+                    altarEntity.getBlockPos().getZ() + 0.5,
+                    SoundEvents.RESPAWN_ANCHOR_DEPLETE.get(),
+                    SoundSource.AMBIENT,
+                    1.0F,
+                    0.5F
+            );
+
+            serverLevel.playSound(
+                    null,
+                    altarEntity.getBlockPos().getX() + 0.5,
+                    altarEntity.getBlockPos().getY() + 1,
+                    altarEntity.getBlockPos().getZ() + 0.5,
+                    SoundEvents.UI_TOAST_CHALLENGE_COMPLETE,
+                    SoundSource.AMBIENT,
+                    1.0f,
+                    1.0f
+            );
         }
     }
 

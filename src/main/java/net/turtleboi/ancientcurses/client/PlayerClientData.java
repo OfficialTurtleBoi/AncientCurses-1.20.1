@@ -9,6 +9,7 @@ public class PlayerClientData {
     public static int voidTimer = 0;
     public static int voidTotalTime = 0;
     public static String trialType = "None";
+    public static String eliminationTarget = "None";
     public static int eliminationKills = 0;
     public static int eliminationKillsRequired = 0;
     private static long trialDurationElapsed = 0;
@@ -17,6 +18,8 @@ public class PlayerClientData {
     public static int fetchItems = 0;
     public static int fetchItemsRequired = 0;
     private static float portalOverlayAlpha = 0;
+    private static float cameraShakeIntensity = 0;
+    private static int cameraShakeDuration = 0;
 
     public static boolean isAsleep() {
         return isAsleep;
@@ -71,6 +74,14 @@ public class PlayerClientData {
 
     public static void setTrialType(String trialString){
         trialType = trialString;
+    }
+
+    public static String getEliminationTarget(){
+        return eliminationTarget;
+    }
+
+    public static void setEliminationTarget(String targetString){
+        eliminationTarget = targetString;
     }
 
     public static Integer getEliminationKills(){
@@ -156,6 +167,22 @@ public class PlayerClientData {
 
     public static void setPortalOverlayAlpha(float overlayAlpha) {
         portalOverlayAlpha = overlayAlpha;
+    }
+
+    public static Float getCameraShakeIntensity(){
+        return cameraShakeIntensity;
+    }
+
+    public static void setCameraShakeIntensity(float intensity) {
+        cameraShakeIntensity = intensity;
+    }
+
+    public static Integer getCameraShakeDuration(){
+        return cameraShakeDuration;
+    }
+
+    public static void setCameraShakeDuration(int duration) {
+        cameraShakeDuration = duration;
     }
 
 }

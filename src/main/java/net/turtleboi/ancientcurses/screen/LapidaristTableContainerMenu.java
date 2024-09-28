@@ -61,17 +61,65 @@ public class LapidaristTableContainerMenu extends AbstractContainerMenu {
                 }
             });
 
-            this.addSlot(new PreciousGemSlot(iItemHandler, 2, 80, 9, blockEntity));
-            this.addSlot(new PreciousGemSlot(iItemHandler, 3, 53, 29, blockEntity));
-            this.addSlot(new PreciousGemSlot(iItemHandler, 4, 107, 29, blockEntity));
-            this.addSlot(new PreciousGemSlot(iItemHandler, 5, 62, 59, blockEntity));
-            this.addSlot(new PreciousGemSlot(iItemHandler, 6, 98, 59, blockEntity));
+            this.addSlot(new PreciousGemSlot(iItemHandler, 2, 80, 9, blockEntity) {
+                @Override
+                public boolean mayPlace(@NotNull ItemStack stack){
+                    ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
+                    return !socketableItem.isEmpty() &&
+                            super.mayPlace(stack) &&
+                            stack.getItem() instanceof PreciousGemItem &&
+                            !stack.is(ModTags.Items.ANCIENT_GEMS);
+                }
+            });
+            this.addSlot(new PreciousGemSlot(iItemHandler, 3, 53, 29, blockEntity) {
+                @Override
+                public boolean mayPlace(@NotNull ItemStack stack){
+                    ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
+                    return !socketableItem.isEmpty() &&
+                            super.mayPlace(stack) &&
+                            stack.getItem() instanceof PreciousGemItem &&
+                            !stack.is(ModTags.Items.ANCIENT_GEMS);
+                }
+            });
+            this.addSlot(new PreciousGemSlot(iItemHandler, 4, 107, 29, blockEntity) {
+                @Override
+                public boolean mayPlace(@NotNull ItemStack stack){
+                    ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
+                    return !socketableItem.isEmpty() &&
+                            super.mayPlace(stack) &&
+                            stack.getItem() instanceof PreciousGemItem &&
+                            !stack.is(ModTags.Items.ANCIENT_GEMS);
+                }
+            });
+            this.addSlot(new PreciousGemSlot(iItemHandler, 5, 62, 59, blockEntity) {
+                @Override
+                public boolean mayPlace(@NotNull ItemStack stack){
+                    ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
+                    return !socketableItem.isEmpty() &&
+                            super.mayPlace(stack) &&
+                            stack.getItem() instanceof PreciousGemItem &&
+                            !stack.is(ModTags.Items.ANCIENT_GEMS);
+                }
+            });
+            this.addSlot(new PreciousGemSlot(iItemHandler, 6, 98, 59, blockEntity) {
+                @Override
+                public boolean mayPlace(@NotNull ItemStack stack){
+                    ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
+                    return !socketableItem.isEmpty() &&
+                            super.mayPlace(stack) &&
+                            stack.getItem() instanceof PreciousGemItem &&
+                            !stack.is(ModTags.Items.ANCIENT_GEMS);
+                }
+            });
 
             this.addSlot(new PreciousGemSlot(iItemHandler, 1, 80, 34, blockEntity) {
                 @Override
                 public boolean mayPlace(@NotNull ItemStack stack) {
                     ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
-                    return !socketableItem.isEmpty() && super.mayPlace(stack) && stack.getItem() instanceof PreciousGemItem && !stack.is(ModTags.Items.MINOR_GEMS);
+                    return !socketableItem.isEmpty() &&
+                            super.mayPlace(stack) &&
+                            stack.getItem() instanceof PreciousGemItem &&
+                            !stack.is(ModTags.Items.MINOR_GEMS);
                 }
             });
         });

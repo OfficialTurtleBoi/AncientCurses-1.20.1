@@ -150,7 +150,26 @@ public class CursedPortalEntity extends Entity {
     }
 
     private void playPortalTravelSound(Player player) {
-        this.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PORTAL_TRAVEL, SoundSource.BLOCKS, 0.25F, this.level().random.nextFloat() * 0.2F + 0.5F);
+        this.level().playSound(
+                null,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.PORTAL_TRAVEL,
+                SoundSource.BLOCKS,
+                0.25F,
+                this.level().random.nextFloat() * 0.2F + 0.5F
+        );
+        this.level().playSound(
+                null,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.CHORUS_FRUIT_TELEPORT,
+                SoundSource.BLOCKS,
+                0.25F,
+                this.level().random.nextFloat() * 0.2F + 0.5F
+        );
     }
 
     private void decrementCooldowns() {
@@ -169,6 +188,7 @@ public class CursedPortalEntity extends Entity {
                     continue;
                 }
                 if (this.linkedPortal != null && this.linkedPortal.isTeleportEnabled()) {
+                    this.getLinkedPortal().playerCooldowns.put(playerUUID, teleportCooldown);
                     teleportPlayerToPortal(serverPlayer, this.getLinkedPortal().blockPosition(), this.level());
                 } else if (this.altarPos != null) {
                     teleportPlayerToAltar(serverPlayer, altarPos, this.level());
@@ -276,7 +296,7 @@ public class CursedPortalEntity extends Entity {
             level.addFreshEntity(portal);
             return portal;
         } else {
-            player.sendSystemMessage(Component.literal("No space for a portal!").withStyle(ChatFormatting.RED));
+            player.displayClientMessage(Component.literal("Portal cannot manifest!").withStyle(ChatFormatting.RED), true);
             return null;
         }
     }

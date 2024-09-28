@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 
 public class SyncTrialDataS2C {
     private final String trialType;
+    private final String eliminationTarget;
     private final int eliminationKills;
     private final int eliminationKillsRequired;
     private final long trialDurationElapsed;
@@ -21,9 +22,11 @@ public class SyncTrialDataS2C {
     private final int fetchItemsRequired;
 
 
-    public SyncTrialDataS2C(String trialType, int eliminationKills, int eliminationKillsRequired, long trialDurationElapsed, long trialDurationTotal,
+    public SyncTrialDataS2C(String trialType, String eliminationTarget, int eliminationKills, int eliminationKillsRequired,
+                            long trialDurationElapsed, long trialDurationTotal,
                             String fetchItem, int fetchItems, int fetchItemsRequired) {
         this.trialType = trialType;
+        this.eliminationTarget = eliminationTarget;
         this.eliminationKills = eliminationKills;
         this.eliminationKillsRequired = eliminationKillsRequired;
         this.trialDurationElapsed = trialDurationElapsed;
@@ -35,6 +38,7 @@ public class SyncTrialDataS2C {
 
     public SyncTrialDataS2C(FriendlyByteBuf buf) {
         this.trialType = buf.readUtf();
+        this.eliminationTarget = buf.readUtf();
         this.eliminationKills = buf.readInt();
         this.eliminationKillsRequired = buf.readInt();
         this.trialDurationElapsed = buf.readLong();
@@ -46,6 +50,7 @@ public class SyncTrialDataS2C {
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUtf(trialType);
+        buf.writeUtf(eliminationTarget);
         buf.writeInt(eliminationKills);
         buf.writeInt(eliminationKillsRequired);
         buf.writeLong(trialDurationElapsed);
@@ -63,6 +68,7 @@ public class SyncTrialDataS2C {
             if (trialType == null || trialType.equals("None")) {
                 PlayerClientData.trialType = "None";
             } else {
+                PlayerClientData.setEliminationTarget(eliminationTarget);
                 PlayerClientData.setEliminationKills(eliminationKills);
                 PlayerClientData.setEliminationKillsRequired(eliminationKillsRequired);
                 PlayerClientData.setTrialDurationElapsed(trialDurationElapsed);
@@ -70,9 +76,6 @@ public class SyncTrialDataS2C {
                 PlayerClientData.setFetchItem(fetchItem);
                 PlayerClientData.setFetchItems(fetchItems);
                 PlayerClientData.setFetchItemsRequired(fetchItemsRequired);
-                System.out.println(Component.literal("You need: " + fetchItem));
-                System.out.println(Component.literal("You need this many items: " + fetchItems));
-                System.out.println(Component.literal("You have this many items: " + fetchItemsRequired));
             }
         });
         context.setPacketHandled(true);

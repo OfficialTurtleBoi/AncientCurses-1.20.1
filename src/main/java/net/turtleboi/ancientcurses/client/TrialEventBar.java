@@ -9,6 +9,8 @@ import net.minecraft.util.Mth;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
 
+import java.awt.*;
+
 public class TrialEventBar {
     private static final ResourceLocation TRIAL_BOSS_BAR =
             new ResourceLocation(AncientCurses.MOD_ID, "textures/gui/quest_bar.png");
@@ -42,7 +44,11 @@ public class TrialEventBar {
 
         String displayText = getTrialDisplayText();
         int titleWidth = minecraft.font.width(displayText);
-        guiGraphics.drawString(minecraft.font, displayText, x + (barWidth / 2) - (titleWidth / 2), y - 9, 0xFFFFFF);
+        int color = 0xFFFFFF;
+        if (PlayerClientData.getTrialProgress() >= 1.0F){
+            color = 0xFFAA00;
+        }
+        guiGraphics.drawString(minecraft.font, displayText, x + (barWidth / 2) - (titleWidth / 2), y - 9, color);
     }
 
     private static int getProgress(int barWidth, int barBuffer) {
@@ -51,19 +57,25 @@ public class TrialEventBar {
     }
 
     private static String getTrialDisplayText() {
-        String trialType = PlayerClientData.getTrialType();
-        if (trialType.equalsIgnoreCase(PlayerTrialData.survivalTrial)) {
-            int percentComplete = (int) (PlayerClientData.getTrialProgress() * 100);
-            return "Survive: " + percentComplete + "%";
-        } else if (trialType.equalsIgnoreCase(PlayerTrialData.eliminationTrial)) {
-            int eliminationCount = PlayerClientData.getEliminationKills();
-            int requiredEliminations = PlayerClientData.getEliminationKillsRequired();
-            return "Eliminate Enemies: " + eliminationCount + "/" + requiredEliminations;
-        } else if (trialType.equalsIgnoreCase(PlayerTrialData.fetchTrial)) {
-            String fetchItem = PlayerClientData.getFetchItem();
-            int fetchItemCount = PlayerClientData.getFetchItems();
-            int requiredFetchitems = PlayerClientData.getFetchItemsRequired();
-            return "Feed the altar: " + fetchItemCount + "/" + requiredFetchitems + " " + fetchItem;
+        float trialProgress = PlayerClientData.getTrialProgress();
+        if (trialProgress < 1.0F) {
+            String trialType = PlayerClientData.getTrialType();
+            if (trialType.equalsIgnoreCase(PlayerTrialData.survivalTrial)) {
+                int percentComplete = (int) (PlayerClientData.getTrialProgress() * 100);
+                return "Survive: " + percentComplete + "%";
+            } else if (trialType.equalsIgnoreCase(PlayerTrialData.eliminationTrial)) {
+                String targetName = PlayerClientData.getEliminationTarget();
+                int eliminationCount = PlayerClientData.getEliminationKills();
+                int requiredEliminations = PlayerClientData.getEliminationKillsRequired();
+                return "Eradicate " + targetName + "s: " + eliminationCount + "/" + requiredEliminations;
+            } else if (trialType.equalsIgnoreCase(PlayerTrialData.fetchTrial)) {
+                String fetchItem = PlayerClientData.getFetchItem();
+                int fetchItemCount = PlayerClientData.getFetchItems();
+                int requiredFetchitems = PlayerClientData.getFetchItemsRequired();
+                return "Feed the altar: " + fetchItemCount + "/" + requiredFetchitems + " " + fetchItem;
+            }
+        } else {
+            return "The altar beckons your return...";
         }
         return "";
     }

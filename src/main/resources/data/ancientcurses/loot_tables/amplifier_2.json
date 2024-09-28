@@ -561,6 +561,19 @@
         {
           "type": "minecraft:item",
           "name": "ancientcurses:deprecophobia_music_disc"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "ancientcurses:cursed_pearl",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "min": 4,
+                "max": 16
+              }
+            }
+          ]
         }
       ]
     }

@@ -1,9 +1,12 @@
 package net.turtleboi.ancientcurses.block.entity;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -208,7 +211,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return true;
     }
 
-    public void cursePlayer(Player player, MobEffect curse, int amplifier) {
+    public void cursePlayer(Player player, MobEffect curse, int curseAmplifier) {
         BlockPos altarPos = this.getBlockPos();
         UUID playerUUID = player.getUUID();
         Random random = new Random();
@@ -216,20 +219,21 @@ public class CursedAltarBlockEntity extends BlockEntity {
         int maxMultiple = 240;
         int range = maxMultiple - minMultiple + 1;
         int randomMultiple = random.nextInt(range) + minMultiple;
-        int duration = randomMultiple * 20;
+        int calculatedDuration = randomMultiple * 20;
+        int curseDuration = calculatedDuration * (curseAmplifier + 1);
 
-        Trial trial = createTrialForCurse(player, curse, duration, amplifier);
+        Trial trial = createTrialForCurse(player, curse, curseDuration, curseAmplifier);
         addPlayerTrial(playerUUID, trial);
 
         PlayerTrialData.setCurseEffect(player, curse);
-        PlayerTrialData.setCurseAmplifier(player, amplifier);
+        PlayerTrialData.setCurseAmplifier(player, curseAmplifier);
         PlayerTrialData.setCurrentAltarPos(player, altarPos);
 
         String trialType = trial.getType();
         TrialRecord trialRecord = new TrialRecord(altarPos, trialType, false, false);
         PlayerTrialData.addOrUpdateTrialRecord(player, trialRecord);
 
-        player.addEffect(new MobEffectInstance(curse, trial instanceof SurvivalTrial ? duration : MobEffectInstance.INFINITE_DURATION, amplifier, false, false, true));
+        player.addEffect(new MobEffectInstance(curse, trial instanceof SurvivalTrial ? curseDuration : MobEffectInstance.INFINITE_DURATION, curseAmplifier, false, false, true));
 
         trial.trackProgress(player);
     }
@@ -237,7 +241,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public boolean hasPlayerCompletedTrial(Player player) {
         BlockPos altarPos = this.getBlockPos();
         boolean completed = PlayerTrialData.hasCompletedTrial(player, altarPos);
-        System.out.println("Checking if player " + player.getName().getString() + " has completed trial at altar " + altarPos + ": " + completed);
+        //System.out.println("Checking if player " + player.getName().getString() + " has completed trial at altar " + altarPos + ": " + completed);
         return completed;
     }
 
@@ -310,7 +314,44 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public static int getRandomAmplifier(Player player) {
         int trialsCompleted = PlayerTrialData.getPlayerTrialsCompleted(player);
         List<Integer> weightedAmplifiers = getWeightedAmplifier(trialsCompleted);
-        return weightedAmplifiers.get(new Random().nextInt(weightedAmplifiers.size()));
+
+        if (weightedAmplifiers.isEmpty()) {
+            System.out.println(
+                    Component.literal("No amplifiers available at this time.")
+                            .withStyle(ChatFormatting.RED)
+            );
+            return 0;
+        }
+
+        int count0 = 0;
+        int count1 = 0;
+        int count2 = 0;
+        for (int amplifier : weightedAmplifiers) {
+            switch (amplifier) {
+                case 0 -> count0++;
+                case 1 -> count1++;
+                case 2 -> count2++;
+                default -> {}
+            }
+        }
+
+        int total = weightedAmplifiers.size();
+        double chance0 = total > 0 ? (count0 * 100.0 / total) : 0.0;
+        double chance1 = total > 0 ? (count1 * 100.0 / total) : 0.0;
+        double chance2 = total > 0 ? (count2 * 100.0 / total) : 0.0;
+
+        Component message = Component.literal("Trials Completed: ")
+                .append(Component.literal(String.valueOf(trialsCompleted)).withStyle(ChatFormatting.GREEN))
+                .append(Component.literal("\nAmplifier Chances:\n"))
+                .append(Component.literal("• Amplifier 0: ").withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(String.format("%.2f%%", chance0)).withStyle(ChatFormatting.GOLD))
+                .append(Component.literal("\n• Amplifier 1: ").withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(String.format("%.2f%%", chance1)).withStyle(ChatFormatting.GOLD))
+                .append(Component.literal("\n• Amplifier 2: ").withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(String.format("%.2f%%", chance2)).withStyle(ChatFormatting.GOLD));
+
+        //System.out.println(message);
+        return weightedAmplifiers.get(ThreadLocalRandom.current().nextInt(weightedAmplifiers.size()));
     }
 
     private static @NotNull List<Integer> getWeightedAmplifier(int trialsCompleted) {
@@ -328,16 +369,15 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     public Trial createTrialForCurse(Player player, MobEffect curseType, int curseDuration, int curseAmplifier) {
-        int randomEliminations = ThreadLocalRandom.current().nextInt(8, 13);
         if (curseType == ModEffects.CURSE_OF_AVARICE.get()) {
             return new FetchTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_ENDING.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration * (curseAmplifier + 1));
             return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
         } else if (curseType == ModEffects.CURSE_OF_ENVY.get()) {
-            return new EliminationTrial(player, curseType, randomEliminations * (curseAmplifier + 1), this);
+            return new EliminationTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_FRAILTY.get()) {
-            return new EliminationTrial(player, curseType, randomEliminations * (curseAmplifier + 1), this);
+            return new EliminationTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_GLUTTONY.get()) {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration * (curseAmplifier + 1));
             return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
@@ -350,13 +390,13 @@ public class CursedAltarBlockEntity extends BlockEntity {
             MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration * (curseAmplifier + 1));
             return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
         } else if (curseType == ModEffects.CURSE_OF_PRIDE.get()) {
-            return new EliminationTrial(player, curseType, randomEliminations * (curseAmplifier + 1), this);
+            return new EliminationTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_SHADOWS.get()) {
             return new FetchTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_SLOTH.get()) {
             return new FetchTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_WRATH.get()) {
-            return new EliminationTrial(player, curseType, randomEliminations * (curseAmplifier + 1), this);
+            return new EliminationTrial(player, curseType, curseAmplifier, this);
         }
         return null;
     }

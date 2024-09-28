@@ -66,6 +66,12 @@ public class ModNetworking {
                 .encoder(PortalOverlayPacketC2S::toBytes)
                 .consumerMainThread(PortalOverlayPacketC2S::handle)
                 .add();
+
+        net.messageBuilder(CameraShakeS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(CameraShakeS2C::new)
+                .encoder(CameraShakeS2C::toBytes)
+                .consumerMainThread(CameraShakeS2C::handle)
+                .add();
     }
 
     public static <MSG> void sendToPlayer (MSG message, ServerPlayer player) {

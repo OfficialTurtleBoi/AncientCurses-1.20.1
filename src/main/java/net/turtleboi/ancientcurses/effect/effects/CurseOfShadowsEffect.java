@@ -17,6 +17,7 @@ import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 
 import java.util.List;
+import java.util.Objects;
 
 public class CurseOfShadowsEffect extends MobEffect {
     public CurseOfShadowsEffect(MobEffectCategory pCategory, int pColor) {
@@ -43,7 +44,9 @@ public class CurseOfShadowsEffect extends MobEffect {
         }
 
         if (!pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
-            player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 100, amplifier, false, false, false));
+            if (!player.hasEffect(MobEffects.DARKNESS) || Objects.requireNonNull(player.getEffect(MobEffects.DARKNESS)).getDuration() <= 20) {
+                player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 100, amplifier, false, false, false));
+            }
             Level level = player.level();
             if (pLivingEntity.tickCount % 20 == 0) {
                 int effectColor = this.getColor();
