@@ -309,7 +309,7 @@ public class CursedPortalEntity extends Entity {
     }
 
     private void detectAndApplyScreenEffect() {
-        double distanceThreshold = 4.0;
+        double distanceThreshold = 2.5;
         List<Player> players = this.level().getEntitiesOfClass(Player.class, this.getBoundingBox().inflate(distanceThreshold));
 
         for (Player player : players) {

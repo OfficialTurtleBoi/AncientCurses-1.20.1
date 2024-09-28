@@ -287,43 +287,34 @@ public class ModClientEvents {
     }
 
     public static void renderCursedPortalOverlay(Minecraft minecraft) {
-        // Get the current alpha from player data
         float alpha = PlayerClientData.getPortalOverlayAlpha();
 
         if (alpha <= 0) {
-            return; // No need to render if alpha is zero or less
+            return;
         }
 
-        // Setup the pose stack for rendering
-        PoseStack poseStack = new PoseStack();
-
-        // Get the screen dimensions
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
         int screenHeight = minecraft.getWindow().getGuiScaledHeight();
 
-        // Enable blending for transparency
+        RenderSystem.disableDepthTest();
+        RenderSystem.depthMask(false);
         RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc(); // Use default blending
-        RenderSystem.setShaderColor(1.0F, 0.0F, 0.0F, alpha); // Red color with alpha
-
-        // Get the texture (this can be your custom texture or the vanilla nether portal texture)
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShaderColor(1.0F, 0.0F, 0.0F, alpha);
         ResourceLocation portalTexture = new ResourceLocation("minecraft", "textures/block/nether_portal.png");
         RenderSystem.setShaderTexture(0, portalTexture);
 
         long time = minecraft.level.getGameTime();
-        int totalFrames = 32; // The Nether portal has 16 frames in its animation
-        int frame = (int) (time % totalFrames); // Loop over the frames based on the game time
+        int totalFrames = 32;
+        int frame = (int) (time % totalFrames);
 
-        // Each frame is stacked vertically in the texture, so calculate the UV coordinates for the current frame
-        float frameHeight = 1.0f / totalFrames; // Height of each frame in the texture
-        float vMin = frame * frameHeight; // Start of the current frame (v)
-        float vMax = vMin + frameHeight; // End of the current frame (v)
+        float frameHeight = 1.0f / totalFrames;
+        float vMin = frame * frameHeight;
+        float vMax = vMin + frameHeight;
 
-        // Start rendering the quad with the selected frame
         BufferBuilder buffer = Tesselator.getInstance().getBuilder();
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
 
-        // Render the full-screen quad with the current frame of the portal texture
         buffer.vertex(0.0D, screenHeight, -90.0D).uv(0.0F, vMax).endVertex();
         buffer.vertex(screenWidth, screenHeight, -90.0D).uv(1.0F, vMax).endVertex();
         buffer.vertex(screenWidth, 0.0D, -90.0D).uv(1.0F, vMin).endVertex();
@@ -331,8 +322,9 @@ public class ModClientEvents {
 
         Tesselator.getInstance().end();
 
-        // Disable blending after rendering
         RenderSystem.disableBlend();
+        RenderSystem.depthMask(true);
+        RenderSystem.enableDepthTest();
     }
 
 

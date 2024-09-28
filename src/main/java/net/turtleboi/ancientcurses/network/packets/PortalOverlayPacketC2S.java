@@ -32,7 +32,7 @@ public class PortalOverlayPacketC2S {
             ServerPlayer player = context.getSender();
             if (player != null) {
                 List<CursedPortalEntity> cursedPortalEntities = player.level().getEntitiesOfClass(
-                        CursedPortalEntity.class, player.getBoundingBox().inflate(4));
+                        CursedPortalEntity.class, player.getBoundingBox().inflate(2.5));
                 if (cursedPortalEntities.isEmpty()){
                     float newAlpha = Math.max(0, portalAlpha - 0.001F);
                     ModNetworking.sendToPlayer(new PortalOverlayPacketS2C(newAlpha), player);

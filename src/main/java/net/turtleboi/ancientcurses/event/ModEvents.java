@@ -35,6 +35,7 @@ import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -42,6 +43,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.event.AnvilUpdateEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -66,13 +68,11 @@ import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
-import net.turtleboi.ancientcurses.trials.EliminationTrial;
-import net.turtleboi.ancientcurses.trials.PlayerTrialData;
-import net.turtleboi.ancientcurses.trials.SurvivalTrial;
-import net.turtleboi.ancientcurses.trials.Trial;
+import net.turtleboi.ancientcurses.trials.*;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -98,11 +98,25 @@ public class ModEvents {
         MobEffect curseEffect = PlayerTrialData.getCurseEffect(player);
         if (curseEffect != null) {
             player.removeEffect(curseEffect);
-            player.addEffect(new MobEffectInstance(curseEffect, 6000, PlayerTrialData.getCurseAmplifier(player)));
+            player.addEffect(new MobEffectInstance(curseEffect, 2400, PlayerTrialData.getCurseAmplifier(player), false, false, true));
         }
         PlayerTrialData.clearCurrentAltarPos(player);
         PlayerTrialData.clearCurseEffect(player);
         PlayerTrialData.clearCurseAmplifier(player);
+
+        if (player instanceof ServerPlayer serverPlayer) {
+            ModNetworking.sendToPlayer(
+                    new SyncTrialDataS2C(
+                            "None",
+                            0,
+                            0,
+                            0,
+                            0,
+                            "",
+                            0,
+                            0),
+                    serverPlayer);
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -712,6 +726,24 @@ public class ModEvents {
                 }
             }
 
+            BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
+            if (altarPos == null) {
+                return;
+            }
+
+            BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
+            if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
+                return;
+            }
+
+            if (!altar.hasPlayerCompletedTrial(player)) {
+                altar.removePlayerFromTrial(player);
+            }
+
+            PlayerTrialData.clearCurrentAltarPos(player);
+            PlayerTrialData.clearCurseEffect(player);
+            PlayerTrialData.clearCurseAmplifier(player);
+
             PlayerTrialData.clearPlayerCurse(player);
             if (player instanceof ServerPlayer serverPlayer) {
                 ModNetworking.sendToPlayer(
@@ -719,6 +751,9 @@ public class ModEvents {
                                 "None",
                                 0,
                                 0,
+                                0,
+                                0,
+                                "",
                                 0,
                                 0),
                         serverPlayer);
@@ -820,35 +855,111 @@ public class ModEvents {
         }
     }
 
+    //@SubscribeEvent
+    //public static void onAnvilUpdate(AnvilUpdateEvent event) {
+    //    ItemStack leftStack = event.getLeft();
+    //    ItemStack rightStack = event.getRight();
+    //    if (rightStack.getItem() == Items.DIAMOND) {
+    //        ItemStack resultStack = leftStack.copy();
+    //        CompoundTag nbt = resultStack.getOrCreateTag();
+    //        int currentSockets = nbt.getInt("SocketCount");
+    //        boolean isSocketable = nbt.getBoolean("Socketable");
+//
+    //        if (!isSocketable || (isSocketable && currentSockets < 3)) {
+    //            if (!isSocketable) {
+    //                nbt.putBoolean("Socketable", true);
+    //                currentSockets = 0;
+    //            }
+    //            if (currentSockets < 3) {
+    //                nbt.putInt("SocketCount", currentSockets + 1);
+    //                ListTag socketsList = nbt.getList("Sockets", CompoundTag.TAG_COMPOUND);
+    //                CompoundTag newSocket = new CompoundTag();
+    //                newSocket.putInt("SlotIndex", currentSockets);
+    //                newSocket.putString("SocketType", "General");
+    //                socketsList.add(newSocket);
+    //                nbt.put("Sockets", socketsList);
+    //            }
+//
+    //            resultStack.setTag(nbt);
+    //            event.setOutput(resultStack);
+    //            event.setCost(5);
+    //            event.setMaterialCost(1);
+    //        }
+    //    }
+    //}
+
     @SubscribeEvent
-    public static void onAnvilUpdate(AnvilUpdateEvent event) {
-        ItemStack leftStack = event.getLeft();
-        ItemStack rightStack = event.getRight();
-        if (rightStack.getItem() == Items.DIAMOND) {
-            ItemStack resultStack = leftStack.copy();
-            CompoundTag nbt = resultStack.getOrCreateTag();
-            int currentSockets = nbt.getInt("SocketCount");
-            boolean isSocketable = nbt.getBoolean("Socketable");
+    public static void onItemToss(ItemTossEvent event) {
+        Entity entity = event.getEntity();
+        if (!(entity instanceof ItemEntity itemEntity)) {
+            return;
+        }
 
-            if (!isSocketable || (isSocketable && currentSockets < 3)) {
-                if (!isSocketable) {
-                    nbt.putBoolean("Socketable", true);
-                    currentSockets = 0;
-                }
-                if (currentSockets < 3) {
-                    nbt.putInt("SocketCount", currentSockets + 1);
-                    ListTag socketsList = nbt.getList("Sockets", CompoundTag.TAG_COMPOUND);
-                    CompoundTag newSocket = new CompoundTag();
-                    newSocket.putInt("SlotIndex", currentSockets);
-                    newSocket.putString("SocketType", "General");
-                    socketsList.add(newSocket);
-                    nbt.put("Sockets", socketsList);
+        Item tossedItem = itemEntity.getItem().getItem();
+        BlockPos itemPos = itemEntity.blockPosition();
+        Player player = event.getPlayer();
+
+        if (player == null) {
+            return;
+        }
+
+        if (!PlayerTrialData.isPlayerCursed(player)) {
+            return;
+        }
+
+        ServerLevel serverLevel = (ServerLevel) player.level();
+
+        for (TrialRecord trialRecord : PlayerTrialData.getActiveTrialsByType(player, PlayerTrialData.fetchTrial)) {
+            BlockPos altarPos = trialRecord.getAltarPos();
+            BlockPos lowerBound = altarPos.above(1);
+            BlockPos upperBound = altarPos.above(3);
+            boolean isWithinHeight = itemPos.getY() >= lowerBound.getY() && itemPos.getY() <= upperBound.getY();
+            boolean isWithinRadius = altarPos.getCenter().closerThan(itemEntity.position(), 3.0);
+
+            if (isWithinHeight && isWithinRadius) {
+                BlockEntity blockEntity = serverLevel.getBlockEntity(altarPos);
+                if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
+                    continue;
                 }
 
-                resultStack.setTag(nbt);
-                event.setOutput(resultStack);
-                event.setCost(5);
-                event.setMaterialCost(1);
+                Trial trial = altar.getPlayerTrial(player.getUUID());
+                if (trial instanceof FetchTrial fetchTrial) {
+                    Item requiredItem = fetchTrial.getRequiredItem();
+
+                    if (tossedItem.equals(requiredItem)) {
+                        fetchTrial.incrementFetchCount();
+                        itemEntity.discard();
+                        serverLevel.sendParticles(
+                                ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
+                                altarPos.getX() + 0.5,
+                                altarPos.getY() + 1.0,
+                                altarPos.getZ() + 0.5,
+                                100,
+                                0.2,
+                                2.0,
+                                0.2,
+                                0.01
+                        );
+                        serverLevel.playSound(
+                                null,
+                                altarPos.getX() + 0.5,
+                                altarPos.getY() + 1.0,
+                                altarPos.getZ() + 0.5,
+                                SoundEvents.GHAST_SHOOT,
+                                SoundSource.HOSTILE,
+                                1.0f,
+                                0.5f
+                        );
+                        trial.trackProgress(player);
+
+                        if (fetchTrial.isTrialCompleted(player)) {
+                            fetchTrial.concludeTrial(player);
+                        }
+
+                        System.out.println("Player " + player.getName().getString() + " has thrown " + tossedItem.getDescriptionId() + " at altar " + altarPos + ". Collected: " + fetchTrial.getCollectedCount() + "/" + fetchTrial.getRequiredCount());
+                        break;
+                    }
+                }
             }
         }
     }

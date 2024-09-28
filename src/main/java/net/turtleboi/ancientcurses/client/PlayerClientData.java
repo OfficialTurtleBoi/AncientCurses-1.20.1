@@ -13,6 +13,9 @@ public class PlayerClientData {
     public static int eliminationKillsRequired = 0;
     private static long trialDurationElapsed = 0;
     private static long trialDurationTotal = 0;
+    public static String fetchItem = "";
+    public static int fetchItems = 0;
+    public static int fetchItemsRequired = 0;
     private static float portalOverlayAlpha = 0;
 
     public static boolean isAsleep() {
@@ -102,6 +105,30 @@ public class PlayerClientData {
         trialDurationTotal = durationTotal;
     }
 
+    public static String getFetchItem(){
+        return fetchItem;
+    }
+
+    public static void setFetchItem(String item) {
+        fetchItem = item;
+    }
+
+    public static Integer getFetchItems(){
+        return fetchItems;
+    }
+
+    public static void setFetchItems(int items) {
+        fetchItems = items;
+    }
+
+    public static Integer getFetchItemsRequired(){
+        return fetchItemsRequired;
+    }
+
+    public static void setFetchItemsRequired(int itemsRequired) {
+        fetchItemsRequired = itemsRequired;
+    }
+
     public static float getTrialProgress() {
         String trialType = getTrialType();
         if (trialType.equalsIgnoreCase(PlayerTrialData.survivalTrial)) {
@@ -114,6 +141,11 @@ public class PlayerClientData {
             int requiredKills = getEliminationKillsRequired();
             if (requiredKills == 0) return 0.0F;
             return Math.min(1.0F, (float) kills / (float) requiredKills);
+        } else if (trialType.equalsIgnoreCase(PlayerTrialData.fetchTrial)) {
+            int items = getFetchItems();
+            int requiredItems = getFetchItemsRequired();
+            if (requiredItems == 0) return 0.0F;
+            return Math.min(1.0F, (float) items / (float) requiredItems);
         }
         return 0.0F;
     }

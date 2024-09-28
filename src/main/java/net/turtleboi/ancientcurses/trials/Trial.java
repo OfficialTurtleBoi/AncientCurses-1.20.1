@@ -10,7 +10,6 @@ public interface Trial {
     void trackProgress(Player player);
     boolean isTrialCompleted(Player player);
     void concludeTrial(Player player);
-    //void removeEventBar(Player player);
 
     void onEntityKilled(Player player, Entity entity);
     void onPlayerTick(Player player);
@@ -22,7 +21,8 @@ public interface Trial {
     MobEffect getEffect();
     void setAltar(CursedAltarBlockEntity altar);
 
-    void onPlayerRemoved(Player player);
+    boolean isCompleted();
+    void setCompleted(boolean completed);
 }
 
 

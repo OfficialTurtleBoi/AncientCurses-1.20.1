@@ -70,7 +70,7 @@ public class CurseOfPestilenceEffect extends MobEffect {
                 setPestilenceCooldown(player, minTimeInterval + player.getRandom().nextInt(maxTimeInterval - minTimeInterval + 1));
             } else {
                 setPestilenceCooldown(player,pestilenceCooldown - 1);
-                player.displayClientMessage(Component.literal("Pestilence cooldown: " + pestilenceCooldown), true); //debug code
+                //player.displayClientMessage(Component.literal("Pestilence cooldown: " + pestilenceCooldown), true); //debug code
             }
 
             if (pAmplifier >= 2) {
@@ -119,7 +119,7 @@ public class CurseOfPestilenceEffect extends MobEffect {
     }
 
     private void applyNewDebuff(Player player, int amplifier) {
-        player.sendSystemMessage(Component.literal("Applying new debuff!")); // Debug code
+        //player.sendSystemMessage(Component.literal("Applying new debuff!")); // Debug code
         List<MobEffect> possibleDebuffs = Arrays.asList(
                 MobEffects.WEAKNESS,
                 MobEffects.MOVEMENT_SLOWDOWN,
@@ -144,10 +144,10 @@ public class CurseOfPestilenceEffect extends MobEffect {
                         curseDuration,
                         0
                 ));
-                player.sendSystemMessage(Component.literal("Applied debuff: " + randomDebuff.getDescriptionId()));  // Debug code
+                //player.sendSystemMessage(Component.literal("Applied debuff: " + randomDebuff.getDescriptionId()));  // Debug code
                 i++;
             } else {
-                player.sendSystemMessage(Component.literal("Already has debuff: " + randomDebuff.getDescriptionId()));  // Debug code
+                //player.sendSystemMessage(Component.literal("Already has debuff: " + randomDebuff.getDescriptionId()));  // Debug code
             }
             availableDebuffs.remove(randomIndex);
         }
@@ -155,7 +155,7 @@ public class CurseOfPestilenceEffect extends MobEffect {
 
 
     private void upgradeExistingDebuff(Player player, int amplifier) {
-        player.sendSystemMessage(Component.literal("Upgrading debuff!")); // Debug code
+        //player.sendSystemMessage(Component.literal("Upgrading debuff!")); // Debug code
         List<MobEffect> possibleDebuffs = Arrays.asList(
                 MobEffects.WEAKNESS,
                 MobEffects.MOVEMENT_SLOWDOWN,
@@ -187,12 +187,12 @@ public class CurseOfPestilenceEffect extends MobEffect {
                         curseDuration,
                         selectedDebuff.getAmplifier() + 1
                 ));
-                player.sendSystemMessage(Component.literal("Upgraded debuff: " + selectedDebuff.getEffect().getDescriptionId()));  // Debug code
+                //player.sendSystemMessage(Component.literal("Upgraded debuff: " + selectedDebuff.getEffect().getDescriptionId()));  // Debug code
                 debuffsToUpgrade.remove(randomIndex);
                 i++;
             }
         } else {
-            player.sendSystemMessage(Component.literal("No debuffs to upgrade."));  // Debug code
+            //player.sendSystemMessage(Component.literal("No debuffs to upgrade."));  // Debug code
         }
     }
 

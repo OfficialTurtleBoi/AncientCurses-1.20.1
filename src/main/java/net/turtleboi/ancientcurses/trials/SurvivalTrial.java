@@ -30,6 +30,7 @@ public class SurvivalTrial implements Trial {
     private long trialDuration;
     private CursedAltarBlockEntity altar;
     private MobEffect effect;
+    private boolean completed;
     public static final String trialDurationTotal = "TrialDuration";
     public static final String trialDurationElapsed = "TrialElapsedTime";
 
@@ -39,12 +40,13 @@ public class SurvivalTrial implements Trial {
         this.effect = effect;
         this.trialDuration = trialDuration;
         this.elapsedTime = 0;
-
+        this.completed = false;
         PlayerTrialData.setCurseEffect(player, effect);
     }
 
     public SurvivalTrial(CursedAltarBlockEntity altar) {
         this.altar = altar;
+        this.completed = false;
     }
 
     public boolean isTrialActive() {
@@ -57,6 +59,7 @@ public class SurvivalTrial implements Trial {
         tag.putString("Effect", Objects.requireNonNull(ForgeRegistries.MOB_EFFECTS.getKey(effect)).toString());
         tag.putLong(trialDurationElapsed, elapsedTime);
         tag.putLong(trialDurationTotal, trialDuration);
+        tag.putBoolean("Completed", completed);
     }
 
     @Override
@@ -66,6 +69,7 @@ public class SurvivalTrial implements Trial {
         this.effect = ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(effectName));
         this.elapsedTime = tag.getLong(trialDurationElapsed);
         this.trialDuration = tag.getLong(trialDurationTotal);
+        this.completed = tag.getBoolean("Completed");
     }
 
     @Override
@@ -118,7 +122,10 @@ public class SurvivalTrial implements Trial {
                             0,
                             0,
                             elapsedTime,
-                            trialDuration),
+                            trialDuration,
+                            "",
+                            0,
+                            0),
                     (ServerPlayer) player);
             //player.displayClientMessage(Component.literal(String.format("Trial progress: %.2f%% complete", progressPercentage * 100))
             //        .withStyle(ChatFormatting.YELLOW), true);
@@ -134,7 +141,10 @@ public class SurvivalTrial implements Trial {
                         0,
                         0,
                         trialDuration,
-                        trialDuration),
+                        trialDuration,
+                        "",
+                        0,
+                        0),
                 (ServerPlayer) player);
         player.removeEffect(this.effect);
 
@@ -142,7 +152,7 @@ public class SurvivalTrial implements Trial {
 
         CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel(), altar);
         altar.setPlayerTrialCompleted(player);
-        altar.removePlayerTrial(playerUUID);
+        this.completed = true;
     }
 
     @Override
@@ -151,7 +161,12 @@ public class SurvivalTrial implements Trial {
     }
 
     @Override
-    public void onPlayerRemoved(Player player) {
+    public boolean isCompleted() {
+        return this.completed;
+    }
 
+    @Override
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
     }
 }

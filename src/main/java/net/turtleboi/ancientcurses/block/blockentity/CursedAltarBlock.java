@@ -278,6 +278,9 @@ public class CursedAltarBlock extends BaseEntityBlock {
                             0,
                             0,
                             0,
+                            0,
+                            "",
+                            0,
                             0),
                     (ServerPlayer) player);
             PlayerTrialData.clearCurseAmplifier(player);

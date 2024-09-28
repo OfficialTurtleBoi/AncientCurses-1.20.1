@@ -16,14 +16,21 @@ public class SyncTrialDataS2C {
     private final int eliminationKillsRequired;
     private final long trialDurationElapsed;
     private final long trialDurationTotal;
+    private final String fetchItem;
+    private final int fetchItems;
+    private final int fetchItemsRequired;
 
 
-    public SyncTrialDataS2C(String trialType, int eliminationKills, int eliminationKillsRequired, long trialDurationElapsed, long trialDurationTotal) {
+    public SyncTrialDataS2C(String trialType, int eliminationKills, int eliminationKillsRequired, long trialDurationElapsed, long trialDurationTotal,
+                            String fetchItem, int fetchItems, int fetchItemsRequired) {
         this.trialType = trialType;
         this.eliminationKills = eliminationKills;
         this.eliminationKillsRequired = eliminationKillsRequired;
         this.trialDurationElapsed = trialDurationElapsed;
         this.trialDurationTotal = trialDurationTotal;
+        this.fetchItem = fetchItem;
+        this.fetchItems = fetchItems;
+        this.fetchItemsRequired = fetchItemsRequired;
     }
 
     public SyncTrialDataS2C(FriendlyByteBuf buf) {
@@ -32,6 +39,9 @@ public class SyncTrialDataS2C {
         this.eliminationKillsRequired = buf.readInt();
         this.trialDurationElapsed = buf.readLong();
         this.trialDurationTotal = buf.readLong();
+        this.fetchItem = buf.readUtf();
+        this.fetchItems = buf.readInt();
+        this.fetchItemsRequired = buf.readInt();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
@@ -40,6 +50,9 @@ public class SyncTrialDataS2C {
         buf.writeInt(eliminationKillsRequired);
         buf.writeLong(trialDurationElapsed);
         buf.writeLong(trialDurationTotal);
+        buf.writeUtf(fetchItem);
+        buf.writeInt(fetchItems);
+        buf.writeInt(fetchItemsRequired);
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
@@ -54,6 +67,12 @@ public class SyncTrialDataS2C {
                 PlayerClientData.setEliminationKillsRequired(eliminationKillsRequired);
                 PlayerClientData.setTrialDurationElapsed(trialDurationElapsed);
                 PlayerClientData.setTrialDurationTotal(trialDurationTotal);
+                PlayerClientData.setFetchItem(fetchItem);
+                PlayerClientData.setFetchItems(fetchItems);
+                PlayerClientData.setFetchItemsRequired(fetchItemsRequired);
+                System.out.println(Component.literal("You need: " + fetchItem));
+                System.out.println(Component.literal("You need this many items: " + fetchItems));
+                System.out.println(Component.literal("You have this many items: " + fetchItemsRequired));
             }
         });
         context.setPacketHandled(true);

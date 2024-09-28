@@ -28,6 +28,7 @@ public class EliminationTrial implements Trial {
     public static final String eliminationRequirement = "EliminationRequirement";
     private CursedAltarBlockEntity altar;
     private MobEffect effect;
+    private boolean completed;
 
     public EliminationTrial(Player player, MobEffect effect, int requiredEliminations, CursedAltarBlockEntity altar) {
         this.playerUUID = player.getUUID();
@@ -35,11 +36,13 @@ public class EliminationTrial implements Trial {
         this.effect = effect;
         this.eliminationKillsRequired = requiredEliminations;
         this.eliminationKills = 0;
+        this.completed = false;
         PlayerTrialData.setCurseEffect(player, effect);
     }
 
     public EliminationTrial(CursedAltarBlockEntity altar) {
         this.altar = altar;
+        this.completed = false;
     }
 
     public boolean isTrialActive() {
@@ -52,6 +55,7 @@ public class EliminationTrial implements Trial {
         tag.putString("Effect", Objects.requireNonNull(ForgeRegistries.MOB_EFFECTS.getKey(effect)).toString());
         tag.putInt(eliminationCount, eliminationKills);
         tag.putInt(eliminationRequirement, eliminationKillsRequired);
+        tag.putBoolean("Completed", completed);
     }
 
     @Override
@@ -61,6 +65,7 @@ public class EliminationTrial implements Trial {
         this.effect = ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(effectName));
         this.eliminationKills = tag.getInt(eliminationCount);
         this.eliminationKillsRequired = tag.getInt(eliminationRequirement);
+        this.completed = tag.getBoolean("Completed");
     }
 
     @Override
@@ -84,7 +89,6 @@ public class EliminationTrial implements Trial {
         }
         return null;
     }
-
 
     @Override
     public boolean isTrialCompleted(Player player) {
@@ -123,6 +127,9 @@ public class EliminationTrial implements Trial {
                             eliminationKills,
                             eliminationKillsRequired,
                             0,
+                            0,
+                            "",
+                            0,
                             0),
                     (ServerPlayer) player);
         }
@@ -137,6 +144,9 @@ public class EliminationTrial implements Trial {
                         eliminationKillsRequired,
                         eliminationKillsRequired,
                         0,
+                        0,
+                        "",
+                        0,
                         0),
                 (ServerPlayer) player);
         player.removeEffect(this.effect);
@@ -145,7 +155,7 @@ public class EliminationTrial implements Trial {
 
         CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel(), altar);
         altar.setPlayerTrialCompleted(player);
-        altar.removePlayerTrial(playerUUID);
+        setCompleted(true);
     }
 
     public void incrementEliminationCount() {
@@ -153,7 +163,12 @@ public class EliminationTrial implements Trial {
     }
 
     @Override
-    public void onPlayerRemoved(Player player) {
+    public boolean isCompleted() {
+        return this.completed;
+    }
 
+    @Override
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
     }
 }

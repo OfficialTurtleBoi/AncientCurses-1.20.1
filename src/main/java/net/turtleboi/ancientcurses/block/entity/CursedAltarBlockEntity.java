@@ -20,14 +20,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.items.ItemStackHandler;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.item.ModItems;
-import net.turtleboi.ancientcurses.trials.EliminationTrial;
-import net.turtleboi.ancientcurses.trials.PlayerTrialData;
-import net.turtleboi.ancientcurses.trials.SurvivalTrial;
-import net.turtleboi.ancientcurses.trials.Trial;
+import net.turtleboi.ancientcurses.trials.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class CursedAltarBlockEntity extends BlockEntity {
     public int time;
@@ -211,16 +209,25 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     public void cursePlayer(Player player, MobEffect curse, int amplifier) {
+        BlockPos altarPos = this.getBlockPos();
         UUID playerUUID = player.getUUID();
-        int duration = 6000;
+        Random random = new Random();
+        int minMultiple = 180;
+        int maxMultiple = 240;
+        int range = maxMultiple - minMultiple + 1;
+        int randomMultiple = random.nextInt(range) + minMultiple;
+        int duration = randomMultiple * 20;
 
         Trial trial = createTrialForCurse(player, curse, duration, amplifier);
         addPlayerTrial(playerUUID, trial);
 
         PlayerTrialData.setCurseEffect(player, curse);
         PlayerTrialData.setCurseAmplifier(player, amplifier);
-        PlayerTrialData.setCurrentAltarPos(player, this.getBlockPos());
-        PlayerTrialData.addAltarToTrialList(player, this.getBlockPos(), false);
+        PlayerTrialData.setCurrentAltarPos(player, altarPos);
+
+        String trialType = trial.getType();
+        TrialRecord trialRecord = new TrialRecord(altarPos, trialType, false, false);
+        PlayerTrialData.addOrUpdateTrialRecord(player, trialRecord);
 
         player.addEffect(new MobEffectInstance(curse, trial instanceof SurvivalTrial ? duration : MobEffectInstance.INFINITE_DURATION, amplifier, false, false, true));
 
@@ -229,16 +236,19 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public boolean hasPlayerCompletedTrial(Player player) {
         BlockPos altarPos = this.getBlockPos();
-        return PlayerTrialData.hasCompletedTrial(player, altarPos);
+        boolean completed = PlayerTrialData.hasCompletedTrial(player, altarPos);
+        System.out.println("Checking if player " + player.getName().getString() + " has completed trial at altar " + altarPos + ": " + completed);
+        return completed;
     }
 
     public void setPlayerTrialCompleted(Player player) {
         UUID playerUUID = player.getUUID();
         Trial trial = playerTrials.get(playerUUID);
         if (trial != null) {
+            BlockPos altarPos = this.getBlockPos();
             PlayerTrialData.setTrialCompleted(player, this.getBlockPos());
+            trial.setCompleted(true);
             PlayerTrialData.clearCurrentAltarPos(player);
-            playerTrials.remove(playerUUID);
             setChanged();
         }
     }
@@ -269,12 +279,15 @@ public class CursedAltarBlockEntity extends BlockEntity {
         UUID playerUUID = player.getUUID();
         Trial trial = playerTrials.get(playerUUID);
         if (trial != null) {
-            trial.onPlayerRemoved(player);
-            removePlayerTrial(playerUUID);
-            setChanged();
+            if (!trial.isTrialCompleted(player)) {
+                removePlayerTrial(playerUUID);
+                setChanged();
+                //System.out.println("Removed trial for player: " + player.getName().getString()); //debug code
+            } else {
+                //System.out.println("Attempted to remove a completed trial for player: " + player.getName().getString()); //debug code
+            }
         }
     }
-
 
     public static MobEffect getRandomCurse() {
         List<MobEffect> curses = Arrays.asList(
@@ -315,36 +328,35 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     public Trial createTrialForCurse(Player player, MobEffect curseType, int curseDuration, int curseAmplifier) {
+        int randomEliminations = ThreadLocalRandom.current().nextInt(8, 13);
         if (curseType == ModEffects.CURSE_OF_AVARICE.get()) {
-            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
+            return new FetchTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_ENDING.get()) {
-            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
+            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration * (curseAmplifier + 1));
             return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
         } else if (curseType == ModEffects.CURSE_OF_ENVY.get()) {
-            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
+            return new EliminationTrial(player, curseType, randomEliminations * (curseAmplifier + 1), this);
         } else if (curseType == ModEffects.CURSE_OF_FRAILTY.get()) {
-            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
+            return new EliminationTrial(player, curseType, randomEliminations * (curseAmplifier + 1), this);
         } else if (curseType == ModEffects.CURSE_OF_GLUTTONY.get()) {
-            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
+            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration * (curseAmplifier + 1));
             return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
         } else if (curseType == ModEffects.CURSE_OF_NATURE.get()) {
-            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration);
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
+            return new FetchTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_OBESSSION.get()) {
-            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), this);
+            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration * (curseAmplifier + 1));
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
         } else if (curseType == ModEffects.CURSE_OF_PESTILENCE.get()) {
-            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), this);
+            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration * (curseAmplifier + 1));
+            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
         } else if (curseType == ModEffects.CURSE_OF_PRIDE.get()) {
-            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), this);
+            return new EliminationTrial(player, curseType, randomEliminations * (curseAmplifier + 1), this);
         } else if (curseType == ModEffects.CURSE_OF_SHADOWS.get()) {
-            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), this);
+            return new FetchTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_SLOTH.get()) {
-            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), this);
+            return new FetchTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_WRATH.get()) {
-            return new EliminationTrial(player, curseType, 10 * (curseAmplifier + 1), this);
+            return new EliminationTrial(player, curseType, randomEliminations * (curseAmplifier + 1), this);
         }
         return null;
     }

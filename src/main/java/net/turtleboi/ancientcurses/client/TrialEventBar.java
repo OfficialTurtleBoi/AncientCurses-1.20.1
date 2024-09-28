@@ -6,11 +6,8 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.BossEvent;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
-
-import java.util.UUID;
 
 public class TrialEventBar {
     private static final ResourceLocation TRIAL_BOSS_BAR =
@@ -62,26 +59,12 @@ public class TrialEventBar {
             int eliminationCount = PlayerClientData.getEliminationKills();
             int requiredEliminations = PlayerClientData.getEliminationKillsRequired();
             return "Eliminate Enemies: " + eliminationCount + "/" + requiredEliminations;
+        } else if (trialType.equalsIgnoreCase(PlayerTrialData.fetchTrial)) {
+            String fetchItem = PlayerClientData.getFetchItem();
+            int fetchItemCount = PlayerClientData.getFetchItems();
+            int requiredFetchitems = PlayerClientData.getFetchItemsRequired();
+            return "Feed the altar: " + fetchItemCount + "/" + requiredFetchitems + " " + fetchItem;
         }
         return "";
     }
-
-
-
-    //private static int getProgress2(int barWidth, int barBuffer) {
-    //    float trialProgress = 0.0F;
-//
-    //    String trialName = bossEvent.getName().getString();
-    //    if (trialName.equalsIgnoreCase(PlayerTrialData.survivalTrial)){
-    //        long elapsedTime = PlayerClientData.getTrialDurationElapsed();
-    //        long trialDuration = PlayerClientData.getTrialDurationTotal();
-    //        trialProgress = Math.min(1.0F, (float) elapsedTime / (float) trialDuration);
-    //    } else if (trialName.equalsIgnoreCase(PlayerTrialData.eliminationTrial)) {
-    //        int eliminationCount = PlayerClientData.getEliminationKills();
-    //        int requiredEliminations = PlayerClientData.getEliminationKillsRequired();
-    //        trialProgress = Math.min(1.0F, (float) eliminationCount / (float) requiredEliminations);
-    //    }
-//
-    //    return Mth.ceil(trialProgress * (barWidth - (barBuffer * 2)));
-    //}
 }
