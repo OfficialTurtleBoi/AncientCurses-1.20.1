@@ -13,7 +13,12 @@
   "effect.ancientcurses.curse_of_pride": "Curse of Pride",
   "effect.ancientcurses.curse_of_shadows": "Curse of Shadows",
   "effect.ancientcurses.curse_of_sloth": "Curse of Sloth",
-  "effect.ancientcurses.curse_of_wrath": "Curse of Wrath",
+  "effect.ancientcurses.critical_fury": "Critical Fury",
+  "effect.ancientcurses.crystalline_hardening": "Crystalline Hardening",
+  "effect.ancientcurses.elemental_convergence": "Elemental Convergence",
+  "effect.ancientcurses.fortunes_favor": "Fortune's Favor",
+  "effect.ancientcurses.frenzied_blows": "Frenzied Blows",
+  "effect.ancientcurses.lifebloom": "Lifebloom",
 
   "block.ancientcurses.cursed_altar": "Cursed Altar",
   "block.ancientcurses.lapidarist_table": "Lapidary Table",
@@ -49,5 +54,6 @@
   "item.ancientcurses.ancient_alexandrite": "Ancient Alexandrite",
   "item.ancientcurses.ancient_bismuth": "Ancient Bismuth",
   "item.ancientcurses.ancient_chrysoberyl": "Ancient Chrysoberyl",
+  "item.ancientcurses.cursed_pearl": "Cursed Pearl",
   "item.ancientcurses.rotclump": "Rotten clump"
 }

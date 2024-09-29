@@ -1,21 +1,45 @@
 package net.turtleboi.ancientcurses.item.items;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
+import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Objects;
 
 public class PreciousGemItem extends Item {
-    public PreciousGemItem(Properties pProperties) {
+    private final PreciousGemType gemType;
+    public PreciousGemItem(Properties pProperties, PreciousGemType gemType) {
         super(pProperties);
+        this.gemType = gemType;
+    }
+
+    public PreciousGemType getGemType (){
+        return this.gemType;
+    }
+
+    @Override
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        tooltip.add(Component.literal("When socketed:").withStyle(ChatFormatting.GRAY));
+        for (String bonus : gemType.getBonuses()) {
+            tooltip.add(Component.literal(bonus).withStyle(ChatFormatting.BLUE));
+        }
     }
 
     public void applyMajorBonus(Player player, int slotIndex) {
@@ -35,6 +59,10 @@ public class PreciousGemItem extends Item {
                     amulet + "perfect_amethyst_bonus" + slotName,
                     12.0,
                     AttributeModifier.Operation.ADDITION);
+            if (!player.hasEffect(ModEffects.LIFEBLOOM.get()) ||
+                    (player.hasEffect(ModEffects.LIFEBLOOM.get()) && Objects.requireNonNull(player.getEffect(ModEffects.LIFEBLOOM.get())).getDuration() <= 20)) {
+                player.addEffect(new MobEffectInstance(ModEffects.LIFEBLOOM.get(), 200, 0, true, true));
+            }
         } else if (this == ModItems.POLISHED_DIAMOND.get()) {
             AttributeModifierUtil.applyPermanentModifier(
                     player,
@@ -61,6 +89,10 @@ public class PreciousGemItem extends Item {
                     amulet + "perfect_diamond_armortoughness_bonus" + slotName,
                     2.0,
                     AttributeModifier.Operation.ADDITION);
+            if (!player.hasEffect(ModEffects.CRYSTALLINE_HARDENING.get()) ||
+                    (player.hasEffect(ModEffects.CRYSTALLINE_HARDENING.get()) && Objects.requireNonNull(player.getEffect(ModEffects.CRYSTALLINE_HARDENING.get())).getDuration() <= 20)) {
+                player.addEffect(new MobEffectInstance(ModEffects.CRYSTALLINE_HARDENING.get(), 200, 0, true, true));
+            }
         } else if (this == ModItems.POLISHED_EMERALD.get()) {
             AttributeModifierUtil.applyPermanentModifier(
                     player,
@@ -75,6 +107,10 @@ public class PreciousGemItem extends Item {
                     amulet + "perfect_emerald_bonus" + slotName,
                     2.0,
                     AttributeModifier.Operation.ADDITION);
+            if (!player.hasEffect(ModEffects.FORTUNES_FAVOR.get()) ||
+                    (player.hasEffect(ModEffects.FORTUNES_FAVOR.get()) && Objects.requireNonNull(player.getEffect(ModEffects.FORTUNES_FAVOR.get())).getDuration() <= 20)) {
+                player.addEffect(new MobEffectInstance(ModEffects.FORTUNES_FAVOR.get(), 200, 0, true, true));
+            }
         } else if (this == ModItems.POLISHED_RUBY.get()) {
             AttributeModifierUtil.applyPermanentModifier(
                     player,
@@ -203,6 +239,10 @@ public class PreciousGemItem extends Item {
                         player.getFoodData().eat(1, 0.5F);
                     }
                 }
+            }
+        } else if (this == ModItems.ANCIENT_BISMUTH.get()) {
+            if (!player.hasEffect(ModEffects.ELEMENTAL_CONVERGENCE.get())) {
+                player.addEffect(new MobEffectInstance(ModEffects.ELEMENTAL_CONVERGENCE.get(), 200, 0, true, true));
             }
         } else if (this == ModItems.ANCIENT_CHRYSOBERYL.get()) {
             AttributeModifierUtil.applyPermanentModifier(
@@ -411,3 +451,5 @@ public class PreciousGemItem extends Item {
         }
     }
 }
+
+

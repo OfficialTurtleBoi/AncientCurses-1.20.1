@@ -4,7 +4,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -37,11 +36,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.event.AnvilUpdateEvent;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.*;
@@ -71,10 +73,7 @@ import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.trials.*;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID)
 public class ModEvents {
@@ -244,7 +243,7 @@ public class ModEvents {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onPlayerAttack(LivingAttackEvent event) {
+    public static void onEntityAttack(LivingAttackEvent event) {
         DamageSource source = event.getSource();
         if (source.getEntity() instanceof Player player) {
             //ENVY CURSE EFFECT
@@ -399,7 +398,7 @@ public class ModEvents {
         Level level = player.level();
         BlockPos blockPos = event.getPos();
 
-        //ENVY CURSE EFFECT
+
         MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
         if (envyCurse!=null) {
             double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envyCurse.getAmplifier());
@@ -415,7 +414,6 @@ public class ModEvents {
             }
         }
 
-        //NATURE CURSE EFFECT
         MobEffectInstance natureCurse = player.getEffect(ModEffects.CURSE_OF_NATURE.get());
         if (natureCurse != null) {
             int amplifier = natureCurse.getAmplifier();
@@ -429,6 +427,66 @@ public class ModEvents {
                     level.addFreshEntity(silverfish);
                     silverfish.spawnAnim();
                 }
+            }
+        }
+
+        MobEffectInstance fortuneFavor = player.getEffect(ModEffects.FORTUNES_FAVOR.get());
+        if (fortuneFavor != null) {
+            double chance = 0.33;
+            BlockState state = event.getState();
+            BlockPos pos = event.getPos();
+            if (!(level instanceof ServerLevel serverLevel)) {
+                return;
+            }
+
+            LootParams.Builder lootBuilder = new LootParams.Builder(serverLevel)
+                    .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
+                    .withParameter(LootContextParams.BLOCK_STATE, state)
+                    .withParameter(LootContextParams.TOOL, player.getMainHandItem())
+                    .withLuck(EnchantmentHelper.getItemEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.BLOCK_FORTUNE, player.getMainHandItem()));
+            List<ItemStack> drops = state.getDrops(lootBuilder);
+
+            boolean isFortuneAffected = drops.stream().anyMatch(stack -> !stack.is(state.getBlock().asItem()));
+
+            if (!isFortuneAffected) {
+                return;
+            }
+
+            int multiplier = 2;
+            //System.out.println(Component.literal("Doubling loot!"));
+            if (random.nextDouble() < chance) {
+                multiplier = 3;
+                //System.out.println(Component.literal("Tripling loot!"));
+            }
+
+            for (ItemStack stack : drops) {
+                if (stack.isEmpty()) continue;
+                ItemStack duplicatedStack = stack.copy();
+                duplicatedStack.setCount(stack.getCount() * (multiplier - 1));
+                ItemEntity itemEntity = new ItemEntity(serverLevel, pos.getX(), pos.getY(), pos.getZ(), duplicatedStack);
+                serverLevel.addFreshEntity(itemEntity);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingDrops(LivingDropsEvent event) {
+        if (!(event.getSource().getEntity() instanceof Player player)) return;
+
+        MobEffectInstance fortuneFavor = player.getEffect(ModEffects.FORTUNES_FAVOR.get());
+        if (fortuneFavor != null) {
+            double chance = 0.33;
+            for (ItemEntity itemEntity : event.getDrops()) {
+                //System.out.println(Component.literal("Doubling loot!"));
+                ItemStack original = itemEntity.getItem();
+                ItemStack multiplied = original.copy();
+                int multiplier = 2;
+                if (random.nextDouble() < chance) {
+                    multiplier = 3;
+                    //System.out.println(Component.literal("Tripling loot!"));
+                }
+                multiplied.setCount(original.getCount() * multiplier);
+                itemEntity.setItem(multiplied);
             }
         }
     }
@@ -487,7 +545,7 @@ public class ModEvents {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onPlayerAttacked(LivingDamageEvent event) {
+    public static void onEntityHurt(LivingDamageEvent event) {
         Entity attacker = event.getSource().getEntity();
         Entity target = event.getEntity();
         if (attacker instanceof Mob mob && target instanceof Player player) {
@@ -591,6 +649,71 @@ public class ModEvents {
                                 0.0, 0.0, 0.0);
                     }
                     //player.sendSystemMessage(Component.literal("Missed!")); //debug code
+                }
+            }
+
+            MobEffectInstance hardening = player.getEffect(ModEffects.CRYSTALLINE_HARDENING.get());
+            if (hardening != null) {
+                boolean isBlocking = player.isBlocking();
+                if (isBlocking) {
+                    if (random.nextFloat() <= 0.5f) {
+                        event.setAmount(0.0f);
+                    }
+                } else {
+                    if (random.nextFloat() <= 0.2f) {
+                        event.setAmount(0.0f);
+                    }
+                }
+            }
+
+        } else if (attacker instanceof Player player){
+            ItemStack activeAmulet  = ItemStack.EMPTY;
+            CompoundTag playerData = player.getPersistentData();
+            UUID activeAmuletUUID = null;
+
+            if (playerData.contains("ActiveAmuletUUID", 11)) {
+                activeAmuletUUID = playerData.getUUID("ActiveAmuletUUID");
+            }
+            for (ItemStack stack : player.getInventory().items) {
+                if (stack.getItem() instanceof GoldenAmuletItem) {
+                    UUID amuletUUID = GoldenAmuletItem.getUUID(stack);
+                    if (amuletUUID != null && amuletUUID.equals(activeAmuletUUID)) {
+                        activeAmulet = stack;
+                        break;
+                    }
+                }
+            }
+
+            if (!activeAmulet.isEmpty()) {
+                CompoundTag amuletTag = activeAmulet.getTag();
+                if (amuletTag != null) {
+                    if (amuletTag.contains("MainGem")) {
+                        ItemStack mainGemStack = ItemStack.of(amuletTag.getCompound("MainGem"));
+                        if (mainGemStack.getItem() == ModItems.PERFECT_RUBY.get()){
+                            //System.out.println(Component.literal("You have a ruby in your amulet!"));
+                            ItemStack mainHandItem = player.getMainHandItem();
+                            double normalDamage = player.getAttributes().getValue(Attributes.ATTACK_DAMAGE) +
+                                    mainHandItem.getDamageValue() +
+                                    EnchantmentHelper.getDamageBonus(mainHandItem, event.getEntity().getMobType());
+                            if (event.getAmount() > normalDamage) {
+                                player.addEffect(new MobEffectInstance(ModEffects.CRITICAL_FURY.get(), 200, 0));
+                                //System.out.println(Component.literal("Critical hit!"));
+                            } else {
+                                //System.out.println(Component.literal("Not a critical hit!"));
+                            }
+                        } else if (mainGemStack.getItem() == ModItems.PERFECT_TOPAZ.get()){
+                            if (!player.hasEffect(ModEffects.FRENZIED_BLOWS.get())){
+                                player.addEffect(new MobEffectInstance(ModEffects.FRENZIED_BLOWS.get(), 100, 0));
+                            } else {
+                                int effectAmplifier = Objects.requireNonNull(player.getEffect(ModEffects.FRENZIED_BLOWS.get())).getAmplifier();
+                                if (effectAmplifier < 2) {
+                                    player.addEffect(new MobEffectInstance(ModEffects.FRENZIED_BLOWS.get(), 100, effectAmplifier + 1));
+                                } else if (effectAmplifier == 2){
+                                    player.addEffect(new MobEffectInstance(ModEffects.FRENZIED_BLOWS.get(), 100, 2));
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

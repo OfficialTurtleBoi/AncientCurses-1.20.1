@@ -49,6 +49,24 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> CURSE_OF_OBESSSION = MOB_EFFECTS.register("curse_of_obsession",
             () -> new CurseOfObessionEffect(MobEffectCategory.HARMFUL, 16711900));
 
+    public static final RegistryObject<MobEffect> LIFEBLOOM = MOB_EFFECTS.register("lifebloom",
+            () -> new LifebloomEffect(MobEffectCategory.BENEFICIAL, 11767539));
+
+    public static final RegistryObject<MobEffect> CRYSTALLINE_HARDENING = MOB_EFFECTS.register("crystalline_hardening",
+            () -> new CrystallineHardeningEffect(MobEffectCategory.BENEFICIAL, 5897448));
+
+    public static final RegistryObject<MobEffect> FORTUNES_FAVOR = MOB_EFFECTS.register("fortunes_favor",
+            () -> new FortunesFavorEffect(MobEffectCategory.BENEFICIAL, 1564002));
+
+    public static final RegistryObject<MobEffect> CRITICAL_FURY = MOB_EFFECTS.register("critical_fury",
+            () -> new CriticalFuryEffect(MobEffectCategory.BENEFICIAL, 15225426));
+
+    public static final RegistryObject<MobEffect> FRENZIED_BLOWS = MOB_EFFECTS.register("frenzied_blows",
+            () -> new FrenziedBlowsEffect(MobEffectCategory.BENEFICIAL, 16363564));
+
+    public static final RegistryObject<MobEffect> ELEMENTAL_CONVERGENCE = MOB_EFFECTS.register("elemental_convergence",
+            () -> new ElementalConvergenceEffect(MobEffectCategory.BENEFICIAL, 1665999));
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

@@ -58,6 +58,7 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> SCONCED_WALL_UNLIT_TORCH = BLOCKS.register("sconced_wall_unlit_torch",
             () -> new SconcedWallUnlitTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH).lightLevel(state -> 0), ParticleTypes.SOUL_FIRE_FLAME));
+
     public static final RegistryObject<Block> SCONCED_UNLIT_SOUL_TORCH = BLOCKS.register("sconced_unlit_soul_torch",
             () -> new SconcedUnlitSoulTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH).lightLevel(state -> 0), ParticleTypes.SOUL_FIRE_FLAME));
 

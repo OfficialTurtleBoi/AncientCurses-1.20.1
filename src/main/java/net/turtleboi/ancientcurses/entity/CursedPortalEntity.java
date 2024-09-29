@@ -80,7 +80,7 @@ public class CursedPortalEntity extends Entity {
                 textureTickCounter = 0;
             }
 
-            if (age == 0){
+            if (age == 1){
                 playPortalSpawnSound();
             }
 
@@ -142,11 +142,28 @@ public class CursedPortalEntity extends Entity {
     }
 
     private void playPortalSpawnSound() {
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.AMBIENT_SOUL_SAND_VALLEY_MOOD.get(), SoundSource.BLOCKS, 0.5F, this.level().random.nextFloat() * 0.4F + 0.8F);
+        this.level().playSound(
+                null,
+                this.getX(),
+                this.getY(),
+                this.getZ(),
+                SoundEvents.EVOKER_CAST_SPELL,
+                SoundSource.BLOCKS,
+                1.0F,
+                this.level().random.nextFloat() * 0.2F + 0.5F
+        );
     }
 
     private void playPortalAmbientSound() {
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.PORTAL_AMBIENT, SoundSource.BLOCKS, 0.5F, this.level().random.nextFloat() * 0.4F + 0.8F);
+        this.level().playSound(
+                null,
+                this.getX(),
+                this.getY(),
+                this.getZ(),
+                SoundEvents.PORTAL_AMBIENT,
+                SoundSource.BLOCKS,
+                0.5F,
+                this.level().random.nextFloat() * 0.4F + 0.8F);
     }
 
     private void playPortalTravelSound(Player player) {
@@ -155,19 +172,9 @@ public class CursedPortalEntity extends Entity {
                 player.getX(),
                 player.getY(),
                 player.getZ(),
-                SoundEvents.PORTAL_TRAVEL,
-                SoundSource.BLOCKS,
-                0.25F,
-                this.level().random.nextFloat() * 0.2F + 0.5F
-        );
-        this.level().playSound(
-                null,
-                player.getX(),
-                player.getY(),
-                player.getZ(),
                 SoundEvents.CHORUS_FRUIT_TELEPORT,
                 SoundSource.BLOCKS,
-                0.25F,
+                0.75F,
                 this.level().random.nextFloat() * 0.2F + 0.5F
         );
     }

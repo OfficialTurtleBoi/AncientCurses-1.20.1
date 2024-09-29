@@ -67,7 +67,7 @@ public class TrialEventBar {
                 String targetName = PlayerClientData.getEliminationTarget();
                 int eliminationCount = PlayerClientData.getEliminationKills();
                 int requiredEliminations = PlayerClientData.getEliminationKillsRequired();
-                return "Eradicate " + targetName + "s: " + eliminationCount + "/" + requiredEliminations;
+                return "Eliminate " + targetName + "s: " + eliminationCount + "/" + requiredEliminations;
             } else if (trialType.equalsIgnoreCase(PlayerTrialData.fetchTrial)) {
                 String fetchItem = PlayerClientData.getFetchItem();
                 int fetchItemCount = PlayerClientData.getFetchItems();

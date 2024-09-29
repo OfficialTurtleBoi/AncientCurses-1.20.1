@@ -70,21 +70,13 @@ public class CurseOfNatureEffect extends MobEffect {
                 }
             }
 
-            // Lightning strike logic
+
             if (pAmplifier >= 2) {
-                // Increment tick counter every tick
                 tickcounterlightning++;
-
-                // Define a constant cooldown in ticks (e.g., 3 seconds)
                 int lightningboltcooldown = 20 * 3;
-
-                // Check if the counter has reached the cooldown time
                 if (tickcounterlightning >= lightningboltcooldown) {
-                    // Strike player and nearby mobs with lightning
                     strikewithlightningbolt(player);
                     strikemobswithlightning(player, 25.0D);
-
-                    // Reset the lightning tick counter
                     tickcounterlightning = 0;
                 }
             }

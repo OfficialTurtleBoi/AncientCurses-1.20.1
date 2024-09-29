@@ -23,11 +23,8 @@ public class ModCreativeModeTabs {
 
                         pOutput.accept(ModBlocks.SCONCED_TORCH.get());
                         pOutput.accept(ModBlocks.SCONCED_SOUL_TORCH.get());
-                        pOutput.accept(ModBlocks.SCONCED_UNLIT_SOUL_TORCH.get());
                         pOutput.accept(ModBlocks.SCONCED_REDSTONE_TORCH.get());
                         pOutput.accept(ModBlocks.SCONCED_CURSED_TORCH.get());
-                        pOutput.accept(ModBlocks.SCONCED_UNLIT_TORCH.get());
-
                         pOutput.accept(ModItems.GOLDEN_AMULET.get());
                         pOutput.accept(ModItems.DEPRECOPHOBIA_MUSIC_DISC.get());
                         pOutput.accept(ModItems.BROKEN_AMETHYST.get());
