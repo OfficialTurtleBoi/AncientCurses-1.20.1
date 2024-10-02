@@ -19,6 +19,10 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.monster.MagmaCube;
+import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -27,6 +31,7 @@ import net.turtleboi.ancientcurses.effect.effects.CurseOfObessionEffect;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketS2C;
+import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import org.joml.Vector3f;
 
 import java.util.*;
@@ -34,17 +39,21 @@ import java.util.*;
 public class CursedPortalEntity extends Entity {
     private static final EntityDataAccessor<Integer> TEXTURE_INDEX = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> TELEPORT_ENABLED = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> SPAWNING_ENABLED = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<BlockPos> ALTAR_POS = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.BLOCK_POS);
     private static final EntityDataAccessor<Optional<UUID>> LINKED_PORTAL_UUID = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
     private static final int teleportCooldown = 100;
+    private static  int spawningCooldown = 0;
     private Map<UUID, Integer> playerCooldowns = new HashMap<>();
+    private static int portalLiveTime = 620;
 
     private BlockPos altarPos;
     private CursedPortalEntity linkedPortal;
     private Object owner;
     private int textureTickCounter = 0;
     protected int age;
+
 
     public CursedPortalEntity(EntityType<?> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
@@ -54,6 +63,7 @@ public class CursedPortalEntity extends Entity {
     protected void defineSynchedData() {
         this.entityData.define(TEXTURE_INDEX, 0);
         this.entityData.define(TELEPORT_ENABLED, false);
+        this.entityData.define(SPAWNING_ENABLED, false);
         this.entityData.define(ALTAR_POS, BlockPos.ZERO);
         this.entityData.define(LINKED_PORTAL_UUID, Optional.empty());
     }
@@ -92,17 +102,29 @@ public class CursedPortalEntity extends Entity {
                 playPortalAmbientSound();
             }
 
+            if (this.isSpawningEnabled()&&spawningCooldown<=0){
+                playPortalSpawnSound();
+
+                EliminationTrial.MobList mobList = new EliminationTrial.MobList();
+                EliminationTrial.WeightedMob WMob = mobList.selectRandomTargetMobWithWeight();
+                EntityType<?> mob = WMob.getMobType();
+                spawningCooldown=getCooldown(WMob.getWeight());
+                spawnMob(mob);
+            }
+            spawningCooldown-=1;
             if (this.isTeleportEnabled()) {
                 teleportNearbyPlayers();
             }
 
-            if (age >= 620){
+            if (age >= portalLiveTime){
                 this.discard();
             }
 
-            if (getOwner() == null){
+            /*if
+             (getOwner() == null){
+
                 this.discard();
-            }
+            }*/
         }
     }
 
@@ -204,6 +226,18 @@ public class CursedPortalEntity extends Entity {
             }
         }
     }
+    private void spawnMob(EntityType<?> WantToBeAMob){
+        Entity Mob = WantToBeAMob.create(this.level());
+        if(Mob instanceof Slime){
+            ((Slime) Mob).setSize(4,true);
+        }
+        Mob.setPos(this.getX(),this.getY(),this.getZ());
+        this.level().addFreshEntity(Mob);
+    }
+    private int getCooldown(double weight){
+        return (int) (23-weight)*10;
+    }
+
 
     private void teleportPlayerToPortal(ServerPlayer player, BlockPos portalPos, Level level) {
         player.teleportTo(portalPos.getX(), portalPos.getY(), portalPos.getZ());
@@ -275,6 +309,14 @@ public class CursedPortalEntity extends Entity {
         return this.entityData.get(TELEPORT_ENABLED);
     }
 
+    public void setSpawningEnabled(boolean enabled) {
+        this.entityData.set(SPAWNING_ENABLED, enabled);
+    }
+
+    public boolean isSpawningEnabled() {
+        return this.entityData.get(SPAWNING_ENABLED);
+    }
+
     public int getTextureIndex() {
         return this.entityData.get(TEXTURE_INDEX);
     }
@@ -306,6 +348,22 @@ public class CursedPortalEntity extends Entity {
             player.displayClientMessage(Component.literal("Portal cannot manifest!").withStyle(ChatFormatting.RED), true);
             return null;
         }
+    }
+    public static CursedPortalEntity spawnSummoningPortalNearPlayer(Player player, BlockPos altarPos, Level level, Object owner) {
+        BlockPos portalPos = findRandomValidLocationNearPlayer(player, level);
+        CursedPortalEntity portal = new CursedPortalEntity(ModEntities.CURSED_PORTAL.get(), level);
+        portalLiveTime = 300;
+        if (portalPos != null) {
+            portal.setPos(portalPos.getX() + 0.5, portalPos.getY() + 0.5, portalPos.getZ() + 0.5);
+        } else {
+            portal.setPos(player.getX(),player.getY(),player.getZ());
+
+        }
+        portal.setOwner(owner);
+        portal.setAltarPos(altarPos);
+        portal.setSpawningEnabled(true);
+        level.addFreshEntity(portal);
+        return portal;
     }
 
     private static BlockPos findRandomValidLocationNearPlayer(Player player, Level level) {
@@ -340,7 +398,7 @@ public class CursedPortalEntity extends Entity {
         List<Player> players = this.level().getEntitiesOfClass(Player.class, this.getBoundingBox().inflate(distanceThreshold));
 
         for (Player player : players) {
-            if (player instanceof ServerPlayer serverPlayer) {
+            if (player instanceof ServerPlayer serverPlayer&&!isSpawningEnabled()) {
                 double distance = player.distanceTo(this);
                 float alpha;
                 if (distance <= 1.0) {
@@ -363,6 +421,7 @@ public class CursedPortalEntity extends Entity {
     @Override
     protected void readAdditionalSaveData(CompoundTag pCompound) {
         this.setTeleportEnabled(pCompound.getBoolean("TeleportEnabled"));
+        this.setSpawningEnabled(pCompound.getBoolean("SpawningEnabled"));
         if (pCompound.contains("AltarPos")) {
             BlockPos pos = BlockPos.of(pCompound.getLong("AltarPos"));
             this.setAltarPos(pos);

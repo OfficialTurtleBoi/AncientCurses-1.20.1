@@ -141,6 +141,7 @@ public class EliminationTrial implements Trial {
         return mobList.get(mobList.size() - 1).getMobType();
     }
 
+
     private int calculateRequiredKillCount(int amplifier) {
         int randomMultiplier = ThreadLocalRandom.current().nextInt(8, 13);
         int baseKillCount = randomMultiplier * (amplifier + 1);
@@ -278,8 +279,23 @@ public class EliminationTrial implements Trial {
                 new WeightedMob(EntityType.GHAST, 1.0),
                 new WeightedMob(EntityType.BLAZE, 2.0),
                 new WeightedMob(EntityType.HUSK, 3.0),
-                new WeightedMob(EntityType.STRAY, 3.0),
-                new WeightedMob(EntityType.VILLAGER, 0.01)
+                new WeightedMob(EntityType.STRAY, 3.0)
         );
+        public WeightedMob selectRandomTargetMobWithWeight() {
+            List<WeightedMob> mobList = MobList.ELIMINATION_TRIAL_MOBS;
+            double totalWeight = mobList.stream().mapToDouble(WeightedMob::getWeight).sum();
+            double randomValue = ThreadLocalRandom.current().nextDouble(totalWeight);
+            double cumulativeWeight = 0.0;
+
+            for (WeightedMob wm : mobList) {
+                cumulativeWeight += wm.getWeight();
+                if (randomValue <= cumulativeWeight) {
+                    return wm; // Return the selected WeightedMob
+                }
+            }
+
+            // In case of an unexpected situation, return the last mob type
+            return mobList.get(mobList.size() - 1); // Still returning a WeightedMob
+        }
     }
 }

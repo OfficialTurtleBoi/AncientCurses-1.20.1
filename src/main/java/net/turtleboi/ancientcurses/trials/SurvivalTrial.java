@@ -36,7 +36,8 @@ public class SurvivalTrial implements Trial {
     private boolean completed;
     public static final String trialDurationTotal = "TrialDuration";
     public static final String trialDurationElapsed = "TrialElapsedTime";
-
+    private int portalCooldown = 400;
+    private int activeportalcooldown =0;
     public SurvivalTrial(Player player, MobEffect effect, long trialDuration, CursedAltarBlockEntity altar) {
         this.playerUUID = player.getUUID();
         this.altar = altar;
@@ -44,6 +45,7 @@ public class SurvivalTrial implements Trial {
         this.trialDuration = trialDuration;
         this.elapsedTime = 0;
         this.completed = false;
+        this.activeportalcooldown = 0;
         PlayerTrialData.setCurseEffect(player, effect);
     }
 
@@ -107,7 +109,11 @@ public class SurvivalTrial implements Trial {
         if (!isTrialActive()) {
             return;
         }
-
+        activeportalcooldown+=1;
+        if (activeportalcooldown>=portalCooldown){
+            activeportalcooldown=0;
+            CursedPortalEntity.spawnSummoningPortalNearPlayer(player,altar.getBlockPos(),player.level(),altar);
+        }
         trackProgress(player);
         if (isTrialCompleted(player)) {
             concludeTrial(player);
