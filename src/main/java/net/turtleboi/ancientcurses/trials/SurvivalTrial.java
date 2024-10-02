@@ -109,11 +109,14 @@ public class SurvivalTrial implements Trial {
         if (!isTrialActive()) {
             return;
         }
-        activeportalcooldown+=1;
-        if (activeportalcooldown>=portalCooldown){
-            activeportalcooldown=0;
-            CursedPortalEntity.spawnSummoningPortalNearPlayer(player,altar.getBlockPos(),player.level(),altar);
+
+        activeportalcooldown++;
+        if (activeportalcooldown >= portalCooldown){
+            activeportalcooldown = 0;
+            System.out.println(Component.literal("Spawning new summoning portal"));
+            CursedPortalEntity.spawnSummoningPortalNearPlayer(player, altar.getBlockPos(), player.level(), altar);
         }
+
         trackProgress(player);
         if (isTrialCompleted(player)) {
             concludeTrial(player);
@@ -123,7 +126,7 @@ public class SurvivalTrial implements Trial {
     @Override
     public void trackProgress(Player player) {
         if (player != null) {
-            elapsedTime += 1;
+            elapsedTime++;
             float progressPercentage = Math.min((float) elapsedTime / trialDuration, 1.0f);
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(

@@ -17,13 +17,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.monster.MagmaCube;
-import net.minecraft.world.entity.monster.Slime;
-import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.monster.*;
+import net.minecraft.world.entity.monster.piglin.Piglin;
+import net.minecraft.world.entity.monster.piglin.PiglinBrute;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
@@ -102,16 +102,25 @@ public class CursedPortalEntity extends Entity {
                 playPortalAmbientSound();
             }
 
-            if (this.isSpawningEnabled()&&spawningCooldown<=0){
-                playPortalSpawnSound();
-
+            if (this.isSpawningEnabled() && spawningCooldown <= 0){
+                this.level().playSound(
+                        null,
+                        this.getX(),
+                        this.getY(),
+                        this.getZ(),
+                        SoundEvents.CHORUS_FRUIT_TELEPORT,
+                        SoundSource.HOSTILE,
+                        1.00F,
+                        this.level().random.nextFloat() * 0.2F + 0.5F
+                );
                 EliminationTrial.MobList mobList = new EliminationTrial.MobList();
                 EliminationTrial.WeightedMob WMob = mobList.selectRandomTargetMobWithWeight();
                 EntityType<?> mob = WMob.getMobType();
-                spawningCooldown=getCooldown(WMob.getWeight());
+                spawningCooldown = getCooldown(WMob.getWeight());
                 spawnMob(mob);
             }
-            spawningCooldown-=1;
+            spawningCooldown--;
+
             if (this.isTeleportEnabled()) {
                 teleportNearbyPlayers();
             }
@@ -120,11 +129,10 @@ public class CursedPortalEntity extends Entity {
                 this.discard();
             }
 
-            /*if
+            if
              (getOwner() == null){
-
                 this.discard();
-            }*/
+            }
         }
     }
 
@@ -226,18 +234,30 @@ public class CursedPortalEntity extends Entity {
             }
         }
     }
+
     private void spawnMob(EntityType<?> WantToBeAMob){
-        Entity Mob = WantToBeAMob.create(this.level());
-        if(Mob instanceof Slime){
-            ((Slime) Mob).setSize(4,true);
+        Entity spawnedMob = WantToBeAMob.create(this.level());
+
+        if (spawnedMob != null) {
+            if(spawnedMob instanceof Slime slimeMob){
+                slimeMob.setSize(4,true);
+            }
+
+            if(spawnedMob instanceof Zombie || spawnedMob instanceof Skeleton || spawnedMob instanceof Husk ||
+                    spawnedMob instanceof Stray || spawnedMob instanceof WitherSkeleton || spawnedMob instanceof Piglin ||
+                    spawnedMob instanceof ZombifiedPiglin || spawnedMob instanceof PiglinBrute){
+                spawnedMob.setItemSlot(EquipmentSlot.CHEST, Items.GOLDEN_CHESTPLATE.getDefaultInstance());
+            }
+
+            System.out.println(Component.literal("Spawning new mob from portal"));
+            spawnedMob.setPos(this.getX(), this.getY(), this.getZ());
+            this.level().addFreshEntity(spawnedMob);
         }
-        Mob.setPos(this.getX(),this.getY(),this.getZ());
-        this.level().addFreshEntity(Mob);
     }
+
     private int getCooldown(double weight){
         return (int) (23-weight)*10;
     }
-
 
     private void teleportPlayerToPortal(ServerPlayer player, BlockPos portalPos, Level level) {
         player.teleportTo(portalPos.getX(), portalPos.getY(), portalPos.getZ());
@@ -353,15 +373,17 @@ public class CursedPortalEntity extends Entity {
         BlockPos portalPos = findRandomValidLocationNearPlayer(player, level);
         CursedPortalEntity portal = new CursedPortalEntity(ModEntities.CURSED_PORTAL.get(), level);
         portalLiveTime = 300;
+
         if (portalPos != null) {
             portal.setPos(portalPos.getX() + 0.5, portalPos.getY() + 0.5, portalPos.getZ() + 0.5);
         } else {
             portal.setPos(player.getX(),player.getY(),player.getZ());
-
         }
+
         portal.setOwner(owner);
         portal.setAltarPos(altarPos);
         portal.setSpawningEnabled(true);
+        System.out.println(Component.literal("New summoning portal spawned!"));
         level.addFreshEntity(portal);
         return portal;
     }
