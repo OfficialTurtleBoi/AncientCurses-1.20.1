@@ -55,6 +55,12 @@ public class ModNetworking {
                 .consumerMainThread(SyncTrialDataS2C::handle)
                 .add();
 
+        net.messageBuilder(TrialOverlayPacketC2S.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(TrialOverlayPacketC2S::new)
+                .encoder(TrialOverlayPacketC2S::toBytes)
+                .consumerMainThread(TrialOverlayPacketC2S::handle)
+                .add();
+
         net.messageBuilder(PortalOverlayPacketS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
                 .decoder(PortalOverlayPacketS2C::new)
                 .encoder(PortalOverlayPacketS2C::toBytes)

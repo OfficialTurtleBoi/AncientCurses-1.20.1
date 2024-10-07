@@ -1,28 +1,22 @@
 package net.turtleboi.ancientcurses.trials;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.BossEvent;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
-import net.turtleboi.ancientcurses.client.PlayerClientData;
-import net.turtleboi.ancientcurses.effect.effects.CurseOfObessionEffect;
+import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.CameraShakeS2C;
-import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
-import org.apache.logging.log4j.core.jmx.Server;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -33,19 +27,22 @@ public class SurvivalTrial implements Trial {
     private long trialDuration;
     private CursedAltarBlockEntity altar;
     private MobEffect effect;
+    private int pAmplifier;
     private boolean completed;
     public static final String trialDurationTotal = "TrialDuration";
     public static final String trialDurationElapsed = "TrialElapsedTime";
-    private int portalCooldown = 400;
-    private int activeportalcooldown =0;
-    public SurvivalTrial(Player player, MobEffect effect, long trialDuration, CursedAltarBlockEntity altar) {
+    private int portalCooldown = 0;
+    public SurvivalTrial(Player player, MobEffect effect, int pAmplifier, long trialDuration, CursedAltarBlockEntity altar) {
         this.playerUUID = player.getUUID();
         this.altar = altar;
         this.effect = effect;
         this.trialDuration = trialDuration;
+        //System.out.println(Component.literal("Setting trial duration to: " + this.trialDuration));
         this.elapsedTime = 0;
+        //System.out.println(Component.literal("Setting elapsed time to: " + this.elapsedTime));
+        this.pAmplifier = pAmplifier + 1;
         this.completed = false;
-        this.activeportalcooldown = 0;
+        this.portalCooldown = 0;
         PlayerTrialData.setCurseEffect(player, effect);
     }
 
@@ -101,6 +98,7 @@ public class SurvivalTrial implements Trial {
 
     @Override
     public boolean isTrialCompleted(Player player) {
+        //System.out.println(Component.literal("Completed trial!"));
         return elapsedTime >= trialDuration;
     }
 
@@ -110,11 +108,13 @@ public class SurvivalTrial implements Trial {
             return;
         }
 
-        activeportalcooldown++;
-        if (activeportalcooldown >= portalCooldown){
-            activeportalcooldown = 0;
-            System.out.println(Component.literal("Spawning new summoning portal"));
-            CursedPortalEntity.spawnSummoningPortalNearPlayer(player, altar.getBlockPos(), player.level(), altar);
+        if (effect != ModEffects.CURSE_OF_PESTILENCE.get()) {
+            portalCooldown++;
+            if (portalCooldown >= 600 / pAmplifier) {
+                portalCooldown = 0;
+                //System.out.println(Component.literal("Spawning new summoning portal"));
+                CursedPortalEntity.spawnSummoningPortalOnPlayer(player, altar.getBlockPos(), player.level(), altar);
+            }
         }
 
         trackProgress(player);
@@ -127,6 +127,7 @@ public class SurvivalTrial implements Trial {
     public void trackProgress(Player player) {
         if (player != null) {
             elapsedTime++;
+            //System.out.println("Setting elapsed time to: " + elapsedTime);
             float progressPercentage = Math.min((float) elapsedTime / trialDuration, 1.0f);
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
@@ -160,8 +161,8 @@ public class SurvivalTrial implements Trial {
                         0,
                         0),
                 (ServerPlayer) player);
+        PlayerTrialData.clearCurseAmplifier(player);
         player.removeEffect(this.effect);
-
         PlayerTrialData.clearCurseEffect(player);
 
         ModNetworking.sendToPlayer(new CameraShakeS2C(0.125F, 1000), (ServerPlayer) player);
@@ -179,6 +180,7 @@ public class SurvivalTrial implements Trial {
         }
 
         CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel(), altar);
+        //System.out.println(Component.literal("Spawning new portal to altar"));
         altar.setPlayerTrialCompleted(player);
         this.completed = true;
     }

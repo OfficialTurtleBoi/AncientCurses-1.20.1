@@ -34,6 +34,7 @@ import net.turtleboi.ancientcurses.client.TrialEventBar;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
+import net.turtleboi.ancientcurses.network.packets.TrialOverlayPacketC2S;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import org.joml.Matrix4f;
 
@@ -61,6 +62,7 @@ public class ModClientEvents {
             if (PlayerClientData.hasTrial()) {
                 int screenWidth = minecraft.getWindow().getGuiScaledWidth();
                 TrialEventBar.render(event.getGuiGraphics(), (screenWidth - 192) / 2, 11, minecraft);
+                ModNetworking.sendToServer(new TrialOverlayPacketC2S());
             }
 
             if (event.getOverlay() == VanillaGuiOverlay.BOSS_EVENT_PROGRESS.type()) {

@@ -209,6 +209,14 @@ public class CursedAltarBlock extends BaseEntityBlock {
                     return InteractionResult.FAIL;
                 }
 
+                if (PlayerTrialData.getCurrentAltarPos(player) != null) {
+                    if (!Objects.equals(PlayerTrialData.getCurrentAltarPos(player), altarEntity.getBlockPos())) {
+                        //player.sendSystemMessage(Component.literal("You have an altar! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
+                        return InteractionResult.FAIL;
+                    }
+                }
+
+
                 if (altarEntity.hasPlayerCompletedTrial(player)){
                     rewardPlayer(player, altarEntity, level, pos);
                     //player.sendSystemMessage(Component.literal("You've completed this trial!").withStyle(ChatFormatting.GREEN));

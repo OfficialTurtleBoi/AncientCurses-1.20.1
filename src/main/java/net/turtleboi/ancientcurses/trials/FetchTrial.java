@@ -208,8 +208,8 @@ public class FetchTrial implements Trial {
                         requiredCount),
                 (ServerPlayer) player
         );
+        PlayerTrialData.clearCurseAmplifier(player);
         player.removeEffect(this.effect);
-
         PlayerTrialData.clearCurseEffect(player);
 
         ModNetworking.sendToPlayer(new CameraShakeS2C(0.125F, 1000), (ServerPlayer) player);
@@ -231,8 +231,8 @@ public class FetchTrial implements Trial {
         altar.setPlayerTrialCompleted(player);
     }
 
-    public void incrementFetchCount() {
-        collectedCount++;
+    public void incrementFetchCount(int itemCount) {
+        collectedCount += itemCount;
     }
 
     public Item getRequiredItem() {

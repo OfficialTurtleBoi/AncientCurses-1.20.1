@@ -201,8 +201,8 @@ public class EliminationTrial implements Trial {
                         0,
                         0),
                 (ServerPlayer) player);
+        PlayerTrialData.clearCurseAmplifier(player);
         player.removeEffect(this.effect);
-
         PlayerTrialData.clearCurseEffect(player);
 
         ModNetworking.sendToPlayer(new CameraShakeS2C(0.05F, 1000), (ServerPlayer) player);
@@ -290,12 +290,11 @@ public class EliminationTrial implements Trial {
             for (WeightedMob wm : mobList) {
                 cumulativeWeight += wm.getWeight();
                 if (randomValue <= cumulativeWeight) {
-                    return wm; // Return the selected WeightedMob
+                    return wm;
                 }
             }
 
-            // In case of an unexpected situation, return the last mob type
-            return mobList.get(mobList.size() - 1); // Still returning a WeightedMob
+            return mobList.get(mobList.size() - 1);
         }
     }
 }

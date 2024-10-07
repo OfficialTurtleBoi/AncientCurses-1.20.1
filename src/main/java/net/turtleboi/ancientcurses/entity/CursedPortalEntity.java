@@ -1,7 +1,6 @@
 package net.turtleboi.ancientcurses.entity;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.nbt.CompoundTag;
@@ -22,14 +21,11 @@ import net.minecraft.world.entity.monster.*;
 import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.monster.piglin.PiglinBrute;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
-import net.turtleboi.ancientcurses.effect.effects.CurseOfObessionEffect;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketS2C;
 import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import org.joml.Vector3f;
@@ -243,14 +239,46 @@ public class CursedPortalEntity extends Entity {
                 slimeMob.setSize(4,true);
             }
 
-            if(spawnedMob instanceof Zombie || spawnedMob instanceof Skeleton || spawnedMob instanceof Husk ||
-                    spawnedMob instanceof Stray || spawnedMob instanceof WitherSkeleton || spawnedMob instanceof Piglin ||
-                    spawnedMob instanceof ZombifiedPiglin || spawnedMob instanceof PiglinBrute){
-                spawnedMob.setItemSlot(EquipmentSlot.CHEST, Items.GOLDEN_CHESTPLATE.getDefaultInstance());
+            //if(spawnedMob instanceof Zombie || spawnedMob instanceof Skeleton || spawnedMob instanceof Husk ||
+            //        spawnedMob instanceof Stray || spawnedMob instanceof WitherSkeleton || spawnedMob instanceof Piglin ||
+            //        spawnedMob instanceof ZombifiedPiglin || spawnedMob instanceof PiglinBrute){
+            //    spawnedMob.setItemSlot(EquipmentSlot.CHEST, Items.GOLDEN_CHESTPLATE.getDefaultInstance());
+            //}
+
+            if(spawnedMob instanceof Skeleton || spawnedMob instanceof Stray){
+                spawnedMob.setItemSlot(EquipmentSlot.MAINHAND, Items.BOW.getDefaultInstance());
             }
 
-            System.out.println(Component.literal("Spawning new mob from portal"));
+            if(spawnedMob instanceof WitherSkeleton){
+                spawnedMob.setItemSlot(EquipmentSlot.MAINHAND, Items.STONE_SWORD.getDefaultInstance());
+            }
+
+            if(spawnedMob instanceof ZombifiedPiglin){
+                spawnedMob.setItemSlot(EquipmentSlot.MAINHAND, Items.GOLDEN_SWORD.getDefaultInstance());
+            }
+
+            if(spawnedMob instanceof Piglin || spawnedMob instanceof PiglinBrute){
+                spawnedMob.setItemSlot(EquipmentSlot.MAINHAND, Items.GOLDEN_AXE.getDefaultInstance());
+            }
+
+            if(spawnedMob instanceof Vindicator){
+                spawnedMob.setItemSlot(EquipmentSlot.MAINHAND, Items.IRON_AXE.getDefaultInstance());
+            }
+
+            if(spawnedMob instanceof Pillager){
+                spawnedMob.setItemSlot(EquipmentSlot.MAINHAND, Items.CROSSBOW.getDefaultInstance());
+            }
+
+            if(spawnedMob instanceof Drowned){
+                spawnedMob.setItemSlot(EquipmentSlot.MAINHAND, Items.TRIDENT.getDefaultInstance());
+            }
+
+            //System.out.println(Component.literal("Spawning new mob from portal"));
             spawnedMob.setPos(this.getX(), this.getY(), this.getZ());
+            Player nearestPlayer = spawnedMob.level().getNearestPlayer(spawnedMob, 64.0D);
+            if (spawnedMob instanceof Mob){
+                ((Mob) spawnedMob).setTarget(nearestPlayer);
+            }
             this.level().addFreshEntity(spawnedMob);
         }
     }
@@ -369,21 +397,17 @@ public class CursedPortalEntity extends Entity {
             return null;
         }
     }
-    public static CursedPortalEntity spawnSummoningPortalNearPlayer(Player player, BlockPos altarPos, Level level, Object owner) {
-        BlockPos portalPos = findRandomValidLocationNearPlayer(player, level);
+    public static CursedPortalEntity spawnSummoningPortalOnPlayer(Player player, BlockPos altarPos, Level level, Object owner) {
+        BlockPos portalPos = player.blockPosition();
         CursedPortalEntity portal = new CursedPortalEntity(ModEntities.CURSED_PORTAL.get(), level);
         portalLiveTime = 300;
 
-        if (portalPos != null) {
-            portal.setPos(portalPos.getX() + 0.5, portalPos.getY() + 0.5, portalPos.getZ() + 0.5);
-        } else {
-            portal.setPos(player.getX(),player.getY(),player.getZ());
-        }
+        portal.setPos(portalPos.getX(), portalPos.getY(), portalPos.getZ());
 
         portal.setOwner(owner);
         portal.setAltarPos(altarPos);
         portal.setSpawningEnabled(true);
-        System.out.println(Component.literal("New summoning portal spawned!"));
+        //System.out.println(Component.literal("New summoning portal spawned!"));
         level.addFreshEntity(portal);
         return portal;
     }

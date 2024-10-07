@@ -60,6 +60,7 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.ai.AnimalFollowPlayerGoal;
 import net.turtleboi.ancientcurses.ai.FishFollowPlayerGoal;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
+import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.*;
 import net.turtleboi.ancientcurses.init.ModAttributes;
@@ -978,6 +979,25 @@ public class ModEvents {
         }
     }
 
+    @SubscribeEvent
+    public static void onPotionEffectRemoved(MobEffectEvent.Remove event) {
+        LivingEntity entity = event.getEntity();
+        if (entity instanceof Player player) {
+            MobEffectInstance curseEffect = event.getEffectInstance();
+            if (curseEffect != null) {
+                MobEffect effect = curseEffect.getEffect();
+                if (CurseRegistry.getCurses().contains(effect)) {
+                    if (PlayerTrialData.isPlayerCursed(player)) {
+                        event.setCanceled(true);
+                        //System.out.println("Prevented removal of curse from player");
+                    } else {
+                        //System.out.println("Allowed removal of curse from player");
+                    }
+                }
+            }
+        }
+    }
+
     //@SubscribeEvent
     //public static void onAnvilUpdate(AnvilUpdateEvent event) {
     //    ItemStack leftStack = event.getLeft();
@@ -1019,6 +1039,7 @@ public class ModEvents {
         }
 
         Item tossedItem = itemEntity.getItem().getItem();
+        int itemCount = itemEntity.getItem().getCount();
         BlockPos itemPos = itemEntity.blockPosition();
         Player player = event.getPlayer();
 
@@ -1050,7 +1071,7 @@ public class ModEvents {
                     Item requiredItem = fetchTrial.getRequiredItem();
 
                     if (tossedItem.equals(requiredItem)) {
-                        fetchTrial.incrementFetchCount();
+                        fetchTrial.incrementFetchCount(itemCount);
                         itemEntity.discard();
                         serverLevel.sendParticles(
                                 ModParticleTypes.CURSED_FLAME_PARTICLE.get(),

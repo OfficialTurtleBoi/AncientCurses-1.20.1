@@ -12,6 +12,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.command.ClearCurseCommand;
+import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.init.ModAttributes;
@@ -59,6 +60,7 @@ public class AncientCurses {
         event.enqueueWork(() -> {
 
         });
+        CurseRegistry.initialize();
         ModNetworking.register();
     }
 

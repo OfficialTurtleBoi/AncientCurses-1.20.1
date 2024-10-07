@@ -252,7 +252,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
             BlockPos altarPos = this.getBlockPos();
             PlayerTrialData.setTrialCompleted(player, this.getBlockPos());
             trial.setCompleted(true);
-            PlayerTrialData.clearCurrentAltarPos(player);
+
             setChanged();
         }
     }
@@ -264,6 +264,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public void markRewardCollected(Player player) {
         PlayerTrialData.setRewardCollected(player, this.getBlockPos());
+        PlayerTrialData.clearCurrentAltarPos(player);
         setChanged();
     }
 
@@ -372,23 +373,19 @@ public class CursedAltarBlockEntity extends BlockEntity {
         if (curseType == ModEffects.CURSE_OF_AVARICE.get()) {
             return new FetchTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_ENDING.get()) {
-            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration * (curseAmplifier + 1));
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
+            return new SurvivalTrial(player, curseType, curseAmplifier, curseDuration, this);
         } else if (curseType == ModEffects.CURSE_OF_ENVY.get()) {
             return new EliminationTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_FRAILTY.get()) {
             return new EliminationTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_GLUTTONY.get()) {
-            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration * (curseAmplifier + 1));
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
+            return new SurvivalTrial(player, curseType, curseAmplifier, curseDuration, this);
         } else if (curseType == ModEffects.CURSE_OF_NATURE.get()) {
             return new FetchTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_OBESSSION.get()) {
-            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration * (curseAmplifier + 1));
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
+            return new SurvivalTrial(player, curseType, curseAmplifier, curseDuration, this);
         } else if (curseType == ModEffects.CURSE_OF_PESTILENCE.get()) {
-            MobEffectInstance curseInstance = new MobEffectInstance(curseType, curseDuration * (curseAmplifier + 1));
-            return new SurvivalTrial(player, curseType, curseInstance.getDuration(), this);
+            return new SurvivalTrial(player, curseType, curseAmplifier, curseDuration, this);
         } else if (curseType == ModEffects.CURSE_OF_PRIDE.get()) {
             return new EliminationTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_SHADOWS.get()) {
