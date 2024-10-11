@@ -55,6 +55,7 @@ import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.ai.AnimalFollowPlayerGoal;
@@ -73,8 +74,10 @@ import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.trials.*;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
+import top.theillusivec4.curios.api.CuriosApi;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID)
 public class ModEvents {
@@ -1113,40 +1116,57 @@ public class ModEvents {
         Player player = event.player;
         Level level = player.level();
         CompoundTag playerData = player.getPersistentData();
-        UUID activeAmuletUUID = null;
+        UUID activeAmuletUUID;
 
         if (playerData.contains("ActiveAmuletUUID", 11)) {
             activeAmuletUUID = playerData.getUUID("ActiveAmuletUUID");
+        } else {
+            activeAmuletUUID = null;
         }
-        ItemStack activeAmulet  = ItemStack.EMPTY;
+        AtomicReference<ItemStack> activeAmulet = new AtomicReference<>(ItemStack.EMPTY);
 
         if (!level.isClientSide && event.phase == TickEvent.Phase.END) {
-            for (ItemStack stack : player.getInventory().items) {
-                if (stack.getItem() instanceof GoldenAmuletItem) {
-                    UUID amuletUUID = GoldenAmuletItem.getUUID(stack);
-                    if (amuletUUID != null && amuletUUID.equals(activeAmuletUUID)) {
-                        activeAmulet = stack;
-                        break;
+            if (ModList.get().isLoaded("curios")) {
+                CuriosApi.getCuriosInventory(player).ifPresent(curiosInventory -> {
+                    curiosInventory.getStacksHandler("necklace").ifPresent(slotInventory -> {
+                        ItemStack necklaceItem = slotInventory.getStacks().getStackInSlot(0);
+                        if (!necklaceItem.isEmpty() && necklaceItem.getItem() instanceof GoldenAmuletItem goldenAmuletItem) {
+                            goldenAmuletItem.applyGemBonuses(player, necklaceItem);
+                        } else if (necklaceItem.isEmpty() || !(necklaceItem.getItem() instanceof GoldenAmuletItem)) {
+                            PreciousGemItem.removeBonus(player);
+                        }
+                    });
+                });
+            } else {
+                for (ItemStack stack : player.getInventory().items) {
+                    if (stack.getItem() instanceof GoldenAmuletItem) {
+                        UUID amuletUUID = GoldenAmuletItem.getUUID(stack);
+                        if (amuletUUID != null && amuletUUID.equals(activeAmuletUUID)) {
+                            activeAmulet.set(stack);
+                            break;
+                        }
                     }
                 }
-            }
 
-            if (!activeAmulet.isEmpty()) {
-                GoldenAmuletItem amuletItem = (GoldenAmuletItem) activeAmulet.getItem();
-                amuletItem.applyGemBonuses(player, activeAmulet);
-            } else {
-                PreciousGemItem.removeBonus(player);
-                player.getPersistentData().remove("ActiveAmuletUUID");
-                for (ItemStack stack : player.getInventory().items) {
-                    if (stack.getItem() instanceof GoldenAmuletItem amuletItem) {
-                        UUID newUUID = GoldenAmuletItem.getOrCreateUUID(stack);
-                        player.getPersistentData().putUUID("ActiveAmuletUUID", newUUID);
-                        amuletItem.applyGemBonuses(player, stack);
-                        break;
+                if (!activeAmulet.get().isEmpty()) {
+                    GoldenAmuletItem amuletItem = (GoldenAmuletItem) activeAmulet.get().getItem();
+                    amuletItem.applyGemBonuses(player, activeAmulet.get());
+                } else {
+                    PreciousGemItem.removeBonus(player);
+                    player.getPersistentData().remove("ActiveAmuletUUID");
+
+                    for (ItemStack stack : player.getInventory().items) {
+                        if (stack.getItem() instanceof GoldenAmuletItem amuletItem) {
+                            UUID newUUID = GoldenAmuletItem.getOrCreateUUID(stack);
+                            player.getPersistentData().putUUID("ActiveAmuletUUID", newUUID);
+                            amuletItem.applyGemBonuses(player, stack);
+                            break;
+                        }
                     }
                 }
             }
         }
+
 
         MobEffectInstance shadowCurse = player.getEffect(ModEffects.CURSE_OF_SHADOWS.get());
         if (shadowCurse != null && shadowCurse.getAmplifier() >= 1 && !level.isClientSide) {
