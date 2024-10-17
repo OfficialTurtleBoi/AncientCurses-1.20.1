@@ -53,7 +53,7 @@ public class ModClientEvents {
             }
 
             if (event.getOverlay() == VanillaGuiOverlay.FOOD_LEVEL.type()) {
-                if (player.hasEffect(ModEffects.CURSE_OF_GLUTTONY.get())) {
+                if (!player.getAbilities().instabuild && player.hasEffect(ModEffects.CURSE_OF_GLUTTONY.get())) {
                     event.setCanceled(true);
                     renderCustomHungerBar(event.getGuiGraphics(), player);
                 }
