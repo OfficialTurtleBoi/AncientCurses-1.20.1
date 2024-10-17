@@ -6,5 +6,12 @@
         "stream": true
       }
     ]
+  },
+  "gem_place": {
+    "sounds": [
+      {
+        "name": "ancientcurses:gem_place"
+      }
+    ]
   }
 }

@@ -433,7 +433,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public void serverTick() {
         if (isAnimating) {
             long currentTime = System.currentTimeMillis();
-            long animationDuration = 7800;
+            long animationDuration = 7600;
             if (currentTime - getAnimationStartTime() >= animationDuration) {
                 performGemUpgrade();
                 stopAnimation();
