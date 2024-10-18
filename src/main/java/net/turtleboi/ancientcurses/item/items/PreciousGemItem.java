@@ -38,9 +38,9 @@ public class PreciousGemItem extends Item {
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
         tooltip.add(Component.literal("When socketed:").withStyle(ChatFormatting.GRAY));
-        for (String bonus : gemType.getBonuses()) {
-            tooltip.add(Component.literal(bonus).withStyle(ChatFormatting.BLUE));
-        }
+
+        tooltip.add(Component.literal(gemType.getBonuses()).withStyle(ChatFormatting.BLUE));
+
     }
 
     public void applyMajorBonus(Player player, int slotIndex) {
