@@ -52,13 +52,13 @@ public class ModBlockLootTables extends BlockLootSubProvider {
                 block -> createSingleItemTable(ModItems.SCONCED_UNLIT_SOUL_TORCH_ITEM.get()));
     }
 
-    protected LootTable.Builder createCopperLikeOreDrops(Block pBlock, Item item) {
-        return createSilkTouchDispatchTable(pBlock,
-                this.applyExplosionDecay(pBlock,
-                        LootItem.lootTableItem(item)
-                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 5.0F)))
-                                .apply(ApplyBonusCount.addOreBonusCount(Enchantments.BLOCK_FORTUNE))));
-    }
+    //protected LootTable.Builder createCopperLikeOreDrops(Block pBlock, Item item) {
+    //    return createSilkTouchDispatchTable(pBlock,
+    //            this.applyExplosionDecay(pBlock,
+    //                    LootItem.lootTableItem(item)
+    //                            .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 5.0F)))
+    //                            .apply(ApplyBonusCount.addOreBonusCount(Enchantments.BLOCK_FORTUNE))));
+    //}
 
     @Override
     protected Iterable<Block> getKnownBlocks() {

@@ -4,6 +4,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -39,7 +40,10 @@ public class PreciousGemItem extends Item {
         super.appendHoverText(stack, level, tooltip, flag);
         tooltip.add(Component.literal("When socketed:").withStyle(ChatFormatting.GRAY));
 
-        tooltip.add(gemType.getBonuses().withStyle(ChatFormatting.BLUE));
+        List<MutableComponent> bonuses = gemType.getBonuses();
+        for (MutableComponent bonus : bonuses) {
+            tooltip.add(bonus.withStyle(ChatFormatting.BLUE));
+        }
     }
 
     public void applyMajorBonus(Player player, int slotIndex) {

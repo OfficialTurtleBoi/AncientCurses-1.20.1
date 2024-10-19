@@ -201,7 +201,7 @@ public class EliminationTrial implements Trial {
                         0,
                         0),
                 (ServerPlayer) player);
-        PlayerTrialData.clearCurseAmplifier(player);
+        //PlayerTrialData.clearCurseAmplifier(player);
         player.removeEffect(this.effect);
         PlayerTrialData.clearCurseEffect(player);
 

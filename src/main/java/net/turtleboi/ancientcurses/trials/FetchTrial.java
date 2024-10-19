@@ -208,7 +208,7 @@ public class FetchTrial implements Trial {
                         requiredCount),
                 (ServerPlayer) player
         );
-        PlayerTrialData.clearCurseAmplifier(player);
+        //PlayerTrialData.clearCurseAmplifier(player);
         player.removeEffect(this.effect);
         PlayerTrialData.clearCurseEffect(player);
 

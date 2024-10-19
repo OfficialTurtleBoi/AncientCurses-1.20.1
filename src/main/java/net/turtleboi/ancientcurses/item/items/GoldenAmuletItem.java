@@ -23,17 +23,21 @@ public class GoldenAmuletItem extends Item {
 
     private void initializeAmuletNBT(ItemStack stack) {
         CompoundTag nbt = stack.getOrCreateTag();
-        nbt.putBoolean("Socketable", true);
-        nbt.putInt("SocketCount", 6);
+        if (!nbt.contains("Socketable")) {
+            nbt.putBoolean("Socketable", true);
+            nbt.putInt("SocketCount", 6);
 
-        ListTag socketsList = new ListTag();
-        for (int i = 0; i < 6; i++) {
-            CompoundTag socketTag = new CompoundTag();
-            socketTag.putInt("SlotIndex", i);
-            socketTag.putString("SocketType", i == 0 ? "Main" : "Minor");
-            socketsList.add(socketTag);
+            ListTag socketsList = new ListTag();
+            for (int i = 0; i < 6; i++) {
+                CompoundTag socketTag = new CompoundTag();
+                socketTag.putInt("SlotIndex", i);
+                socketTag.putString("SocketType", i == 0 ? "Main" : "Minor");
+                socketsList.add(socketTag);
+            }
+            nbt.put("Sockets", socketsList);
         }
-        nbt.put("Sockets", socketsList);
+
+        getOrCreateUUID(stack);
     }
 
     @Override
@@ -45,14 +49,13 @@ public class GoldenAmuletItem extends Item {
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
         super.inventoryTick(stack, level, entity, slotId, isSelected);
-        if (!level.isClientSide && stack.hasTag()) {
-            CompoundTag nbt = stack.getTag();
-            if (!nbt.contains("Socketable")) {
+        if (!level.isClientSide) {
+            CompoundTag nbt = stack.getOrCreateTag();
+            if (!nbt.contains("Socketable") || !nbt.contains("SocketCount")) {
                 initializeAmuletNBT(stack);
             }
         }
     }
-
 
     public static UUID getOrCreateUUID(ItemStack amulet) {
         CompoundTag amuletTag = amulet.getOrCreateTag();
@@ -67,38 +70,6 @@ public class GoldenAmuletItem extends Item {
         CompoundTag amuletTag = amulet.getTag();
         return amuletTag != null && amuletTag.hasUUID("AmuletUUID") ? amuletTag.getUUID("AmuletUUID") : null;
     }
-
-    //@Override
-    //public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-    //    super.appendHoverText(stack, level, tooltip, flag);
-    //    CompoundTag amuletTag = stack.getTag();
-    //    if (amuletTag != null) {
-    //        if (amuletTag.contains("MainGem")) {
-    //            ItemStack mainGemStack = ItemStack.of(amuletTag.getCompound("MainGem"));
-    //            tooltip.add(Component.literal("Main Gem: " + mainGemStack.getHoverName().getString()).withStyle(ChatFormatting.GOLD));
-    //        } else {
-    //            tooltip.add(Component.literal("Main Gem: None").withStyle(ChatFormatting.GRAY));
-    //        }
-//
-    //        if (amuletTag.contains("MinorGems")) {
-    //            ListTag minorGems = amuletTag.getList("MinorGems", CompoundTag.TAG_COMPOUND);
-    //            if (!minorGems.isEmpty()) {
-    //                tooltip.add(Component.literal("Minor Gems:").withStyle(ChatFormatting.GREEN));
-    //                for (int i = 0; i < minorGems.size(); i++) {
-    //                    ItemStack minorGemStack = ItemStack.of(minorGems.getCompound(i));
-    //                    tooltip.add(Component.literal("  - " + minorGemStack.getHoverName().getString()).withStyle(ChatFormatting.YELLOW));
-    //                }
-    //            } else {
-    //                tooltip.add(Component.literal("Minor Gems: None").withStyle(ChatFormatting.GRAY));
-    //            }
-    //        } else {
-    //            tooltip.add(Component.literal("Minor Gems: None").withStyle(ChatFormatting.GRAY));
-    //        }
-    //    } else {
-    //        tooltip.add(Component.literal("Main Gem: None").withStyle(ChatFormatting.GRAY));
-    //        tooltip.add(Component.literal("Minor Gems: None").withStyle(ChatFormatting.GRAY));
-    //    }
-    //}
 
     public void applyGemBonuses(Player player, ItemStack amulet) {
         if (!amulet.hasTag()) {

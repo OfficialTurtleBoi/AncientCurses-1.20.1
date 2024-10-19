@@ -1126,22 +1126,16 @@ public class ModEvents {
         AtomicReference<ItemStack> activeAmulet = new AtomicReference<>(ItemStack.EMPTY);
 
         if (!level.isClientSide && event.phase == TickEvent.Phase.END) {
-            // Check if Curios is installed
             if (ModList.get().isLoaded("curios")) {
-                // Curios logic: Check the "necklace" slot
-                CuriosApi.getCuriosInventory(player).ifPresent(curiosInventory -> {
-                    curiosInventory.getStacksHandler("necklace").ifPresent(slotInventory -> {
-                        // Handle the necklace slot here, e.g., checking or modifying its contents
-                        ItemStack necklaceItem = slotInventory.getStacks().getStackInSlot(0); // Assuming the first slot
-                        if (!necklaceItem.isEmpty() && necklaceItem.getItem() instanceof GoldenAmuletItem goldenAmuletItem) {
-                            goldenAmuletItem.applyGemBonuses(player, necklaceItem);
-                        } else if (necklaceItem.isEmpty() || !(necklaceItem.getItem() instanceof GoldenAmuletItem)) {
-                            PreciousGemItem.removeBonus(player);
-                        }
-                    });
-                });
+                CuriosApi.getCuriosInventory(player).ifPresent(curiosInventory -> curiosInventory.getStacksHandler("necklace").ifPresent(slotInventory -> {
+                    ItemStack necklaceItem = slotInventory.getStacks().getStackInSlot(0);
+                    if (!necklaceItem.isEmpty() && necklaceItem.getItem() instanceof GoldenAmuletItem goldenAmuletItem) {
+                        goldenAmuletItem.applyGemBonuses(player, necklaceItem);
+                    } else if (necklaceItem.isEmpty() || !(necklaceItem.getItem() instanceof GoldenAmuletItem)) {
+                        PreciousGemItem.removeBonus(player);
+                    }
+                }));
             } else {
-                // Fallback: Use inventory logic if Curios is not installed
                 for (ItemStack stack : player.getInventory().items) {
                     if (stack.getItem() instanceof GoldenAmuletItem) {
                         UUID amuletUUID = GoldenAmuletItem.getUUID(stack);
@@ -1153,15 +1147,12 @@ public class ModEvents {
                 }
 
                 if (!activeAmulet.get().isEmpty()) {
-                    // Apply gem bonuses using the amulet from the inventory
                     GoldenAmuletItem amuletItem = (GoldenAmuletItem) activeAmulet.get().getItem();
                     amuletItem.applyGemBonuses(player, activeAmulet.get());
                 } else {
-                    // Remove bonuses if no amulet is found in the inventory
                     PreciousGemItem.removeBonus(player);
                     player.getPersistentData().remove("ActiveAmuletUUID");
 
-                    // Look for a new active amulet in the player's inventory
                     for (ItemStack stack : player.getInventory().items) {
                         if (stack.getItem() instanceof GoldenAmuletItem amuletItem) {
                             UUID newUUID = GoldenAmuletItem.getOrCreateUUID(stack);

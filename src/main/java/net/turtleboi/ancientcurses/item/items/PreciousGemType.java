@@ -3,6 +3,10 @@ package net.turtleboi.ancientcurses.item.items;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public enum PreciousGemType {
     BROKEN_AMETHYST("item.ancientcurses.broken_amethyst.tooltip"),
     POLISHED_AMETHYST("item.ancientcurses.polished_amethyst.tooltip"),
@@ -32,7 +36,11 @@ public enum PreciousGemType {
         this.translationKey = translationKey;
     }
 
-    public MutableComponent getBonuses() {
-        return Component.translatable(translationKey);
+    public List<MutableComponent> getBonuses() {
+        String translated = Component.translatable(translationKey).getString();
+        String[] lines = translated.split("\\|");
+        return Arrays.stream(lines)
+                .map(Component::literal)
+                .collect(Collectors.toList());
     }
 }

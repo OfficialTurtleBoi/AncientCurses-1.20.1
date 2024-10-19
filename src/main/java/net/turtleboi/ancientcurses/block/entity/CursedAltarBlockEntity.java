@@ -21,6 +21,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.items.ItemStackHandler;
+import net.turtleboi.ancientcurses.config.AncientCursesConfig;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.trials.*;
@@ -215,8 +216,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
         BlockPos altarPos = this.getBlockPos();
         UUID playerUUID = player.getUUID();
         Random random = new Random();
-        int minMultiple = 180;
-        int maxMultiple = 240;
+        int minMultiple = AncientCursesConfig.CURSE_TIME_MIN.get();
+        int maxMultiple = AncientCursesConfig.CURSE_TIME_MAX.get();
         int range = maxMultiple - minMultiple + 1;
         int randomMultiple = random.nextInt(range) + minMultiple;
         int calculatedDuration = randomMultiple * 20;
@@ -240,9 +241,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public boolean hasPlayerCompletedTrial(Player player) {
         BlockPos altarPos = this.getBlockPos();
-        boolean completed = PlayerTrialData.hasCompletedTrial(player, altarPos);
         //System.out.println("Checking if player " + player.getName().getString() + " has completed trial at altar " + altarPos + ": " + completed);
-        return completed;
+        return PlayerTrialData.hasCompletedTrial(player, altarPos);
     }
 
     public void setPlayerTrialCompleted(Player player) {
@@ -356,11 +356,11 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     private static @NotNull List<Integer> getWeightedAmplifier(int trialsCompleted) {
-        double completionFactor = Math.min(trialsCompleted / (double) 25, 1.0);
+        double completionFactor = Math.min(trialsCompleted / AncientCursesConfig.CURSED_TRIAL_MAX.get(), 1.0);
 
-        int amplifier0Weight = (int) Math.max(6 * (1.0 - completionFactor), 0);
-        int amplifier1Weight = (int) Math.max(3 * (1.0 - completionFactor), 0);
-        int amplifier2Weight = (int) Math.max(1 + (10 * completionFactor), 1);
+        int amplifier0Weight = (int) Math.max(AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get() * (1.0 - completionFactor), 0);
+        int amplifier1Weight = (int) Math.max(AncientCursesConfig.CURSED_TRIAL_TIER2_CHANCE.get() * (1.0 - completionFactor), 0);
+        int amplifier2Weight = (int) Math.max(AncientCursesConfig.CURSED_TRIAL_TIER3_CHANCE.get() + (10 * completionFactor), 1);
         List<Integer> weightedAmplifiers = new ArrayList<>();
         for (int i = 0; i < amplifier0Weight; i++) weightedAmplifiers.add(0);
         for (int i = 0; i < amplifier1Weight; i++) weightedAmplifiers.add(1);
