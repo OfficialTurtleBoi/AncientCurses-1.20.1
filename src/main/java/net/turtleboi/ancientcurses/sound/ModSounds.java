@@ -13,7 +13,7 @@ public class ModSounds {
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, AncientCurses.MOD_ID);
 
     public static final RegistryObject<SoundEvent> DEPRECOPHOBIA = registerSoundEvents("deprecophobia");
-
+    public static final RegistryObject<SoundEvent> GEM_PLACE = registerSoundEvents("gem_place");
 
     private static RegistryObject<SoundEvent> registerSoundEvents(String name){
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(AncientCurses.MOD_ID, name)));

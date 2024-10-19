@@ -51,6 +51,7 @@ import net.turtleboi.ancientcurses.network.packets.CameraShakeS2C;
 import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
+import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
 import net.turtleboi.ancientcurses.trials.SurvivalTrial;
@@ -231,6 +232,15 @@ public class CursedAltarBlock extends BaseEntityBlock {
                                 } else {
                                     ejectItemsTowardPlayer(level, pos, player, Collections.singletonList(gem));
                                 }
+                                player.level().playSound(
+                                        null,
+                                        player.blockPosition(),
+                                        ModSounds.GEM_PLACE.get(),
+                                        SoundSource.BLOCKS,
+                                        1.0F + 0.07f * i,
+                                        0.9F + 0.1f * i + (float) player.getRandom().
+                                                nextIntBetweenInclusive(0, 3) / 100
+                                );
                                 return InteractionResult.SUCCESS;
                             }
                         }
@@ -241,7 +251,17 @@ public class CursedAltarBlock extends BaseEntityBlock {
                             //player.sendSystemMessage(Component.literal("Adding gem!"));
                             for (int i = 0; i < 3; i++) {
                                 if (altarEntity.getGemInSlot(i).isEmpty()) {
-                                    altarEntity.setGemInSlot(i, heldItem.split(1));
+                                    player.level().playSound(
+                                            null,
+                                            player.blockPosition(),
+                                            ModSounds.GEM_PLACE.get(),
+                                            SoundSource.BLOCKS,
+                                            1.0F + 0.07f * i,
+                                            0.9F + 0.1f * i + (float) player.getRandom().
+                                                    nextIntBetweenInclusive(0, 3) / 100
+                                    );
+                                    ItemStack gemToPlace = player.getAbilities().instabuild ? heldItem.copyWithCount(1) : heldItem.split(1);
+                                    altarEntity.setGemInSlot(i, gemToPlace);
                                     altarEntity.setChanged();
                                     return InteractionResult.SUCCESS;
                                 }

@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffect;
@@ -24,6 +25,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.ancientcurses.trials.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -412,6 +414,15 @@ public class CursedAltarBlockEntity extends BlockEntity {
                 setChanged();
                 if (level != null){
                     level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+                    level.playSound(
+                            null,
+                            worldPosition,
+                            ModSounds.GEM_PLACE.get(),
+                            SoundSource.BLOCKS,
+                            1.0F + 0.07f,
+                            0.9F + 0.1f + (float) level.getRandom().
+                                    nextIntBetweenInclusive(0, 3) / 100
+                    );
                 }
             }
         }
@@ -433,7 +444,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public void serverTick() {
         if (isAnimating) {
             long currentTime = System.currentTimeMillis();
-            long animationDuration = 7800;
+            long animationDuration = 7600;
             if (currentTime - getAnimationStartTime() >= animationDuration) {
                 performGemUpgrade();
                 stopAnimation();
