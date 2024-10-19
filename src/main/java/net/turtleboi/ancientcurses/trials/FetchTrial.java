@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -15,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
+import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.CameraShakeS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
@@ -208,9 +210,14 @@ public class FetchTrial implements Trial {
                         requiredCount),
                 (ServerPlayer) player
         );
-        //PlayerTrialData.clearCurseAmplifier(player);
-        player.removeEffect(this.effect);
         PlayerTrialData.clearCurseEffect(player);
+
+        for (MobEffectInstance effectInstance : player.getActiveEffects()) {
+            MobEffect effect = effectInstance.getEffect();
+            if (CurseRegistry.getCurses().contains(effect)) {
+                player.removeEffect(effect);
+            }
+        }
 
         ModNetworking.sendToPlayer(new CameraShakeS2C(0.125F, 1000), (ServerPlayer) player);
         if (player.level() instanceof ServerLevel serverLevel) {

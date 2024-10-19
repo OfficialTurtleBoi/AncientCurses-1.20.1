@@ -8,6 +8,11 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.turtleboi.ancientcurses.effect.CurseRegistry;
+import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.trials.PlayerTrialData;
 
 public class ClearCurseCommand {
@@ -22,11 +27,34 @@ public class ClearCurseCommand {
         CommandSourceStack source = context.getSource();
         String playerName = StringArgumentType.getString(context, "playerName");
         ServerPlayer player = source.getServer().getPlayerList().getPlayerByName(playerName);
+
         if (player == null) {
             source.sendFailure(Component.literal("Target not found: " + playerName));
             return 0;
         }
+
         PlayerTrialData.clearPlayerCurse(player);
+        ModNetworking.sendToPlayer(
+                new SyncTrialDataS2C(
+                        "None",
+                        "",
+                        0,
+                        0,
+                        0,
+                        0,
+                        "",
+                        0,
+                        0),
+                player
+        );
+
+        for (MobEffectInstance effectInstance : player.getActiveEffects()) {
+            MobEffect effect = effectInstance.getEffect();
+            if (CurseRegistry.getCurses().contains(effect)) {
+                player.removeEffect(effect);
+            }
+        }
+
         source.sendSuccess(() -> Component.literal("Curses cleared for player: " + playerName), true);
         return 1;
     }

@@ -7,11 +7,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
+import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.CameraShakeS2C;
@@ -141,7 +143,6 @@ public class EliminationTrial implements Trial {
         return mobList.get(mobList.size() - 1).getMobType();
     }
 
-
     private int calculateRequiredKillCount(int amplifier) {
         int randomMultiplier = ThreadLocalRandom.current().nextInt(8, 13);
         int baseKillCount = randomMultiplier * (amplifier + 1);
@@ -201,9 +202,14 @@ public class EliminationTrial implements Trial {
                         0,
                         0),
                 (ServerPlayer) player);
-        //PlayerTrialData.clearCurseAmplifier(player);
-        player.removeEffect(this.effect);
         PlayerTrialData.clearCurseEffect(player);
+
+        for (MobEffectInstance effectInstance : player.getActiveEffects()) {
+            MobEffect effect = effectInstance.getEffect();
+            if (CurseRegistry.getCurses().contains(effect)) {
+                player.removeEffect(effect);
+            }
+        }
 
         ModNetworking.sendToPlayer(new CameraShakeS2C(0.05F, 1000), (ServerPlayer) player);
         if (player.level() instanceof ServerLevel serverLevel) {
