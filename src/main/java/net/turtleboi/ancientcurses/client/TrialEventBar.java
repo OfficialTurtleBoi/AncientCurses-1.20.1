@@ -42,7 +42,7 @@ public class TrialEventBar {
             guiGraphics.blit(TRIAL_BOSS_BAR, x + barBuffer, y, barBuffer, 18, barWidth - (barBuffer * 2), barHeight, barWidth, barHeight * 3);
         }
 
-        String displayText = getTrialDisplayText();
+        Component displayText = getTrialDisplayText();
         int titleWidth = minecraft.font.width(displayText);
         int color = 0xFFFFFF;
         if (PlayerClientData.getTrialProgress() >= 1.0F){
@@ -56,27 +56,35 @@ public class TrialEventBar {
         return Mth.ceil(trialProgress * (barWidth - (barBuffer * 2)));
     }
 
-    private static String getTrialDisplayText() {
+    private static Component getTrialDisplayText() {
         float trialProgress = PlayerClientData.getTrialProgress();
+
         if (trialProgress < 1.0F) {
             String trialType = PlayerClientData.getTrialType();
+
             if (trialType.equalsIgnoreCase(PlayerTrialData.survivalTrial)) {
                 int percentComplete = (int) (PlayerClientData.getTrialProgress() * 100);
-                return "Survive: " + percentComplete + "%";
+                // Use translation key "trial.survival" with percent complete
+                return Component.translatable("trial.ancientcurses.survival", percentComplete);
             } else if (trialType.equalsIgnoreCase(PlayerTrialData.eliminationTrial)) {
                 String targetName = PlayerClientData.getEliminationTarget();
                 int eliminationCount = PlayerClientData.getEliminationKills();
                 int requiredEliminations = PlayerClientData.getEliminationKillsRequired();
-                return "Eliminate " + targetName + "s: " + eliminationCount + "/" + requiredEliminations;
+                // Use translation key "trial.elimination" with target name, elimination count, and required eliminations
+                return Component.translatable("trial.ancientcurses.elimination", targetName, eliminationCount, requiredEliminations);
             } else if (trialType.equalsIgnoreCase(PlayerTrialData.fetchTrial)) {
                 String fetchItem = PlayerClientData.getFetchItem();
                 int fetchItemCount = PlayerClientData.getFetchItems();
                 int requiredFetchitems = PlayerClientData.getFetchItemsRequired();
-                return "Feed the altar: " + fetchItemCount + "/" + requiredFetchitems + " " + fetchItem;
+                // Use translation key "trial.fetch" with fetch item count, required fetch items, and fetch item name
+                return Component.translatable("trial.ancientcurses.fetch", fetchItemCount, requiredFetchitems, fetchItem);
             }
         } else {
-            return "The altar beckons your return...";
+            // Use translation key "trial.complete"
+            return Component.translatable("trial.ancientcurses.complete");
         }
-        return "";
+
+        return Component.empty();
     }
+
 }

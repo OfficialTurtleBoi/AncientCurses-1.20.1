@@ -57,11 +57,12 @@
   "item.ancientcurses.ancient_chrysoberyl": "Ancient Chrysoberyl",
   "item.ancientcurses.cursed_pearl": "Cursed Pearl",
   "item.ancientcurses.rotclump": "Rotten clump",
+
   "item.ancientcurses.broken_amethyst.tooltip": "+2 Health",
   "item.ancientcurses.polished_amethyst.tooltip": "+4 Health",
   "item.ancientcurses.perfect_amethyst.tooltip": "Lifebloom: When slotted in Main Gem socket, when you are below half health, you gradually regenerate health over time until you are full health\n+8 Health",
   "item.ancientcurses.broken_diamond.tooltip": "+1 Armor",
-  "item.ancientcurses.polished_diamond.tooltip": "+2 Armor\n+0.5 Armor Toughness",
+  "item.ancientcurses.polished_diamond.tooltip": "+2 Armor\n +0.5 Armor Toughness",
   "item.ancientcurses.perfect_diamond.tooltip": "Crystalline Hardening: When slotted in Main Gem socket, when hit or blocking an attack with a shield, you have a 20% chance to completely negate damage\n+4 Armor\n+1 Armor Toughness",
   "item.ancientcurses.broken_emerald.tooltip": "+0.25 Luck",
   "item.ancientcurses.polished_emerald.tooltip": "+0.5 Luck",
@@ -77,6 +78,17 @@
   "item.ancientcurses.perfect_topaz.tooltip": "Arcane Amplification: When slotted in Main Gem socket, each successful melee attack increases your Attack Speed and Movement Speed by 10% for 5 seconds, stacking up to 3 times. The buff is refreshed on each hit\n+33% Attack Speed\n+33% Movement Speed",
   "item.ancientcurses.ancient_alexandrite.tooltip": "Dawn's Grace: When slotted in Main Gem socket, during the day, gain Regeneration, 25% increased total Armor and 25% increased total Armor Toughness. Additionally, you benefit from Solar Nourishment, which restores hunger passively and is amplified while standing in direct sunlight\nTwilight's Edge: When slotted in Main Gem socket, during the night, gain Night Vision, 25% increased total Attack Speed and 25% increased total Attack Damage. Additionally, you gain a 33% chance to dodge all incoming attacks",
   "item.ancientcurses.ancient_bismuth.tooltip": "Elemental Convergence: When slotted in Main Gem socket, every 10 seconds you unleash a magical pulse, granting either Regeneration II, Strength II, or Speed II for 5 seconds, along with a random elemental aura\nFire Aura- Burn nearby enemies\nLightning Aura- Strike foes with lightning\nIce Aura- Slow and weaken enemies\nAfter each pulse, an elemental burst deals 5 magic damage to nearby enemies within 5 blocks, pushing them back and briefly levitating them",
-  "item.ancientcurses.ancient_chrysoberyl.tooltip": "Electric Skies: When slotted in Main Gem socket, gain the ability to fly\n+50% Attack Speed\n+50% Movement Speed\n+3 Luck"
+  "item.ancientcurses.ancient_chrysoberyl.tooltip": "Electric Skies: When slotted in Main Gem socket, gain the ability to fly\n+50% Attack Speed\n+50% Movement Speed\n+3 Luck",
 
+  "trial.ancientcurses.survival": "Survive: %s%%",
+  "trial.ancientcurses.elimination": "Eliminate %ss: %s/%s",
+  "trial.ancientcurses.fetch": "Feed the altar: %s/%s %s",
+  "trial.ancientcurses.complete": "The altar beckons your return...",
+
+  "trial.ancientcurses.unlucky": "How unlucky...",
+  "trial.ancientcurses.pride.better": "You are better than them!",
+  "trial.ancientcurses.death": "The Altars Feed on your soul...",
+  "trial.ancientcurses.sleep": "It's too dark to sleep...",
+  "trial.ancientcurses.pride.help": "Help is for the weak!",
+  "trial.ancientcurses.pride.run": "Running is for the pathetic!"
 }

@@ -366,7 +366,7 @@ public class ModEvents {
                                 level.playSound(null, player.getX(), player.getY(), player.getZ(),
                                         SoundEvents.FIRE_EXTINGUISH, SoundSource.AMBIENT, 1.0F, 1.0F);
                                 player.getInventory().add(new ItemStack(ModItems.ROT_CLUMP.get()));
-                                player.displayClientMessage(Component.literal("How unlucky...").withStyle(ChatFormatting.RED), true);
+                                player.displayClientMessage(Component.translatable("trial.ancientcurses.unlucky").withStyle(ChatFormatting.RED), true);
                             }
                         }
 
@@ -521,7 +521,7 @@ public class ModEvents {
             MobEffectInstance prideCurse = player.getEffect(ModEffects.CURSE_OF_PRIDE.get());
             if (prideCurse != null) {
                 event.setCanceled(true);
-                player.displayClientMessage(Component.literal("You're better than them!").withStyle(ChatFormatting.RED), true);
+                player.displayClientMessage(Component.translatable("trial.ancientcurses.pride.better").withStyle(ChatFormatting.RED), true);
             }
         }
     }
@@ -884,7 +884,7 @@ public class ModEvents {
                         serverPlayer);
             }
 
-            player.displayClientMessage(Component.literal("The Altars Feed on your soul...").withStyle(ChatFormatting.DARK_RED), true);
+            player.displayClientMessage(Component.translatable("trial.ancientcurses.death").withStyle(ChatFormatting.DARK_RED), true);
         }
     }
 
@@ -892,7 +892,7 @@ public class ModEvents {
     public static void onPlayerSleep(PlayerSleepInBedEvent event) {
         Player player = event.getEntity();
         if (player.hasEffect(ModEffects.CURSE_OF_SHADOWS.get())) {
-            player.displayClientMessage(Component.literal("It's too dark to sleep...").withStyle(ChatFormatting.RED), true);
+            player.displayClientMessage(Component.translatable("trial.ancientcurses.sleep").withStyle(ChatFormatting.RED), true);
             event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM);
         }
     }
@@ -937,7 +937,7 @@ public class ModEvents {
                 MobEffectInstance addedEffect = event.getEffectInstance();
                 if (addedEffect.getEffect().getCategory() == MobEffectCategory.BENEFICIAL) {
                     event.setResult(Event.Result.DENY);
-                    player.displayClientMessage(Component.literal("Help is for the weak!").withStyle(ChatFormatting.RED), true);
+                    player.displayClientMessage(Component.translatable("trial.ancientcurses.pride.help").withStyle(ChatFormatting.RED), true);
                 }
             }
         }
@@ -1197,7 +1197,7 @@ public class ModEvents {
                 player.setSprinting(false);
                 if (prideCurse.getAmplifier() >= 1) {
                     player.hurt(player.level().damageSources().generic(), 1.0F);
-                    player.displayClientMessage(Component.literal("Running is for the pathetic!").withStyle(ChatFormatting.RED), true);
+                    player.displayClientMessage(Component.translatable("trial.ancientcurses.pride.run").withStyle(ChatFormatting.RED), true);
                 }
             }
 
