@@ -58,6 +58,8 @@
   "item.ancientcurses.cursed_pearl": "Cursed Pearl",
   "item.ancientcurses.rotclump": "Rotten clump",
 
+  "item.ancientcurses.gem.socket": "When socketed:",
+
   "item.ancientcurses.broken_amethyst.tooltip": "+2 Health",
   "item.ancientcurses.polished_amethyst.tooltip": "+4 Health",
   "item.ancientcurses.perfect_amethyst.tooltip": "Lifebloom: When slotted in Main Gem socket, when you are below half health, you gradually regenerate health over time until you are full health|+8 Health",
@@ -90,5 +92,12 @@
   "trial.ancientcurses.death": "The Altars Feed on your soul...",
   "trial.ancientcurses.sleep": "It's too dark to sleep...",
   "trial.ancientcurses.pride.help": "Help is for the weak!",
-  "trial.ancientcurses.pride.run": "Running is for the pathetic!"
+  "trial.ancientcurses.pride.run": "Running is for the pathetic!",
+
+  "item.ancientcurses.amulet.minor_gems": "Minor Gems:",
+  "item.ancientcurses.amulet.minor_gem_entry":  "  - %s",
+  "item.ancientcurses.amulet.main_gem": "Main Gem: %s",
+  "item.ancientcurses.amulet.main_gem_none": "Main Gem: None",
+  "item.ancientcurses.amulet.minor_gems_none": "Minor Gems: None"
+
 }

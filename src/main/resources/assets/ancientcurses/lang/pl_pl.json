@@ -58,9 +58,11 @@
   "item.ancientcurses.cursed_pearl": "Przeklęta Perła",
   "item.ancientcurses.rotclump": "Zgniła Masa",
 
+  "item.ancientcurses.gem.socket": "Gdy osadzony w amulecie:",
+
   "item.ancientcurses.broken_amethyst.tooltip": "+2 do zdrowia",
   "item.ancientcurses.polished_amethyst.tooltip": "+4 do zdrowia",
-  "item.ancientcurses.perfect_amethyst.tooltip": "Lifebloom: When slotted in Main Gem socket, when you are below half health, you gradually regenerate health over time until you are full health|+8 do zdrowia",
+  "item.ancientcurses.perfect_amethyst.tooltip": "Rozkiwt Zdrowia: Gdy jest w głównym gnieździe, po straceniu ponad połowy zdrowia dostajesz leczenie aż do momentu gdy nie będziesz w pełni zdrów|+8 do zdrowia",
   "item.ancientcurses.broken_diamond.tooltip": "+1 do zbroi",
   "item.ancientcurses.polished_diamond.tooltip": "+2 do zbroi|+0.5 do wytrzymałości zbroi",
   "item.ancientcurses.perfect_diamond.tooltip": "Crystalline Hardening: When slotted in Main Gem socket, when hit or blocking an attack with a shield, you have a 20% chance to completely negate damage|+4 do zbroi|+1 do wytrzymałości zbroi",
@@ -90,7 +92,13 @@
   "trial.ancientcurses.death": "Ołtarz pożywił się twoją duszą...",
   "trial.ancientcurses.sleep": "Jest zbyt ciemno by zasnąć...",
   "trial.ancientcurses.pride.help": "Pomoc jest dla słabych!",
-  "trial.ancientcurses.pride.run": "Bieganie jest dla słabych!"
+  "trial.ancientcurses.pride.run": "Bieganie jest dla słabych!",
+
+  "item.ancientcurses.amulet.minor_gems": "Pomniejsze Klejnoty:",
+  "item.ancientcurses.amulet.minor_gem_entry":  "  - %s",
+  "item.ancientcurses.amulet.main_gem": "Główny Klejnot: %s",
+  "item.ancientcurses.amulet.main_gem_none": "Główny Klejnot: Brak",
+  "item.ancientcurses.amulet.minor_gems_none": "Pomniejsze Klejnoty: Brak"
 
 
 }

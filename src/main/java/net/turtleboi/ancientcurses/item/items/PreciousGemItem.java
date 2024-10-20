@@ -38,7 +38,7 @@ public class PreciousGemItem extends Item {
     @Override
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
-        tooltip.add(Component.literal("When socketed:").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.ancientcurses.gem.socket").withStyle(ChatFormatting.GRAY));
 
         List<MutableComponent> bonuses = gemType.getBonuses();
         for (MutableComponent bonus : bonuses) {

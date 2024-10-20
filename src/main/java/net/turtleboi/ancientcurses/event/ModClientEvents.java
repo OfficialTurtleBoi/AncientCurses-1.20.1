@@ -99,7 +99,7 @@ public class ModClientEvents {
             int itemValue = ItemValueMap.getItemValue(itemStack, level);
             int itemStackValue = itemValue * itemStack.getCount();
             //event.getToolTip().add(Component.literal("Item Value: " + itemStackValue));
-        }
+            }
 
         if (level != null && itemStack.hasTag()) {
             CompoundTag itemTag = itemStack.getTag();
@@ -108,32 +108,41 @@ public class ModClientEvents {
                 if (itemTag != null) {
                     if (itemTag.contains("MainGem")) {
                         ItemStack mainGemStack = ItemStack.of(itemTag.getCompound("MainGem"));
-                        event.getToolTip().add(Component.literal("Main Gem: " + mainGemStack.getHoverName().getString()).withStyle(ChatFormatting.GOLD));
+                        event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.main_gem", mainGemStack.getHoverName().getString())
+                                .withStyle(ChatFormatting.GOLD));
                     } else {
-                        event.getToolTip().add(Component.literal("Main Gem: None").withStyle(ChatFormatting.GRAY));
+                        event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.main_gem_none")
+                                .withStyle(ChatFormatting.GRAY));
                     }
 
                     if (itemTag.contains("MinorGems")) {
                         ListTag minorGems = itemTag.getList("MinorGems", CompoundTag.TAG_COMPOUND);
                         if (!minorGems.isEmpty()) {
-                            event.getToolTip().add(Component.literal("Minor Gems:").withStyle(ChatFormatting.GREEN));
+                            event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.minor_gems")
+                                    .withStyle(ChatFormatting.GREEN));
                             for (int i = 0; i < minorGems.size(); i++) {
                                 ItemStack minorGemStack = ItemStack.of(minorGems.getCompound(i));
-                                event.getToolTip().add(Component.literal("  - " + minorGemStack.getHoverName().getString()).withStyle(ChatFormatting.YELLOW));
+                                event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.minor_gem_entry", minorGemStack.getHoverName().getString())
+                                        .withStyle(ChatFormatting.YELLOW));
                             }
                         } else {
-                            event.getToolTip().add(Component.literal("Minor Gems: None").withStyle(ChatFormatting.GRAY));
+                            event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.minor_gems_none")
+                                    .withStyle(ChatFormatting.GRAY));
                         }
                     } else {
-                        event.getToolTip().add(Component.literal("Minor Gems: None").withStyle(ChatFormatting.GRAY));
+                        event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.minor_gems_none")
+                                .withStyle(ChatFormatting.GRAY));
                     }
                 } else {
-                    event.getToolTip().add(Component.literal("Main Gem: None").withStyle(ChatFormatting.GRAY));
-                    event.getToolTip().add(Component.literal("Minor Gems: None").withStyle(ChatFormatting.GRAY));
+                    event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.main_gem_none")
+                            .withStyle(ChatFormatting.GRAY));
+                    event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.minor_gems_none")
+                            .withStyle(ChatFormatting.GRAY));
                 }
             }
         }
     }
+
 
     @SubscribeEvent
     public static void onRenderPlayerPost(RenderPlayerEvent.Post event) {
