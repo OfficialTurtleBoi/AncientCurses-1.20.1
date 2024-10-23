@@ -271,8 +271,8 @@ public class PreciousGemItem extends Item {
                     AttributeModifier.Operation.ADDITION);
 
             if(!player.isCreative() && !player.getPersistentData().getBoolean("ChrysoberylFlight")) {
-                player.getPersistentData().putBoolean("ChrysoberylFlight", true);
-                player.getAbilities().mayfly = true;
+                player.getPersistentData().putBoolean("ChrysoberylFlight", false);
+                player.getAbilities().mayfly = false;
                 player.onUpdateAbilities();
             }
         }

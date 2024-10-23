@@ -1,6 +1,7 @@
 package net.turtleboi.ancientcurses.event;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.renderer.EffectInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -1113,10 +1114,12 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+
         Player player = event.player;
         Level level = player.level();
         CompoundTag playerData = player.getPersistentData();
         UUID activeAmuletUUID;
+
 
         if (playerData.contains("ActiveAmuletUUID", 11)) {
             activeAmuletUUID = playerData.getUUID("ActiveAmuletUUID");
@@ -1125,6 +1128,20 @@ public class ModEvents {
         }
         AtomicReference<ItemStack> activeAmulet = new AtomicReference<>(ItemStack.EMPTY);
 
+       // if (!activeAmulet.get().isEmpty()) {
+            //CompoundTag amuletTag = activeAmulet.get().getTag();
+            //if (amuletTag.contains("MainGem")) {
+               // ItemStack mainGemStack = ItemStack.of(amuletTag.getCompound("MainGem"));
+                //if (mainGemStack.getItem() == ModItems.ANCIENT_CHRYSOBERYL.get()) {
+                    if (!player.onGround()) {
+                        if (player.isShiftKeyDown()) {
+                            spawnHoverParticles(level, player);
+                            player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 2, 3, true, false));
+                        }
+                    }
+               // }
+            //}
+        //}
         if (!level.isClientSide && event.phase == TickEvent.Phase.END) {
             if (ModList.get().isLoaded("curios")) {
                 CuriosApi.getCuriosInventory(player).ifPresent(curiosInventory -> curiosInventory.getStacksHandler("necklace").ifPresent(slotInventory -> {
@@ -1147,6 +1164,8 @@ public class ModEvents {
                 }
 
                 if (!activeAmulet.get().isEmpty()) {
+
+
                     GoldenAmuletItem amuletItem = (GoldenAmuletItem) activeAmulet.get().getItem();
                     amuletItem.applyGemBonuses(player, activeAmulet.get());
                 } else {
@@ -1233,4 +1252,16 @@ public class ModEvents {
             }
         }
     }
+    private static void spawnHoverParticles(Level level, Player player) {
+        // Create particle effects around the player's feet
+        for (int i = 0; i < 1; i++) { // Reduced number of particles
+            double x = player.getX() + (level.random.nextDouble() - 0.5) * 0.3; // Randomize x position
+            double y = player.getY(); // Position at the player's feet
+            double z = player.getZ() + (level.random.nextDouble() - 0.5) * 0.3; // Randomize z position
+
+            // Spawn particles with a subtle effect
+            level.addParticle(ParticleTypes.CLOUD, x, y, z, 0, 0.01, 0); // Slight upward motion
+        }
+    }
+
 }
