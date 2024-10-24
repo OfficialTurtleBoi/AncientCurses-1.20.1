@@ -77,6 +77,7 @@ import net.turtleboi.ancientcurses.trials.*;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import top.theillusivec4.curios.api.CuriosApi;
 
+import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -1111,6 +1112,7 @@ public class ModEvents {
             }
         }
     }
+    private static final Map<Player, Integer> runTimeMap = new HashMap<>();
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -1136,12 +1138,31 @@ public class ModEvents {
                     if (!player.onGround()) {
                         if (player.isShiftKeyDown()) {
                             spawnHoverParticles(level, player);
+                            
                             player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 2, 3, true, false));
                         }
                     }
                // }
             //}
         //}
+        runTimeMap.putIfAbsent(player, 0);
+
+
+        int runTime = runTimeMap.get(player) + 1;
+        runTimeMap.put(player, runTime);
+        if (player.isSprinting()) {
+            runTime++;
+            if (runTime >= 5*20) {
+                player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 2, 1, false, false));
+                spawnHoverParticles(level,player);
+            }
+        } else {
+            runTimeMap.put(player, 0); // Reset if not running
+        }
+
+
+
+
         if (!level.isClientSide && event.phase == TickEvent.Phase.END) {
             if (ModList.get().isLoaded("curios")) {
                 CuriosApi.getCuriosInventory(player).ifPresent(curiosInventory -> curiosInventory.getStacksHandler("necklace").ifPresent(slotInventory -> {
@@ -1252,6 +1273,9 @@ public class ModEvents {
             }
         }
     }
+
+
+
     private static void spawnHoverParticles(Level level, Player player) {
         // Create particle effects around the player's feet
         for (int i = 0; i < 1; i++) { // Reduced number of particles
