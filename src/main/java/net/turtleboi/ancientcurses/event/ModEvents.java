@@ -1,7 +1,6 @@
 package net.turtleboi.ancientcurses.event;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.renderer.EffectInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -73,11 +72,11 @@ import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
+import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.ancientcurses.trials.*;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import top.theillusivec4.curios.api.CuriosApi;
 
-import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -368,7 +367,7 @@ public class ModEvents {
                                 level.playSound(null, player.getX(), player.getY(), player.getZ(),
                                         SoundEvents.FIRE_EXTINGUISH, SoundSource.AMBIENT, 1.0F, 1.0F);
                                 player.getInventory().add(new ItemStack(ModItems.ROT_CLUMP.get()));
-                                player.displayClientMessage(Component.translatable("trial.ancientcurses.unlucky").withStyle(ChatFormatting.RED), true);
+                                player.displayClientMessage(Component.literal("How unlucky...").withStyle(ChatFormatting.RED), true);
                             }
                         }
 
@@ -523,7 +522,7 @@ public class ModEvents {
             MobEffectInstance prideCurse = player.getEffect(ModEffects.CURSE_OF_PRIDE.get());
             if (prideCurse != null) {
                 event.setCanceled(true);
-                player.displayClientMessage(Component.translatable("trial.ancientcurses.pride.better").withStyle(ChatFormatting.RED), true);
+                player.displayClientMessage(Component.literal("You're better than them!").withStyle(ChatFormatting.RED), true);
             }
         }
     }
@@ -550,90 +549,52 @@ public class ModEvents {
         }
     }
 
+    private static ItemStack getActiveAmulet(Player player) {
+        AtomicReference<ItemStack> activeAmulet = new AtomicReference<>(ItemStack.EMPTY);
+
+        if (ModList.get().isLoaded("curios")) {
+            CuriosApi.getCuriosInventory(player).ifPresent(curiosInventory -> {
+                curiosInventory.getStacksHandler("necklace").ifPresent(slotInventory -> {
+                    ItemStack necklaceItem = slotInventory.getStacks().getStackInSlot(0);
+                    if (!necklaceItem.isEmpty() && necklaceItem.getItem() instanceof GoldenAmuletItem) {
+                        activeAmulet.set(necklaceItem);
+                    }
+                });
+            });
+        } else {
+            CompoundTag playerData = player.getPersistentData();
+            UUID activeAmuletUUID = null;
+
+            if (playerData.contains("ActiveAmuletUUID", 11)) {
+                activeAmuletUUID = playerData.getUUID("ActiveAmuletUUID");
+            }
+
+            if (activeAmuletUUID != null) {
+                for (ItemStack stack : player.getInventory().items) {
+                    if (stack.getItem() instanceof GoldenAmuletItem) {
+                        UUID amuletUUID = GoldenAmuletItem.getUUID(stack);
+                        if (amuletUUID != null && amuletUUID.equals(activeAmuletUUID)) {
+                            activeAmulet.set(stack);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return activeAmulet.get();
+    }
+
+
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onEntityHurt(LivingDamageEvent event) {
         Entity attacker = event.getSource().getEntity();
         Entity target = event.getEntity();
-        if (attacker instanceof Mob mob && target instanceof Player player) {
-            Level level = mob.level();
-            if (!level.isClientSide) {
-                MobEffectInstance shadowCurse = player.getEffect(ModEffects.CURSE_OF_SHADOWS.get());
-                if (shadowCurse != null) {
-                    MobEffectInstance invisibilityEffect = mob.getEffect(MobEffects.INVISIBILITY);
-                    if (invisibilityEffect != null) {
-                        mob.removeEffect(MobEffects.INVISIBILITY);
-                    }
-                }
 
-                MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
-                if (envyCurse != null) {
-                    int amplifier = envyCurse.getAmplifier();
-                    if (amplifier >= 1) {
-                        float healingPercentage = CurseOfEnvyEffect.getHealPercentage(amplifier);
-                        float healing = event.getAmount() * healingPercentage;
-                        mob.heal(healing);
-                        if (player instanceof ServerPlayer serverPlayer) {
-                            ModNetworking.sendToPlayer(new SendParticlesS2C(
-                                    ModParticleTypes.HEAL_PARTICLE.get(),
-                                    mob.getX(),
-                                    mob.getEyeY() + 0.5,
-                                    mob.getZ(),
-                                    0.1,
-                                    0.25,
-                                    0.1,
-                                    10,
-                                    1
-                            ), serverPlayer);
-                        }
-                    }
+        //System.out.println(Component.literal(target.getName() + "hit!")); //debug code
+        if (target instanceof Player player) {
+            //System.out.println(Component.literal(player.getName() + " got hit!")); //debug code
 
-                    if (amplifier >= 2) {
-                        double itemDropChance = CurseOfEnvyEffect.getItemDropOnUseChance(amplifier);
-                        double randomValue = player.getRandom().nextDouble();
-                        if (randomValue < itemDropChance) {
-                            EquipmentSlot[] slots = EquipmentSlot.values();
-                            EquipmentSlot slot = slots[player.getRandom().nextInt(slots.length)];
-
-                            ItemStack playerItem = player.getItemBySlot(slot);
-                            if (!playerItem.isEmpty()) {
-                                ItemStack mobItem = mob.getItemBySlot(slot);
-                                if (mobItem.isEmpty()) {
-                                    player.setItemSlot(slot, ItemStack.EMPTY);
-                                    mob.setItemSlot(slot, playerItem.copy());
-                                    mob.setGuaranteedDrop(slot);
-
-                                    level.playSound(null, mob.getX(), mob.getY(), mob.getZ(),
-                                            SoundEvents.ITEM_PICKUP, SoundSource.HOSTILE, 1.0F, 1.0F);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                MobEffectInstance endCurse = player.getEffect(ModEffects.CURSE_OF_ENDING.get());
-                if (endCurse != null) {
-                    int pAmplifier = endCurse.getAmplifier();
-                    if (!player.level().isClientSide) {
-                        double teleportChance = CurseOfEndingEffect.getTeleportChance(pAmplifier);
-                        if (player.getRandom().nextDouble() < teleportChance) {
-                            CurseOfEndingEffect.randomTeleport(player, endCurse.getAmplifier());
-                            if (pAmplifier >= 1) {
-                                CurseOfEndingEffect.giveConfusion(player, 100);
-                            }
-                        }
-
-                        if (CurseOfEndingEffect.isVoid(player)){
-                            event.setAmount(1);
-                        }
-                    }
-                }
-
-                MobEffectInstance lustCurse = player.getEffect(ModEffects.CURSE_OF_OBESSSION.get());
-                if (lustCurse != null && CurseOfObessionEffect.hasLustTarget(player)) {
-                    CurseOfObessionEffect.resetLustCooldown(player, lustCurse.getAmplifier());
-                }
-            }
-        } else if (target instanceof Player player){
             AttributeInstance dodgeChanceAttribute = player.getAttribute(ModAttributes.DODGE_CHANCE.get());
             if (dodgeChanceAttribute != null) {
                 double hitChance = dodgeChanceAttribute.getValue();
@@ -658,55 +619,153 @@ public class ModEvents {
                 }
             }
 
-            MobEffectInstance hardening = player.getEffect(ModEffects.CRYSTALLINE_HARDENING.get());
-            if (hardening != null) {
-                boolean isBlocking = player.isBlocking();
-                if (isBlocking) {
-                    if (random.nextFloat() <= 0.5f) {
-                        event.setAmount(0.0f);
-                    }
-                } else {
-                    if (random.nextFloat() <= 0.2f) {
-                        event.setAmount(0.0f);
+            ItemStack amulet = getActiveAmulet(player);
+
+            if (!amulet.isEmpty()) {
+                CompoundTag amuletTag = amulet.getTag();
+                if (amuletTag != null) {
+                    if (amuletTag.contains("MainGem")) {
+                        ItemStack mainGemStack = ItemStack.of(amuletTag.getCompound("MainGem"));
+                        if (mainGemStack.getItem() == ModItems.PERFECT_DIAMOND.get()) {
+                            boolean isBlocking = player.isBlocking();
+                            float chance = player.getRandom().nextFloat();
+                            if (isBlocking) {
+                                if (chance <= 0.5f) {
+                                event.setAmount(0.0f);
+                                    player.level().playSound(
+                                            null,
+                                            player.blockPosition(),
+                                            SoundEvents.ANVIL_PLACE,
+                                            SoundSource.BLOCKS,
+                                            0.5F,
+                                            0.9F
+                                    );
+                                //System.out.println(Component.literal("Damage shield blocked!")); //debug code
+                                }
+                            } else {
+                                if (chance <= 0.2f) {
+                                event.setAmount(0.0f);
+                                    player.level().playSound(
+                                            null,
+                                            player.blockPosition(),
+                                            SoundEvents.ANVIL_PLACE,
+                                            SoundSource.BLOCKS,
+                                            0.5F,
+                                            0.9F
+                                    );
+                                //System.out.println(Component.literal("Damage negated!")); //debug code
+                                }
+                            }
+                        }
                     }
                 }
             }
 
+            if (attacker instanceof Mob mob) {
+                Level level = mob.level();
+                if (!level.isClientSide) {
+                    MobEffectInstance shadowCurse = player.getEffect(ModEffects.CURSE_OF_SHADOWS.get());
+                    if (shadowCurse != null) {
+                        MobEffectInstance invisibilityEffect = mob.getEffect(MobEffects.INVISIBILITY);
+                        if (invisibilityEffect != null) {
+                            mob.removeEffect(MobEffects.INVISIBILITY);
+                        }
+                    }
+
+                    MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
+                    if (envyCurse != null) {
+                        int amplifier = envyCurse.getAmplifier();
+                        if (amplifier >= 1) {
+                            float healingPercentage = CurseOfEnvyEffect.getHealPercentage(amplifier);
+                            float healing = event.getAmount() * healingPercentage;
+                            mob.heal(healing);
+                            if (player instanceof ServerPlayer serverPlayer) {
+                                ModNetworking.sendToPlayer(new SendParticlesS2C(
+                                        ModParticleTypes.HEAL_PARTICLE.get(),
+                                        mob.getX(),
+                                        mob.getEyeY() + 0.5,
+                                        mob.getZ(),
+                                        0.1,
+                                        0.25,
+                                        0.1,
+                                        10,
+                                        1
+                                ), serverPlayer);
+                            }
+                        }
+
+                        if (amplifier >= 2) {
+                            double itemDropChance = CurseOfEnvyEffect.getItemDropOnUseChance(amplifier);
+                            double randomValue = player.getRandom().nextDouble();
+                            if (randomValue < itemDropChance) {
+                                EquipmentSlot[] slots = EquipmentSlot.values();
+                                EquipmentSlot slot = slots[player.getRandom().nextInt(slots.length)];
+
+                                ItemStack playerItem = player.getItemBySlot(slot);
+                                if (!playerItem.isEmpty()) {
+                                    ItemStack mobItem = mob.getItemBySlot(slot);
+                                    if (mobItem.isEmpty()) {
+                                        player.setItemSlot(slot, ItemStack.EMPTY);
+                                        mob.setItemSlot(slot, playerItem.copy());
+                                        mob.setGuaranteedDrop(slot);
+
+                                        level.playSound(null, mob.getX(), mob.getY(), mob.getZ(),
+                                                SoundEvents.ITEM_PICKUP, SoundSource.HOSTILE, 1.0F, 1.0F);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    MobEffectInstance endCurse = player.getEffect(ModEffects.CURSE_OF_ENDING.get());
+                    if (endCurse != null) {
+                        int pAmplifier = endCurse.getAmplifier();
+                        if (!player.level().isClientSide) {
+                            double teleportChance = CurseOfEndingEffect.getTeleportChance(pAmplifier);
+                            if (player.getRandom().nextDouble() < teleportChance) {
+                                CurseOfEndingEffect.randomTeleport(player, endCurse.getAmplifier());
+                                if (pAmplifier >= 1) {
+                                    CurseOfEndingEffect.giveConfusion(player, 100);
+                                }
+                            }
+
+                            if (CurseOfEndingEffect.isVoid(player)){
+                                event.setAmount(1);
+                            }
+                        }
+                    }
+
+                    MobEffectInstance lustCurse = player.getEffect(ModEffects.CURSE_OF_OBESSSION.get());
+                    if (lustCurse != null && CurseOfObessionEffect.hasLustTarget(player)) {
+                        CurseOfObessionEffect.resetLustCooldown(player, lustCurse.getAmplifier());
+                    }
+                }
+            }
         } else if (attacker instanceof Player player){
-            ItemStack activeAmulet  = ItemStack.EMPTY;
-            CompoundTag playerData = player.getPersistentData();
-            UUID activeAmuletUUID = null;
+            ItemStack amulet = getActiveAmulet(player);
 
-            if (playerData.contains("ActiveAmuletUUID", 11)) {
-                activeAmuletUUID = playerData.getUUID("ActiveAmuletUUID");
-            }
-            for (ItemStack stack : player.getInventory().items) {
-                if (stack.getItem() instanceof GoldenAmuletItem) {
-                    UUID amuletUUID = GoldenAmuletItem.getUUID(stack);
-                    if (amuletUUID != null && amuletUUID.equals(activeAmuletUUID)) {
-                        activeAmulet = stack;
-                        break;
-                    }
-                }
-            }
-
-            if (!activeAmulet.isEmpty()) {
-                CompoundTag amuletTag = activeAmulet.getTag();
+            if (!amulet.isEmpty()) {
+                CompoundTag amuletTag = amulet.getTag();
                 if (amuletTag != null) {
                     if (amuletTag.contains("MainGem")) {
                         ItemStack mainGemStack = ItemStack.of(amuletTag.getCompound("MainGem"));
                         if (mainGemStack.getItem() == ModItems.PERFECT_RUBY.get()){
-                            //System.out.println(Component.literal("You have a ruby in your amulet!"));
+                            //System.out.println(Component.literal("You have a ruby in your amulet!")); //debug code
                             ItemStack mainHandItem = player.getMainHandItem();
                             double normalDamage = player.getAttributes().getValue(Attributes.ATTACK_DAMAGE) +
-                                    mainHandItem.getDamageValue() +
                                     EnchantmentHelper.getDamageBonus(mainHandItem, event.getEntity().getMobType());
                             if (event.getAmount() > normalDamage) {
                                 player.addEffect(new MobEffectInstance(ModEffects.CRITICAL_FURY.get(), 200, 0));
-                                //System.out.println(Component.literal("Critical hit!"));
+                                //System.out.println(Component.literal("Critical hit!")); //debug code
                             } else {
-                                //System.out.println(Component.literal("Not a critical hit!"));
+                                //System.out.println(Component.literal("Not a critical hit!")); //debug code
+
                             }
+                            // System.out.println(Component.literal("Expected damage: " + normalDamage)); //debug code
+                            // System.out.println(Component.literal("Actual damage: " + event.getAmount())); //debug code
+                            // System.out.println(Component.literal("Player damage attribute: " + player.getAttributes().getValue(Attributes.ATTACK_DAMAGE))); //debug code
+                            // System.out.println(Component.literal("Main hand damage: " + mainHandItem.getDamageValue())); //debug code
+                            // System.out.println(Component.literal("Enchantment damage: " + EnchantmentHelper.getDamageBonus(mainHandItem, event.getEntity().getMobType()))); //debug code
                         } else if (mainGemStack.getItem() == ModItems.PERFECT_TOPAZ.get()){
                             if (!player.hasEffect(ModEffects.FRENZIED_BLOWS.get())){
                                 player.addEffect(new MobEffectInstance(ModEffects.FRENZIED_BLOWS.get(), 100, 0));
@@ -886,7 +945,7 @@ public class ModEvents {
                         serverPlayer);
             }
 
-            player.displayClientMessage(Component.translatable("trial.ancientcurses.death").withStyle(ChatFormatting.DARK_RED), true);
+            player.displayClientMessage(Component.literal("The Altars Feed on your soul...").withStyle(ChatFormatting.DARK_RED), true);
         }
     }
 
@@ -894,7 +953,7 @@ public class ModEvents {
     public static void onPlayerSleep(PlayerSleepInBedEvent event) {
         Player player = event.getEntity();
         if (player.hasEffect(ModEffects.CURSE_OF_SHADOWS.get())) {
-            player.displayClientMessage(Component.translatable("trial.ancientcurses.sleep").withStyle(ChatFormatting.RED), true);
+            player.displayClientMessage(Component.literal("It's too dark to sleep...").withStyle(ChatFormatting.RED), true);
             event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM);
         }
     }
@@ -939,7 +998,7 @@ public class ModEvents {
                 MobEffectInstance addedEffect = event.getEffectInstance();
                 if (addedEffect.getEffect().getCategory() == MobEffectCategory.BENEFICIAL) {
                     event.setResult(Event.Result.DENY);
-                    player.displayClientMessage(Component.translatable("trial.ancientcurses.pride.help").withStyle(ChatFormatting.RED), true);
+                    player.displayClientMessage(Component.literal("Help is for the weak!").withStyle(ChatFormatting.RED), true);
                 }
             }
         }
@@ -1112,16 +1171,13 @@ public class ModEvents {
             }
         }
     }
-    private static final Map<Player, Integer> runTimeMap = new HashMap<>();
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-
         Player player = event.player;
         Level level = player.level();
         CompoundTag playerData = player.getPersistentData();
         UUID activeAmuletUUID;
-
 
         if (playerData.contains("ActiveAmuletUUID", 11)) {
             activeAmuletUUID = playerData.getUUID("ActiveAmuletUUID");
@@ -1130,49 +1186,18 @@ public class ModEvents {
         }
         AtomicReference<ItemStack> activeAmulet = new AtomicReference<>(ItemStack.EMPTY);
 
-       // if (!activeAmulet.get().isEmpty()) {
-            //CompoundTag amuletTag = activeAmulet.get().getTag();
-            //if (amuletTag.contains("MainGem")) {
-               // ItemStack mainGemStack = ItemStack.of(amuletTag.getCompound("MainGem"));
-                //if (mainGemStack.getItem() == ModItems.ANCIENT_CHRYSOBERYL.get()) {
-                    ///if (!player.onGround()) {
-                        ///if (player.isShiftKeyDown()) {
-                           /// spawnHoverParticles(level, player);
-
-                            ///player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 2, 3, true, false));
-                       /// }
-                    ///}
-               // }
-            //}
-        //}
-        ///runTimeMap.putIfAbsent(player, 0);
-
-
-        ///int runTime = runTimeMap.get(player) + 1;
-        ///runTimeMap.put(player, runTime);
-        ///if (player.isSprinting()) {
-            ///runTime++;
-            ///if (runTime >= 5*20) {
-                ///player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 2, 1, false, false));
-                ///spawnHoverParticles(level,player);
-            ///}
-        ///} else {
-            ///runTimeMap.put(player, 0); // Reset if not running
-        ///}
-
-
-
-
         if (!level.isClientSide && event.phase == TickEvent.Phase.END) {
             if (ModList.get().isLoaded("curios")) {
-                CuriosApi.getCuriosInventory(player).ifPresent(curiosInventory -> curiosInventory.getStacksHandler("necklace").ifPresent(slotInventory -> {
-                    ItemStack necklaceItem = slotInventory.getStacks().getStackInSlot(0);
-                    if (!necklaceItem.isEmpty() && necklaceItem.getItem() instanceof GoldenAmuletItem goldenAmuletItem) {
-                        goldenAmuletItem.applyGemBonuses(player, necklaceItem);
-                    } else if (necklaceItem.isEmpty() || !(necklaceItem.getItem() instanceof GoldenAmuletItem)) {
-                        PreciousGemItem.removeBonus(player);
-                    }
-                }));
+                CuriosApi.getCuriosInventory(player).ifPresent(curiosInventory -> {
+                    curiosInventory.getStacksHandler("necklace").ifPresent(slotInventory -> {
+                        ItemStack necklaceItem = slotInventory.getStacks().getStackInSlot(0);
+                        if (!necklaceItem.isEmpty() && necklaceItem.getItem() instanceof GoldenAmuletItem goldenAmuletItem) {
+                            goldenAmuletItem.applyGemBonuses(player, necklaceItem);
+                        } else if (necklaceItem.isEmpty() || !(necklaceItem.getItem() instanceof GoldenAmuletItem)) {
+                            PreciousGemItem.removeBonus(player);
+                        }
+                    });
+                });
             } else {
                 for (ItemStack stack : player.getInventory().items) {
                     if (stack.getItem() instanceof GoldenAmuletItem) {
@@ -1185,8 +1210,6 @@ public class ModEvents {
                 }
 
                 if (!activeAmulet.get().isEmpty()) {
-
-
                     GoldenAmuletItem amuletItem = (GoldenAmuletItem) activeAmulet.get().getItem();
                     amuletItem.applyGemBonuses(player, activeAmulet.get());
                 } else {
@@ -1228,7 +1251,7 @@ public class ModEvents {
                 player.setSprinting(false);
                 if (prideCurse.getAmplifier() >= 1) {
                     player.hurt(player.level().damageSources().generic(), 1.0F);
-                    player.displayClientMessage(Component.translatable("trial.ancientcurses.pride.run").withStyle(ChatFormatting.RED), true);
+                    player.displayClientMessage(Component.literal("Running is for the pathetic!").withStyle(ChatFormatting.RED), true);
                 }
             }
 
@@ -1273,19 +1296,4 @@ public class ModEvents {
             }
         }
     }
-
-
-
-    private static void spawnHoverParticles(Level level, Player player) {
-        // Create particle effects around the player's feet
-        for (int i = 0; i < 1; i++) { // Reduced number of particles
-            double x = player.getX() + (level.random.nextDouble() - 0.5) * 0.3; // Randomize x position
-            double y = player.getY(); // Position at the player's feet
-            double z = player.getZ() + (level.random.nextDouble() - 0.5) * 0.3; // Randomize z position
-
-            // Spawn particles with a subtle effect
-            level.addParticle(ParticleTypes.CLOUD, x, y, z, 0, 0.01, 0); // Slight upward motion
-        }
-    }
-
 }

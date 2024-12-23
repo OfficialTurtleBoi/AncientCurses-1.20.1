@@ -10,15 +10,21 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -52,6 +58,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
     private boolean isAnimating;
     private long animationStartTime;
     private static final Map<Item, Item> gemUpgradeMap = new HashMap<>();
+    private UUID occupantUuid;
+    private boolean chunkLoaded;
 
     static {
         gemUpgradeMap.put(ModItems.BROKEN_AMETHYST.get(), ModItems.POLISHED_AMETHYST.get());
@@ -96,6 +104,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
         super(ModBlockEntities.CURSED_ALTAR_BE.get(), pPos, pBlockState);
         this.isAnimating = false;
         this.animationStartTime = 0;
+        this.chunkLoaded = false;
     }
 
     public static void bookAnimationTick(Level pLevel, BlockPos pPos, BlockState pState, CursedAltarBlockEntity pBlockEntity) {
@@ -217,6 +226,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     public void cursePlayer(Player player, MobEffect curse, int curseAmplifier) {
+        forceDimensionActive();
+
         BlockPos altarPos = this.getBlockPos();
         UUID playerUUID = player.getUUID();
         Random random = new Random();
@@ -249,6 +260,15 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return PlayerTrialData.hasCompletedTrial(player, altarPos);
     }
 
+    private boolean anyActiveTrialsRemaining() {
+        for (Trial trial : playerTrials.values()) {
+            if (!trial.isCompleted()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void setPlayerTrialCompleted(Player player) {
         UUID playerUUID = player.getUUID();
         Trial trial = playerTrials.get(playerUUID);
@@ -256,6 +276,10 @@ public class CursedAltarBlockEntity extends BlockEntity {
             BlockPos altarPos = this.getBlockPos();
             PlayerTrialData.setTrialCompleted(player, this.getBlockPos());
             trial.setCompleted(true);
+
+            if (!anyActiveTrialsRemaining()) {
+                releaseDimensionActive();
+            }
 
             setChanged();
         }
@@ -315,9 +339,6 @@ public class CursedAltarBlockEntity extends BlockEntity {
         );
         return curses.get(new Random().nextInt(curses.size()));
     }
-
-
-
 
     public static int getRandomAmplifier(Player player, int SoulTorchAround) {
         int trialsCompleted = PlayerTrialData.getPlayerTrialsCompleted(player)+SoulTorchAround*3;
@@ -459,6 +480,99 @@ public class CursedAltarBlockEntity extends BlockEntity {
         }
     }
 
+    public static final TicketType<ChunkPos> CURSED_ALTAR_TICKET = TicketType.create(
+            "cursed_altar_ticket",
+            Comparator.comparingLong(ChunkPos::toLong), // How to compare positions
+            33 // Tick timeout - typically 33 is standard for chunk-based tickets
+    );
+
+    public boolean isChunkLoaded() {
+        return chunkLoaded;
+    }
+
+    public void forceLoadChunk() {
+        if (!(this.level instanceof ServerLevel serverLevel)) return;
+        ChunkPos chunkPos = new ChunkPos(this.worldPosition);
+        int ticketDistance = 1;
+        serverLevel.getChunkSource().addRegionTicket(
+                CURSED_ALTAR_TICKET,
+                chunkPos,
+                ticketDistance,
+                chunkPos
+        );
+        this.chunkLoaded = true;
+        setChanged();
+    }
+
+
+    public void releaseChunkLoad() {
+        if (!(this.level instanceof ServerLevel serverLevel)) return;
+        ChunkPos chunkPos = new ChunkPos(this.worldPosition);
+        int ticketDistance = 1;
+        serverLevel.getChunkSource().removeRegionTicket(
+                CURSED_ALTAR_TICKET,
+                chunkPos,
+                ticketDistance,
+                chunkPos
+        );
+        this.chunkLoaded = false;
+        setChanged();
+    }
+
+    private static final EntityType<ArmorStand> OCCUPANT_TYPE = EntityType.ARMOR_STAND;
+
+    public void forceDimensionActive() {
+        if (!(this.level instanceof ServerLevel serverLevel)) return;
+
+        // 1) Force the chunk to load
+        forceLoadChunk();
+
+        // 2) Check if occupant already exists
+        if (!hasOccupantEntity(serverLevel)) {
+            // Spawn occupant
+            ArmorStand occupant = OCCUPANT_TYPE.create(serverLevel);
+            if (occupant != null) {
+                occupant.setPos(this.worldPosition.getX() + 0.5, this.worldPosition.getY(), this.worldPosition.getZ() + 0.5);
+                occupant.setInvulnerable(true);
+                occupant.setInvisible(true);
+                occupant.setCustomName(Component.literal("Cursed Altar Occupant"));
+                occupant.setCustomNameVisible(false);
+                occupant.setNoGravity(true);
+
+                serverLevel.addFreshEntity(occupant);
+                // store occupant's UUID or some reference to remove later
+                occupantUuid = occupant.getUUID();
+            }
+        }
+    }
+
+    // Called if occupant is no longer needed
+    public void releaseDimensionActive() {
+        if (!(this.level instanceof ServerLevel serverLevel)) return;
+
+        // remove occupant
+        if (occupantUuid != null) {
+            Entity occupantEntity = serverLevel.getEntity(occupantUuid);
+            if (occupantEntity != null) {
+                occupantEntity.remove(Entity.RemovalReason.DISCARDED);
+            }
+            occupantUuid = null;
+        }
+
+        // release chunk
+        releaseChunkLoad();
+    }
+
+    // Simple check for occupant existence
+    private boolean hasOccupantEntity(ServerLevel serverLevel) {
+        if (occupantUuid != null) {
+            Entity occupantEntity = serverLevel.getEntity(occupantUuid);
+            return occupantEntity != null;
+        }
+        return false;
+    }
+
+
     private Trial reconstructTrialFromNBT(String trialType, CompoundTag trialData) {
         if (trialType.equals(PlayerTrialData.survivalTrial)) {
             SurvivalTrial trial = new SurvivalTrial(this);
@@ -478,6 +592,11 @@ public class CursedAltarBlockEntity extends BlockEntity {
         tag.putBoolean("IsAnimating", this.isAnimating);
         tag.putLong("AnimationStartTime", this.animationStartTime);
         tag.put("gems", itemStackHandler.serializeNBT());
+
+        tag.putBoolean("ChunkLoaded", this.chunkLoaded);
+        if (this.occupantUuid != null) {
+            tag.putUUID("OccupantUUID", this.occupantUuid);
+        }
 
         ListTag activeTrialsList = new ListTag();
         for (Map.Entry<UUID, Trial> entry : playerTrials.entrySet()) {
@@ -506,6 +625,13 @@ public class CursedAltarBlockEntity extends BlockEntity {
             itemStackHandler.deserializeNBT(tag.getCompound("gems"));
         }
 
+        this.chunkLoaded = tag.getBoolean("ChunkLoaded");
+        if (tag.hasUUID("OccupantUUID")) {
+            this.occupantUuid = tag.getUUID("OccupantUUID");
+        } else {
+            this.occupantUuid = null;
+        }
+
         ListTag activeTrialsList = tag.getList("ActiveTrials", Tag.TAG_COMPOUND);
         playerTrials.clear();
         for (int i = 0; i < activeTrialsList.size(); i++) {
@@ -519,6 +645,14 @@ public class CursedAltarBlockEntity extends BlockEntity {
                 trial.setAltar(this);
                 playerTrials.put(playerUUID, trial);
             }
+        }
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (!this.level.isClientSide && this.chunkLoaded) {
+            forceDimensionActive();
         }
     }
 
@@ -537,10 +671,6 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public @NotNull CompoundTag getUpdateTag() {
         return saveWithoutMetadata();
     }
-
-
-
-
 }
 
 

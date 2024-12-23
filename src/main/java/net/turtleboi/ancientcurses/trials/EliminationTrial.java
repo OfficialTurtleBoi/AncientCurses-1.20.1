@@ -202,7 +202,6 @@ public class EliminationTrial implements Trial {
                         0,
                         0),
                 (ServerPlayer) player);
-        PlayerTrialData.clearCurseEffect(player);
 
         for (MobEffectInstance effectInstance : player.getActiveEffects()) {
             MobEffect effect = effectInstance.getEffect();
@@ -210,6 +209,8 @@ public class EliminationTrial implements Trial {
                 player.removeEffect(effect);
             }
         }
+
+        PlayerTrialData.clearCurseEffect(player);
 
         ModNetworking.sendToPlayer(new CameraShakeS2C(0.05F, 1000), (ServerPlayer) player);
         if (player.level() instanceof ServerLevel serverLevel) {
