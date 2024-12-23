@@ -18,10 +18,12 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.items.ItemStackHandler;
+import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.item.ModItems;
@@ -314,8 +316,11 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return curses.get(new Random().nextInt(curses.size()));
     }
 
-    public static int getRandomAmplifier(Player player) {
-        int trialsCompleted = PlayerTrialData.getPlayerTrialsCompleted(player);
+
+
+
+    public static int getRandomAmplifier(Player player, int SoulTorchAround) {
+        int trialsCompleted = PlayerTrialData.getPlayerTrialsCompleted(player)+SoulTorchAround*3;
         List<Integer> weightedAmplifiers = getWeightedAmplifier(trialsCompleted);
 
         if (weightedAmplifiers.isEmpty()) {
@@ -370,6 +375,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
         return weightedAmplifiers;
     }
+
+
 
     public Trial createTrialForCurse(Player player, MobEffect curseType, int curseDuration, int curseAmplifier) {
         if (curseType == ModEffects.CURSE_OF_AVARICE.get()) {
@@ -530,4 +537,10 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public @NotNull CompoundTag getUpdateTag() {
         return saveWithoutMetadata();
     }
+
+
+
+
 }
+
+

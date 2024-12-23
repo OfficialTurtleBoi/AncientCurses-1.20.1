@@ -1135,30 +1135,30 @@ public class ModEvents {
             //if (amuletTag.contains("MainGem")) {
                // ItemStack mainGemStack = ItemStack.of(amuletTag.getCompound("MainGem"));
                 //if (mainGemStack.getItem() == ModItems.ANCIENT_CHRYSOBERYL.get()) {
-                    if (!player.onGround()) {
-                        if (player.isShiftKeyDown()) {
-                            spawnHoverParticles(level, player);
-                            
-                            player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 2, 3, true, false));
-                        }
-                    }
+                    ///if (!player.onGround()) {
+                        ///if (player.isShiftKeyDown()) {
+                           /// spawnHoverParticles(level, player);
+
+                            ///player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 2, 3, true, false));
+                       /// }
+                    ///}
                // }
             //}
         //}
-        runTimeMap.putIfAbsent(player, 0);
+        ///runTimeMap.putIfAbsent(player, 0);
 
 
-        int runTime = runTimeMap.get(player) + 1;
-        runTimeMap.put(player, runTime);
-        if (player.isSprinting()) {
-            runTime++;
-            if (runTime >= 5*20) {
-                player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 2, 1, false, false));
-                spawnHoverParticles(level,player);
-            }
-        } else {
-            runTimeMap.put(player, 0); // Reset if not running
-        }
+        ///int runTime = runTimeMap.get(player) + 1;
+        ///runTimeMap.put(player, runTime);
+        ///if (player.isSprinting()) {
+            ///runTime++;
+            ///if (runTime >= 5*20) {
+                ///player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 2, 1, false, false));
+                ///spawnHoverParticles(level,player);
+            ///}
+        ///} else {
+            ///runTimeMap.put(player, 0); // Reset if not running
+        ///}
 
 
 

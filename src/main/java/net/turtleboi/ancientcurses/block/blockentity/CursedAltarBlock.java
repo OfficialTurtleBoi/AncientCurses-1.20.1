@@ -298,6 +298,23 @@ public class CursedAltarBlock extends BaseEntityBlock {
         return InteractionResult.PASS;
     }
 
+
+    public static int SoulTorchAround(BlockGetter world, BlockPos centerPos ) {
+        int soultorchamount = 0;
+        for (int x = -2; x <= 2; x++) {
+            for (int y = -2; y <= 2; y++) {
+                for (int z = -2; z <= 2; z++) {
+                    BlockPos offsetPos = centerPos.offset(x, y, z);
+                    if (world.getBlockState(offsetPos).is(ModBlocks.SCONCED_SOUL_TORCH.get())) {
+                        soultorchamount+=1;
+                    }
+                }
+            }
+        }
+
+        return soultorchamount;
+    }
+
     public void startTrial(Player player, CursedAltarBlockEntity altarEntity) {
         if (altarEntity.hasPlayerCompletedTrial(player)) {
             //player.sendSystemMessage(Component.literal("You have already completed the trial for this altar.").withStyle(ChatFormatting.GREEN));
@@ -305,10 +322,10 @@ public class CursedAltarBlock extends BaseEntityBlock {
         }
 
         MobEffect randomCurse = CursedAltarBlockEntity.getRandomCurse();
-        int randomAmplifier = CursedAltarBlockEntity.getRandomAmplifier(player);
 
         BlockPos playerPos = player.blockPosition();
         Level level = player.level();
+        int randomAmplifier = CursedAltarBlockEntity.getRandomAmplifier(player,SoulTorchAround(level,altarEntity.getBlockPos()));
 
         level.playSound(
                 null,
