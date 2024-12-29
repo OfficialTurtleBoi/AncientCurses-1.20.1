@@ -4,8 +4,11 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -34,8 +37,10 @@ import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.inventory.EnchantmentMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -45,18 +50,17 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.enchanting.EnchantmentLevelSetEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.*;
-import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
+import net.minecraftforge.event.entity.player.*;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.ai.AnimalFollowPlayerGoal;
 import net.turtleboi.ancientcurses.ai.FishFollowPlayerGoal;
@@ -888,12 +892,18 @@ public class ModEvents {
         if (source instanceof ServerPlayer player) {
             UUID playerUUID = player.getUUID();
             if (PlayerTrialData.isPlayerCursed(player)) {
+                MinecraftServer server = player.getServer();
+                if (server == null) return;
+
+                ServerLevel overworld = server.getLevel(Level.OVERWORLD);
+                if (overworld == null) return;
+
                 BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
                 if (altarPos == null) {
                     return;
                 }
 
-                BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
+                BlockEntity blockEntity = overworld.getBlockEntity(altarPos);
                 if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
                     return;
                 }
@@ -915,12 +925,18 @@ public class ModEvents {
                 }
             }
 
+            MinecraftServer server = player.getServer();
+            if (server == null) return;
+
+            ServerLevel overworld = server.getLevel(Level.OVERWORLD);
+            if (overworld == null) return;
+
             BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
             if (altarPos == null) {
                 return;
             }
 
-            BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
+            BlockEntity blockEntity = overworld.getBlockEntity(altarPos);
             if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
                 return;
             }
@@ -1170,6 +1186,108 @@ public class ModEvents {
                 }
             }
         }
+    }
+
+    @SubscribeEvent
+    public static void onContainerOpen(PlayerContainerEvent.Open event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+
+        if (event.getContainer() instanceof EnchantmentMenu enchantMenu) {
+            handleEnchantmentTableOpen(player, enchantMenu);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onContainerClose(PlayerContainerEvent.Close event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+
+        if (event.getContainer() instanceof EnchantmentMenu enchantMenu) {
+            handleEnchantmentTableClose(player, enchantMenu);
+        }
+    }
+
+    private static final String NOT_YET_ENCHANTED_TAG = "NotYetEnchanted";
+
+    private static void handleEnchantmentTableOpen(ServerPlayer player, EnchantmentMenu menu) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.isEnchanted()) {
+                continue;
+            }
+
+            if (isItemEnchantable(stack)) {
+                stack.getOrCreateTag().putBoolean(NOT_YET_ENCHANTED_TAG, true);
+            }
+        }
+    }
+
+    private static void handleEnchantmentTableClose(ServerPlayer player, EnchantmentMenu menu) {
+        for (int i = 0; i < player.getInventory().items.size(); i++) {
+            ItemStack stack = player.getInventory().items.get(i);
+            CompoundTag tag = stack.getTag();
+            if (tag != null && tag.getBoolean(NOT_YET_ENCHANTED_TAG)) {
+                if (stack.isEnchanted()) {
+                    ItemStack amulet = getActiveAmulet(player);
+                    if (!amulet.isEmpty()) {
+                        CompoundTag amuletTag = amulet.getTag();
+                        if (amuletTag != null && amuletTag.contains("MainGem")) {
+                            ItemStack mainGemStack = ItemStack.of(amuletTag.getCompound("MainGem"));
+                            if (mainGemStack.getItem() == ModItems.PERFECT_SAPPHIRE.get()) {
+
+                                ListTag enchantList = stack.getEnchantmentTags();
+                                Random random = new Random();
+
+                                for (Tag baseTag : enchantList) {
+                                    if (baseTag instanceof CompoundTag enchantCompound) {
+                                        int lvl = enchantCompound.getInt("lvl");
+                                        String id = enchantCompound.getString("id");
+                                        ResourceLocation resourceLocation = ResourceLocation.tryParse(id);
+                                        Enchantment enchantment = ForgeRegistries.ENCHANTMENTS.getValue(resourceLocation);
+                                        if (enchantment == null) {
+                                            continue;
+                                        }
+                                        Component enchantDisplayName = enchantment.getFullname(lvl);
+
+                                        double roll = random.nextDouble();
+                                        if (roll > 0.8) {
+                                            enchantCompound.putInt("lvl", lvl + 2);
+                                            player.sendSystemMessage(
+                                                    Component.literal("The amulet empowers ")
+                                                            .append(enchantDisplayName)
+                                                            .append(" by +2")
+                                            );
+                                        } else if (roll > 0.5) {
+                                            enchantCompound.putInt("lvl", lvl + 1);
+                                            player.sendSystemMessage(
+                                                    Component.literal("The amulet empowers ")
+                                                            .append(enchantDisplayName)
+                                                            .append(" by +1")
+                                            );
+                                        } else {
+
+                                        }
+                                    }
+                                }
+
+                                stack.getOrCreateTag().put("Enchantments", enchantList);
+                            }
+                        }
+                    }
+                }
+
+                tag.remove(NOT_YET_ENCHANTED_TAG);
+                if (tag.isEmpty()) {
+                    stack.setTag(null);
+                }
+            }
+        }
+    }
+
+    private static boolean isItemEnchantable(ItemStack stack) {
+        return stack.getItem().isEnchantable(stack);
     }
 
     @SubscribeEvent
