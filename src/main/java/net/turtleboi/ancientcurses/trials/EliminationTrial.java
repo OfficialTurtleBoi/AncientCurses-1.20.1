@@ -20,10 +20,7 @@ import net.turtleboi.ancientcurses.network.packets.CameraShakeS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class EliminationTrial implements Trial {
@@ -205,11 +202,16 @@ public class EliminationTrial implements Trial {
 
         PlayerTrialData.clearCurseEffect(player);
 
+        List<MobEffect> cursesToRemove = new ArrayList<>();
         for (MobEffectInstance effectInstance : player.getActiveEffects()) {
             MobEffect effect = effectInstance.getEffect();
             if (CurseRegistry.getCurses().contains(effect)) {
-                player.removeEffect(effect);
+                cursesToRemove.add(effect);
             }
+        }
+
+        for (MobEffect effect : cursesToRemove) {
+            player.removeEffect(effect);
         }
 
         ModNetworking.sendToPlayer(new CameraShakeS2C(0.05F, 1000), (ServerPlayer) player);

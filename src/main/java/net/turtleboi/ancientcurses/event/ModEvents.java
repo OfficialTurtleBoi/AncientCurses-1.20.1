@@ -50,7 +50,6 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.enchanting.EnchantmentLevelSetEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.*;
@@ -76,7 +75,6 @@ import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
-import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.ancientcurses.trials.*;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -1210,7 +1208,7 @@ public class ModEvents {
         }
     }
 
-    private static final String NOT_YET_ENCHANTED_TAG = "NotYetEnchanted";
+    private static final String notYetEnchanted = "NotYetEnchanted";
 
     private static void handleEnchantmentTableOpen(ServerPlayer player, EnchantmentMenu menu) {
         for (ItemStack stack : player.getInventory().items) {
@@ -1219,7 +1217,7 @@ public class ModEvents {
             }
 
             if (isItemEnchantable(stack)) {
-                stack.getOrCreateTag().putBoolean(NOT_YET_ENCHANTED_TAG, true);
+                stack.getOrCreateTag().putBoolean(notYetEnchanted, true);
             }
         }
     }
@@ -1228,7 +1226,7 @@ public class ModEvents {
         for (int i = 0; i < player.getInventory().items.size(); i++) {
             ItemStack stack = player.getInventory().items.get(i);
             CompoundTag tag = stack.getTag();
-            if (tag != null && tag.getBoolean(NOT_YET_ENCHANTED_TAG)) {
+            if (tag != null && tag.getBoolean(notYetEnchanted)) {
                 if (stack.isEnchanted()) {
                     ItemStack amulet = getActiveAmulet(player);
                     if (!amulet.isEmpty()) {
@@ -1278,7 +1276,7 @@ public class ModEvents {
                     }
                 }
 
-                tag.remove(NOT_YET_ENCHANTED_TAG);
+                tag.remove(notYetEnchanted);
                 if (tag.isEmpty()) {
                     stack.setTag(null);
                 }
