@@ -57,6 +57,8 @@
   "item.ancientcurses.ancient_chrysoberyl": "Ancient Chrysoberyl",
   "item.ancientcurses.cursed_pearl": "Cursed Pearl",
   "item.ancientcurses.rotclump": "Rotten clump",
+  "item.ancientcurses.golden_feather": "Golden Feather",
+
 
   "item.ancientcurses.gem.socket": "When socketed:",
 
@@ -99,5 +101,6 @@
   "item.ancientcurses.amulet.main_gem": "Main Gem: %s",
   "item.ancientcurses.amulet.main_gem_none": "Main Gem: None",
   "item.ancientcurses.amulet.minor_gems_none": "Minor Gems: None"
+
 
 }

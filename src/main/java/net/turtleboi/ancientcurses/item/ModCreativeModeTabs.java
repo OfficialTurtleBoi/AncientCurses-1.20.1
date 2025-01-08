@@ -50,6 +50,7 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.ANCIENT_ALEXANDRITE.get());
                         pOutput.accept(ModItems.CURSED_PEARL.get());
                         pOutput.accept(ModItems.ROT_CLUMP.get());
+                        pOutput.accept(ModItems.GOLDEN_FEATHER.get());
                     })
                     .build());
 
