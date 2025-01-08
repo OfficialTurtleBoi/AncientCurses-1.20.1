@@ -26,7 +26,7 @@ public class GoldenFeatherItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level pLevel, Player pPlayer, InteractionHand pUsedHand) {
 
         Vec3 playerLook = pPlayer.getViewVector(1);
-        Vec3 dashVec = new Vec3(playerLook.x()*1.4, playerLook.y(), playerLook.z()*1.4);
+        Vec3 dashVec = new Vec3(playerLook.x()*2, playerLook.y()*0.2+0.5, playerLook.z()*1.8);
 
         pPlayer.setDeltaMovement(dashVec);
         for (int j = 0; j < 5; j++) {
