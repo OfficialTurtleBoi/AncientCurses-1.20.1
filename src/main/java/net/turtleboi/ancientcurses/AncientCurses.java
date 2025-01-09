@@ -17,6 +17,7 @@ import net.turtleboi.ancientcurses.command.ClearCurseCommand;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.enchantment.ModEnchantments;
 import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModCreativeModeTabs;
@@ -41,7 +42,7 @@ public class AncientCurses {
 
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
-
+        ModEnchantments.register(modEventBus);
         ModEntities.register(modEventBus);
 
         ModEffects.register(modEventBus);
