@@ -14,7 +14,7 @@ public class ModParticleTypes {
     public static final RegistryObject<SimpleParticleType> HEAL_PARTICLE =
             PARTICLES_TYPES.register("heal_particles", () -> new SimpleParticleType(true));
 
-    public static final RegistryObject<SimpleParticleType> CURSED_PARTICLE =
+    public static final RegistryObject<SimpleParticleType>  CURSED_PARTICLE =
             PARTICLES_TYPES.register("cursed_particles", () -> new SimpleParticleType(true));
 
     public static final RegistryObject<SimpleParticleType> SLEEP_PARTICLE =
@@ -22,7 +22,8 @@ public class ModParticleTypes {
 
     public static final RegistryObject<SimpleParticleType> CURSED_FLAME_PARTICLE =
             PARTICLES_TYPES.register("cursed_flame_particles", () -> new SimpleParticleType(true));
-
+    public static final RegistryObject<SimpleParticleType> GOLDEN_FEATHER_PARTICLE =
+            PARTICLES_TYPES.register("golden_feather_particle", () -> new SimpleParticleType(true));
     public static void register(IEventBus eventBus) {
         PARTICLES_TYPES.register(eventBus);
     }

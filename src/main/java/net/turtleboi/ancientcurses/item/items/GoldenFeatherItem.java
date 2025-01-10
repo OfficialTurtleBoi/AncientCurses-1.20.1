@@ -16,6 +16,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.turtleboi.ancientcurses.enchantment.ModEnchantments;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 
 public class GoldenFeatherItem extends Item {
 
@@ -42,13 +43,15 @@ public class GoldenFeatherItem extends Item {
         particletime =140;
         pPlayer.setDeltaMovement(dashVec);
         for (int j = 0; j < 5; j++) {
-            pLevel.addParticle(ParticleTypes.CLOUD,
+            pLevel.addParticle(ModParticleTypes.GOLDEN_FEATHER_PARTICLE.get(),
                     pPlayer.getX() + (pPlayer.getRandom().nextDouble() - 0.5),
                     pPlayer.getY() + (pPlayer.getRandom().nextDouble() - 0.5),
                     pPlayer.getZ() + (pPlayer.getRandom().nextDouble() - 0.5),
                     0.0, 0.1, 0.0);
         }
-
+        item.hurtAndBreak(1, pPlayer, (p_41300_) -> {
+            p_41300_.broadcastBreakEvent(pUsedHand);
+        });
         if (speeddashlevel>0){
             pPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED,50,0));
         }
@@ -68,8 +71,8 @@ public class GoldenFeatherItem extends Item {
                 if (player.onGround()){
                     particletime=0;
                 }
-                for (int j = 0; j < 1; j++) {
-                    pLevel.addParticle(ParticleTypes.CLOUD,
+                for (int j = 0; j < 2; j++) {
+                    pLevel.addParticle(ModParticleTypes.GOLDEN_FEATHER_PARTICLE.get(),
                             pEntity.getX() + (pLevel.getRandom().nextDouble() - 0.5),
                             pEntity.getY() + (pLevel.getRandom().nextDouble() - 0.5),
                             pEntity.getZ() + (pLevel.getRandom().nextDouble() - 0.5),
