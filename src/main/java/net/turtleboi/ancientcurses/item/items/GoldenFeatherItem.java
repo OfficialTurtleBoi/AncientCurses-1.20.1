@@ -28,11 +28,15 @@ public class GoldenFeatherItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level pLevel, Player pPlayer, InteractionHand pUsedHand) {
 
         ItemStack item = pPlayer.getItemInHand(pUsedHand);
-        int enchantmentLevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.FURTHER_DASH.get(), pPlayer);
+        int furtherdashlevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.FURTHER_DASH.get(), pPlayer);
+        int quickdashlevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.QUICK_DASH.get(), pPlayer);
+        int speeddashlevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.SPEED_DASH.get(), pPlayer);
+
 
         Vec3 playerLook = pPlayer.getViewVector(1);
-        double modifier = 1+enchantmentLevel*0.4;
-        Vec3 dashVec = new Vec3((playerLook.x()*2)*modifier, playerLook.y()*0.5+0.4, (playerLook.z()*1.8)*modifier);
+        double dashmodifier = 1+furtherdashlevel*0.4;
+        int cooldownreduction = 15*quickdashlevel;
+        Vec3 dashVec = new Vec3((playerLook.x()*2)*dashmodifier, playerLook.y()*0.5+0.4, (playerLook.z()*1.8)*dashmodifier);
 
         pPlayer.setDeltaMovement(dashVec);
         for (int j = 0; j < 5; j++) {
@@ -43,10 +47,12 @@ public class GoldenFeatherItem extends Item {
                     0.0, 0.1, 0.0);
         }
 
+        if (speeddashlevel>0){
+            pPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED,50,0));
+        }
 
 
-
-        pPlayer.getCooldowns().addCooldown(this,75);
+        pPlayer.getCooldowns().addCooldown(this,75-cooldownreduction);
         pPlayer.awardStat(Stats.ITEM_USED.get(this));
         return InteractionResultHolder.sidedSuccess(item,pLevel.isClientSide);
     }

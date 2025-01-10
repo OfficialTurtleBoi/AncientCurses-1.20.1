@@ -9,6 +9,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.enchantment.goldenfeatherenchantments.FurtherDashEnchantment;
+import net.turtleboi.ancientcurses.enchantment.goldenfeatherenchantments.QuickDashEnchantment;
 
 public class ModEnchantments {
     public static final DeferredRegister<Enchantment> ENCHANTMENTS =
@@ -17,7 +18,12 @@ public class ModEnchantments {
     public static RegistryObject<Enchantment> FURTHER_DASH =
             ENCHANTMENTS.register("further_dash",
                     ()-> new FurtherDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,new EquipmentSlot[]{EquipmentSlot.MAINHAND}));
-
+    public static RegistryObject<Enchantment> QUICK_DASH =
+            ENCHANTMENTS.register("quick_dash",
+                    ()-> new QuickDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,new EquipmentSlot[]{EquipmentSlot.MAINHAND}));
+    public static RegistryObject<Enchantment> SPEED_DASH =
+            ENCHANTMENTS.register("speed_dash",
+                    ()-> new QuickDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,new EquipmentSlot[]{EquipmentSlot.MAINHAND}));
     public static void register(IEventBus eventBus){
         ENCHANTMENTS.register(eventBus);
     }
