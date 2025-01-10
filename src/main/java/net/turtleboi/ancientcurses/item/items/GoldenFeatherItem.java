@@ -8,6 +8,7 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -22,6 +23,7 @@ public class GoldenFeatherItem extends Item {
         super(pProperties);
     }
 
+    private static int particletime = 0;
 
 
     @Override
@@ -34,10 +36,10 @@ public class GoldenFeatherItem extends Item {
 
 
         Vec3 playerLook = pPlayer.getViewVector(1);
-        double dashmodifier = 1+furtherdashlevel*0.4;
+        double dashmodifier = 1+furtherdashlevel*0.42;
         int cooldownreduction = 15*quickdashlevel;
-        Vec3 dashVec = new Vec3((playerLook.x()*2)*dashmodifier, playerLook.y()*0.5+0.4, (playerLook.z()*1.8)*dashmodifier);
-
+        Vec3 dashVec = new Vec3((playerLook.x()*2)*dashmodifier, playerLook.y()*0.5*dashmodifier+0.4, (playerLook.z()*1.8)*dashmodifier);
+        particletime =140;
         pPlayer.setDeltaMovement(dashVec);
         for (int j = 0; j < 5; j++) {
             pLevel.addParticle(ParticleTypes.CLOUD,
@@ -55,5 +57,30 @@ public class GoldenFeatherItem extends Item {
         pPlayer.getCooldowns().addCooldown(this,75-cooldownreduction);
         pPlayer.awardStat(Stats.ITEM_USED.get(this));
         return InteractionResultHolder.sidedSuccess(item,pLevel.isClientSide);
+    }
+
+    @Override
+    public void inventoryTick(ItemStack pStack, Level pLevel, Entity pEntity, int pSlotId, boolean pIsSelected) {
+
+        if(pEntity instanceof Player player) {
+
+            if (particletime>0){
+                if (player.onGround()){
+                    particletime=0;
+                }
+                for (int j = 0; j < 1; j++) {
+                    pLevel.addParticle(ParticleTypes.CLOUD,
+                            pEntity.getX() + (pLevel.getRandom().nextDouble() - 0.5),
+                            pEntity.getY() + (pLevel.getRandom().nextDouble() - 0.5),
+                            pEntity.getZ() + (pLevel.getRandom().nextDouble() - 0.5),
+                            0.0, 0.1, 0.0);
+                }
+                particletime-=1;
+                if (player.isFallFlying()){
+                    particletime-=1;
+                }
+            }
+        }
+        super.inventoryTick(pStack, pLevel, pEntity, pSlotId, pIsSelected);
     }
 }
