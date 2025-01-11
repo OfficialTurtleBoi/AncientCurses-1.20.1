@@ -31,37 +31,47 @@ public class GoldenFeatherItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level pLevel, Player pPlayer, InteractionHand pUsedHand) {
 
         ItemStack item = pPlayer.getItemInHand(pUsedHand);
-        int furtherdashlevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.FURTHER_DASH.get(), pPlayer);
-        int quickdashlevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.QUICK_DASH.get(), pPlayer);
-        int speeddashlevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.SPEED_DASH.get(), pPlayer);
+        if(isDashEnabled(item))
+        {
+            int furtherdashlevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.FURTHER_DASH.get(), pPlayer);
+            int quickdashlevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.QUICK_DASH.get(), pPlayer);
+            int speeddashlevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.SPEED_DASH.get(), pPlayer);
 
 
-        Vec3 playerLook = pPlayer.getViewVector(1);
-        double dashmodifier = 1+furtherdashlevel*0.42;
-        int cooldownreduction = 15*quickdashlevel;
-        Vec3 dashVec = new Vec3((playerLook.x()*2)*dashmodifier, playerLook.y()*0.5*dashmodifier+0.4, (playerLook.z()*1.8)*dashmodifier);
-        particletime =140;
-        pPlayer.setDeltaMovement(dashVec);
-        for (int j = 0; j < 5; j++) {
-            pLevel.addParticle(ModParticleTypes.GOLDEN_FEATHER_PARTICLE.get(),
-                    pPlayer.getX() + (pPlayer.getRandom().nextDouble() - 0.5),
-                    pPlayer.getY() + (pPlayer.getRandom().nextDouble() - 0.5),
-                    pPlayer.getZ() + (pPlayer.getRandom().nextDouble() - 0.5),
-                    0.0, 0.1, 0.0);
+            Vec3 playerLook = pPlayer.getViewVector(1);
+            double dashmodifier = 1 + furtherdashlevel * 0.42;
+            int cooldownreduction = 15 * quickdashlevel;
+            Vec3 dashVec = new Vec3((playerLook.x() * 2) * dashmodifier, playerLook.y() * 0.5 * dashmodifier + 0.4, (playerLook.z() * 1.8) * dashmodifier);
+            particletime = 140;
+            pPlayer.setDeltaMovement(dashVec);
+            for (int j = 0; j < 5; j++) {
+                pLevel.addParticle(ModParticleTypes.GOLDEN_FEATHER_PARTICLE.get(),
+                        pPlayer.getX() + (pPlayer.getRandom().nextDouble() - 0.5),
+                        pPlayer.getY() + (pPlayer.getRandom().nextDouble() - 0.5),
+                        pPlayer.getZ() + (pPlayer.getRandom().nextDouble() - 0.5),
+                        0.0, 0.1, 0.0);
+            }
+            item.hurtAndBreak(1, pPlayer, (p_41300_) -> {
+                p_41300_.broadcastBreakEvent(pUsedHand);
+            });
+            if (speeddashlevel > 0) {
+                pPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 50, 0));
+            }
+
+
+            pPlayer.getCooldowns().addCooldown(this, 75 - cooldownreduction);
+            pPlayer.awardStat(Stats.ITEM_USED.get(this));
+            return InteractionResultHolder.sidedSuccess(item, pLevel.isClientSide);
         }
-        item.hurtAndBreak(1, pPlayer, (p_41300_) -> {
-            p_41300_.broadcastBreakEvent(pUsedHand);
-        });
-        if (speeddashlevel>0){
-            pPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED,50,0));
+        else{
+
+            return InteractionResultHolder.pass(item);
         }
 
-
-        pPlayer.getCooldowns().addCooldown(this,75-cooldownreduction);
-        pPlayer.awardStat(Stats.ITEM_USED.get(this));
-        return InteractionResultHolder.sidedSuccess(item,pLevel.isClientSide);
     }
-
+    public static boolean isDashEnabled(ItemStack pGoldenFeatherStack) {
+        return pGoldenFeatherStack.getDamageValue() < pGoldenFeatherStack.getMaxDamage() - 1;
+    }
     @Override
     public void inventoryTick(ItemStack pStack, Level pLevel, Entity pEntity, int pSlotId, boolean pIsSelected) {
 

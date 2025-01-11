@@ -17,13 +17,13 @@ public class ModEnchantments {
 
     public static RegistryObject<Enchantment> FURTHER_DASH =
             ENCHANTMENTS.register("further_dash",
-                    ()-> new FurtherDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,new EquipmentSlot[]{EquipmentSlot.MAINHAND}));
+                    ()-> new FurtherDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,EquipmentSlot.values()));
     public static RegistryObject<Enchantment> QUICK_DASH =
             ENCHANTMENTS.register("quick_dash",
-                    ()-> new QuickDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,new EquipmentSlot[]{EquipmentSlot.MAINHAND}));
+                    ()-> new QuickDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,EquipmentSlot.values()));
     public static RegistryObject<Enchantment> SPEED_DASH =
             ENCHANTMENTS.register("speed_dash",
-                    ()-> new QuickDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,new EquipmentSlot[]{EquipmentSlot.MAINHAND}));
+                    ()-> new QuickDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,EquipmentSlot.values()));
     public static void register(IEventBus eventBus){
         ENCHANTMENTS.register(eventBus);
     }

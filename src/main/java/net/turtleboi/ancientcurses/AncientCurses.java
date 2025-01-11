@@ -26,6 +26,7 @@ import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.screen.ModMenuTypes;
 import net.turtleboi.ancientcurses.sound.ModSounds;
+import net.turtleboi.ancientcurses.util.ModItemProperties;
 import net.turtleboi.ancientcurses.world.structures.ModStructures;
 import org.slf4j.Logger;
 
@@ -67,6 +68,8 @@ public class AncientCurses {
         event.enqueueWork(() -> {
 
         });
+
+        ModItemProperties.addCustomItemProperties();
         CurseRegistry.initialize();
         ModNetworking.register();
     }

@@ -2,5 +2,13 @@
   "parent": "item/generated",
   "textures": {
     "layer0": "ancientcurses:item/golden_feather"
-  }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "ancientcurses:broken": 1
+      },
+      "model": "ancientcurses:item/golden_feather_broken"
+    }
+  ]
 }
