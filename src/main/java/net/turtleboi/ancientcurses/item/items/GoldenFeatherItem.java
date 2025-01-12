@@ -8,7 +8,9 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.AreaEffectCloud;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,6 +19,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.turtleboi.ancientcurses.enchantment.ModEnchantments;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
+
+import java.util.List;
 
 public class GoldenFeatherItem extends Item {
 
@@ -78,8 +82,29 @@ public class GoldenFeatherItem extends Item {
         if(pEntity instanceof Player player) {
 
             if (particletime>0){
+                int seismicdashlevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.SEISMIC_DASH.get(), player);
+
                 if (player.onGround()){
+                    if(seismicdashlevel>0) {
+                        int damage = (140-particletime) / 10;
+                        AreaEffectCloud DamageCloud = new AreaEffectCloud(pLevel, pEntity.getX() + 0.5D, pEntity.getY() + 0.5D, pEntity.getZ() + 0.5D);
+                        DamageCloud.setDuration(1);
+                        DamageCloud.setRadius(3);
+                        DamageCloud.setParticle(ParticleTypes.CLOUD);
+                        pLevel.addFreshEntity(DamageCloud);
+                        List<Entity> entities = pLevel.getEntitiesOfClass(Entity.class, DamageCloud.getBoundingBox().inflate(1));
+                        for (Entity entity : entities) {
+                            if (entity instanceof LivingEntity livingEntity) {
+                                if(!livingEntity.is(pEntity)) {
+                                    Vec3 dashVec = new Vec3(0, 1, 0);
+                                    livingEntity.setDeltaMovement(dashVec);
+                                    livingEntity.hurt(pLevel.damageSources().magic(), damage);
+                                }
+                            }
+                        }
+                    }
                     particletime=0;
+
                 }
                 for (int j = 0; j < 2; j++) {
                     pLevel.addParticle(ModParticleTypes.GOLDEN_FEATHER_PARTICLE.get(),

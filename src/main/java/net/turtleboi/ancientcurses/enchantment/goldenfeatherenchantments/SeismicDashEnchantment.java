@@ -6,8 +6,8 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentCategory;
 import net.turtleboi.ancientcurses.item.ModItems;
 
-public class SpeedDashEnchantment extends Enchantment {
-    public SpeedDashEnchantment(Rarity pRarity, EnchantmentCategory pCategory, EquipmentSlot[] pApplicableSlots) {
+public class SeismicDashEnchantment extends Enchantment {
+    public SeismicDashEnchantment(Rarity pRarity, EnchantmentCategory pCategory, EquipmentSlot[] pApplicableSlots) {
         super(pRarity, pCategory, pApplicableSlots);
     }
 
@@ -24,6 +24,6 @@ public class SpeedDashEnchantment extends Enchantment {
         return pStack.getItem()== ModItems.GOLDEN_FEATHER.get();
     }
     public boolean checkCompatibility(Enchantment pEnch) {
-        return pEnch instanceof SeismicDashEnchantment ? false : super.checkCompatibility(pEnch);
+        return pEnch instanceof SpeedDashEnchantment ? false : super.checkCompatibility(pEnch);
     }
 }
