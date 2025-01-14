@@ -1,5 +1,7 @@
 {
   "creativetab.ancientcurses_tab": "Starożytne Klątwy",
+  "creativetab.ancientcurses_gems_tab": "Starożytne Klątwy - Klejnoty",
+
   "sounds.ancientcurses.deprecophobia": "Odtwarzanie: KindaGlumm — Deprecophobia",
 
   "effect.ancientcurses.curse_of_ending": "Klątwa Kresu",
@@ -23,6 +25,8 @@
 
   "enchantment.ancientcurses.further_dash": "Dłuższy Lot",
   "enchantment.ancientcurses.quick_dash": "Szybszy Lot",
+  "enchantment.ancientcurses.speed_dash": "Szybkie Lądowanie",
+  "enchantment.ancientcurses.seismic_dash": "Mocne Lądowanie",
 
   "block.ancientcurses.cursed_altar": "Przeklęty ołtarz",
   "block.ancientcurses.lapidarist_table": "Stół jubilera",

@@ -1,5 +1,6 @@
 {
   "creativetab.ancientcurses_tab": "Ancient Curses",
+  "creativetab.ancientcurses_gems_tab": "Ancient Curses - Gems",
   "sounds.ancientcurses.deprecophobia": "Deprecophobia music plays",
 
   "effect.ancientcurses.curse_of_ending": "Curse of Ending",
@@ -23,6 +24,8 @@
 
   "enchantment.ancientcurses.further_dash": "Further Dash",
   "enchantment.ancientcurses.quick_dash": "Quick Dash",
+  "enchantment.ancientcurses.speed_dash": "Speed Dash",
+  "enchantment.ancientcurses.seismic_dash": "Seismic Dash",
 
   "block.ancientcurses.cursed_altar": "Cursed Altar",
   "block.ancientcurses.lapidarist_table": "Lapidary Table",
