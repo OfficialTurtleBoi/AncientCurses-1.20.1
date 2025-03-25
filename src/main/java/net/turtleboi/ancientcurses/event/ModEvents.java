@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -49,6 +50,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.*;
@@ -64,19 +66,26 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.ai.AnimalFollowPlayerGoal;
 import net.turtleboi.ancientcurses.ai.FishFollowPlayerGoal;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
+import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.*;
-import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.SendParticlesS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.trials.*;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
+import net.turtleboi.turtlecore.TurtleCore;
+import net.turtleboi.turtlecore.capabilities.party.PlayerPartyProvider;
+import net.turtleboi.turtlecore.capabilities.targeting.PlayerTargetingProvider;
+import net.turtleboi.turtlecore.effect.CoreEffects;
+import net.turtleboi.turtlecore.init.CoreAttributes;
+import net.turtleboi.turtlecore.network.CoreNetworking;
+import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
+import net.turtleboi.turtlecore.particle.CoreParticles;
 import top.theillusivec4.curios.api.CuriosApi;
 
 import java.util.*;
@@ -88,42 +97,93 @@ public class ModEvents {
     private static int tickCounter = random.nextInt(11) + 10;
 
     @SubscribeEvent
-    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+    public static void onPlayerJoinWorld(PlayerEvent.PlayerLoggedInEvent event) {
         Player player = event.getEntity();
-        BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
-        if (altarPos == null) {
-            return;
-        }
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            if (trialData.isPlayerCursed()) {
+                Trial activeTrial = trialData.getActiveTrial();
+                if (activeTrial != null) {
+                    activeTrial.trackProgress(player);
+                } else {
+                    //System.out.println("Player " + player.getName().getString() + " is cursed, but no active trial instance is found.");
+                    trialData.setPendingTrialUpdate(20);
+                }
+            }
+        });
+    }
 
-        BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
-        if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
-            return;
-        }
 
-        altar.removePlayerFromTrial(player);
-        MobEffect curseEffect = PlayerTrialData.getCurseEffect(player);
-        if (curseEffect != null) {
-            player.removeEffect(curseEffect);
-            player.addEffect(new MobEffectInstance(curseEffect, 2400, PlayerTrialData.getCurseAmplifier(player), false, false, true));
+    @SubscribeEvent
+    public static void onAttachPlayerCapabilities(AttachCapabilitiesEvent<Entity> event) {
+        if (event.getObject() instanceof Player player) {
+            if (!event.getObject().getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).isPresent()) {
+                event.addCapability(new ResourceLocation(AncientCurses.MOD_ID, "player_trial_data"), new PlayerTrialProvider(player));
+            }
         }
-        PlayerTrialData.clearCurrentAltarPos(player);
-        PlayerTrialData.clearCurseEffect(player);
-        PlayerTrialData.clearCurseAmplifier(player);
+    }
 
-        if (player instanceof ServerPlayer serverPlayer) {
-            ModNetworking.sendToPlayer(
-                    new SyncTrialDataS2C(
-                            "None",
-                            "",
-                            0,
-                            0,
-                            0,
-                            0,
-                            "",
-                            0,
-                            0),
-                    serverPlayer);
+    @SubscribeEvent
+    public static void onPlayerClone(PlayerEvent.Clone event) {
+        if (event.isWasDeath()) {
+            event.getOriginal().reviveCaps();
+            event.getOriginal().getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(oldStore ->
+                    event.getEntity().getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(newStore ->
+                            newStore.copyFrom(oldStore)));
+            event.getOriginal().invalidateCaps();
         }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        Player player = event.getEntity();
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            CompoundTag compound = new CompoundTag();
+            trialData.saveNBTData(compound);
+            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(updatedTrialData -> {
+                updatedTrialData.loadNBTData(compound);
+            });
+
+            BlockPos altarPos = trialData.getCurrentAltarPos();
+            ResourceKey<Level> altarDimension = trialData.getAltarDimension();
+            if (altarPos != null && altarDimension != null) {
+                MinecraftServer server = player.getServer();
+                if (server != null) {
+                    ServerLevel altarLevel = server.getLevel(altarDimension);
+                    if (altarLevel != null) {
+                        BlockEntity blockEntity = altarLevel.getBlockEntity(altarPos);
+                        if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
+                            CompoundTag altarNBT = new CompoundTag();
+                            altarEntity.saveAdditional(altarNBT);
+                            altarEntity.load(altarNBT);
+                            //System.out.println("Altar at " + altarPos + " in dimension "
+                            //        + altarDimension.location() + " reloaded trial data for player "
+                            //        + player.getName().getString());
+                        } else {
+                            //System.out.println("No altar found at " + altarPos + " in dimension "
+                            //        + altarDimension.location() + " for player " + player.getName().getString());
+                        }
+                    } else {
+                        //System.out.println("Could not get ServerLevel for dimension " + altarDimension.location());
+                    }
+                } else {
+                    //System.out.println("Player server is null.");
+                }
+            }
+        });
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        Player player = event.getEntity();
+        player.reviveCaps();
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            CompoundTag compound = new CompoundTag();
+            trialData.saveNBTData(compound);
+            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(updatedTrialData -> {
+                updatedTrialData.loadNBTData(compound);
+            });
+        });
+        player.invalidateCaps();
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -194,47 +254,47 @@ public class ModEvents {
                                 }
                             }
                         }
-                        if (player instanceof ServerPlayer serverPlayer) {
+
                             if (tickCounter <= 0) {
-                                ModNetworking.sendToPlayer(new SendParticlesS2C(
-                                        ParticleTypes.ANGRY_VILLAGER,
-                                        mob.getX(),
-                                        mob.getEyeY() + 0.25,
-                                        mob.getZ(),
-                                        0.1,
-                                        0.25,
-                                        0.1,
-                                        3,
-                                        1
-                                ), serverPlayer);
+                                for (int i = 0; i < 3; i++) {
+                                    CoreNetworking.sendToNear(new SendParticlesS2C(
+                                            ParticleTypes.ANGRY_VILLAGER,
+                                            mob.getX(),
+                                            mob.getEyeY() + 0.25,
+                                            mob.getZ(),
+                                            0.1,
+                                            0.25,
+                                            0.1
+                                    ), mob);
+                                }
                                 tickCounter = random.nextInt(11) + 10;
                             } else {
                                 tickCounter--;
                             }
-                        }
+
                     }
                 }
                 if (mob instanceof Monster monster) {
                     MobEffectInstance lustCurse = monster.getEffect(ModEffects.CURSE_OF_OBESSSION.get());
                     if (lustCurse != null) {
-                        if (player instanceof ServerPlayer serverPlayer) {
+
                             if (tickCounter <= 0) {
-                                ModNetworking.sendToPlayer(new SendParticlesS2C(
-                                        ParticleTypes.HEART,
-                                        mob.getX(),
-                                        mob.getEyeY() + 0.25,
-                                        mob.getZ(),
-                                        0.1,
-                                        0.25,
-                                        0.1,
-                                        3,
-                                        1
-                                ), serverPlayer);
+                                for (int i = 0; i < 3; i++) {
+                                    CoreNetworking.sendToNear(new SendParticlesS2C(
+                                            ParticleTypes.HEART,
+                                            mob.getX(),
+                                            mob.getEyeY() + 0.25,
+                                            mob.getZ(),
+                                            0.1,
+                                            0.25,
+                                            0.1
+                                    ), monster);
+                                }
                                 tickCounter = random.nextInt(11) + 10;
                             } else {
                                 tickCounter--;
                             }
-                        }
+
                     }
                 }
             }
@@ -269,7 +329,7 @@ public class ModEvents {
                 }
             }
             //FRAILTY CURSE EFFECT
-            AttributeInstance hitChanceAttribute = player.getAttribute(ModAttributes.HIT_CHANCE.get());
+            AttributeInstance hitChanceAttribute = player.getAttribute(CoreAttributes.HIT_CHANCE.get());
             if (hitChanceAttribute != null) {
                 double hitChance = hitChanceAttribute.getValue();
                 double randomValue = player.getRandom().nextDouble();
@@ -597,16 +657,16 @@ public class ModEvents {
         if (target instanceof Player player) {
             //System.out.println(Component.literal(player.getName() + " got hit!")); //debug code
 
-            AttributeInstance dodgeChanceAttribute = player.getAttribute(ModAttributes.DODGE_CHANCE.get());
+            AttributeInstance dodgeChanceAttribute = player.getAttribute(CoreAttributes.DODGE_CHANCE.get());
             if (dodgeChanceAttribute != null) {
                 double hitChance = dodgeChanceAttribute.getValue();
                 double randomValue = player.getRandom().nextDouble();
-                if (randomValue > hitChance) {
+                if (randomValue < hitChance) {
                     event.setCanceled(true);
                 }
 
                 Level level = player.level();
-                if (event.isCanceled() && player != null) {
+                if (event.isCanceled()) {
                     double x = player.getX();
                     double y = player.getY() + player.getBbHeight() / 2.0;
                     double z = player.getZ();
@@ -681,19 +741,19 @@ public class ModEvents {
                             float healingPercentage = CurseOfEnvyEffect.getHealPercentage(amplifier);
                             float healing = event.getAmount() * healingPercentage;
                             mob.heal(healing);
-                            if (player instanceof ServerPlayer serverPlayer) {
-                                ModNetworking.sendToPlayer(new SendParticlesS2C(
-                                        ModParticleTypes.HEAL_PARTICLE.get(),
-                                        mob.getX(),
-                                        mob.getEyeY() + 0.5,
-                                        mob.getZ(),
-                                        0.1,
-                                        0.25,
-                                        0.1,
-                                        10,
-                                        1
-                                ), serverPlayer);
-                            }
+
+                                for (int i = 0; i < 10; i++) {
+                                    CoreNetworking.sendToNear(new SendParticlesS2C(
+                                            CoreParticles.HEAL_PARTICLE.get(),
+                                            mob.getX(),
+                                            mob.getEyeY() + 0.5,
+                                            mob.getZ(),
+                                            0.1,
+                                            0.25,
+                                            0.1
+                                    ), mob);
+                                }
+
                         }
 
                         if (amplifier >= 2) {
@@ -868,19 +928,19 @@ public class ModEvents {
                         SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0F,
                         (1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.2F) * 0.7F);
 
-                if (player instanceof ServerPlayer serverPlayer) {
-                    ModNetworking.sendToPlayer(new SendParticlesS2C(
-                            ParticleTypes.EXPLOSION,
-                            entity.getX(),
-                            entity.getY() + 1,
-                            entity.getZ(),
-                            3,
-                            3,
-                            3,
-                            4,
-                            explosionRadius
-                    ), serverPlayer);
-                }
+
+                    for (int i = 0; i < 4; i++) {
+                        CoreNetworking.sendToNear(new SendParticlesS2C(
+                                ParticleTypes.EXPLOSION,
+                                entity.getX(),
+                                entity.getY() + 1,
+                                entity.getZ(),
+                                3,
+                                3,
+                                3
+                        ), player);
+                    }
+
                 if (player.distanceTo(entity) <= explosionRadius) {
                     player.hurt(new DamageSource(level.damageSources().generic().typeHolder()), player.distanceTo(entity) * 2);
                 }
@@ -888,31 +948,40 @@ public class ModEvents {
         }
 
         if (source instanceof ServerPlayer player) {
-            UUID playerUUID = player.getUUID();
-            if (PlayerTrialData.isPlayerCursed(player)) {
-                MinecraftServer server = player.getServer();
-                if (server == null) return;
-
-                ServerLevel overworld = server.getLevel(Level.OVERWORLD);
-                if (overworld == null) return;
-
-                BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
-                if (altarPos == null) {
-                    return;
+            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+                if (trialData.isPlayerCursed()) {
+                    ResourceKey<Level> altarDimension = trialData.getAltarDimension();
+                    BlockPos altarPos = trialData.getCurrentAltarPos();
+                    //System.out.println("[Tick] Altar Dimension: " + (altarDimension != null ? altarDimension.location() : "null") +
+                    //        ", Altar Pos: " + (altarPos != null ? altarPos.toShortString() : "null"));
+                    if (altarPos != null) {
+                        MinecraftServer server = player.getServer();
+                        //System.out.println("[Tick] Player server is " + (server != null ? "available" : "null"));
+                        if (altarDimension != null && server != null) {
+                            ServerLevel altarLevel = server.getLevel(altarDimension);
+                            //System.out.println("[Tick] Retrieved altar level for dimension " + altarDimension.location() + ": " + (altarLevel != null ? "available" : "null"));
+                            if (altarLevel != null) {
+                                BlockEntity blockEntity = altarLevel.getBlockEntity(altarPos);
+                                if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
+                                    Trial activeTrial = altarEntity.getPlayerTrial(player.getUUID());
+                                    if (activeTrial != null) {
+                                        activeTrial.onEntityKilled(player , entity);
+                                        //System.out.println("[Tick] Tracked trial progress for player " + player.getName().getString());
+                                    } else {
+                                        //System.out.println("[Tick] No active trial instance found for player " + player.getName().getString());
+                                    }
+                                }
+                            } else {
+                                //System.out.println("[Tick] Altar level not loaded. Retrying...");
+                                trialData.setPendingTrialUpdate(20);
+                            }
+                        } else if (altarDimension == null) {
+                            //System.out.println("[Tick] Altar dimension is null. Retrying...");
+                            trialData.setPendingTrialUpdate(20);
+                        }
+                    }
                 }
-
-                BlockEntity blockEntity = overworld.getBlockEntity(altarPos);
-                if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
-                    return;
-                }
-
-                Trial trial = altar.getPlayerTrial(playerUUID);
-                if (trial != null) {
-                    trial.onEntityKilled(player, entity);
-                } else {
-                    //System.out.println("Trial is null for player: " + player.getName().getString());
-                }
-            }
+            });
         }
 
         if (entity instanceof Player player) {
@@ -923,43 +992,45 @@ public class ModEvents {
                 }
             }
 
-            MinecraftServer server = player.getServer();
-            if (server == null) return;
+            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+                MinecraftServer server = player.getServer();
+                if (server == null) return;
 
-            ServerLevel overworld = server.getLevel(Level.OVERWORLD);
-            if (overworld == null) return;
+                ServerLevel overworld = server.getLevel(Level.OVERWORLD);
+                if (overworld == null) return;
 
-            BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
-            if (altarPos == null) {
-                return;
-            }
+                BlockPos altarPos = trialData.getCurrentAltarPos();
+                if (altarPos == null) {
+                    return;
+                }
 
-            BlockEntity blockEntity = overworld.getBlockEntity(altarPos);
-            if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
-                return;
-            }
+                BlockEntity blockEntity = overworld.getBlockEntity(altarPos);
+                if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
+                    return;
+                }
 
-            if (!altar.hasPlayerCompletedTrial(player)) {
-                altar.removePlayerFromTrial(player);
-            }
+                if (!altar.hasPlayerCompletedTrial(player)) {
+                    altar.removePlayerFromTrial(player);
+                }
 
-            PlayerTrialData.clearPlayerCurse(player);
-            if (player instanceof ServerPlayer serverPlayer) {
-                ModNetworking.sendToPlayer(
-                        new SyncTrialDataS2C(
-                                "None",
-                                "",
-                                0,
-                                0,
-                                0,
-                                0,
-                                "",
-                                0,
-                                0),
-                        serverPlayer);
-            }
+                trialData.clearPlayerCurse();
+                if (player instanceof ServerPlayer serverPlayer) {
+                    ModNetworking.sendToPlayer(
+                            new SyncTrialDataS2C(
+                                    "None",
+                                    "",
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    "",
+                                    0,
+                                    0),
+                            serverPlayer);
+                }
 
-            player.displayClientMessage(Component.literal("The Altars Feed on your soul...").withStyle(ChatFormatting.DARK_RED), true);
+                player.displayClientMessage(Component.literal("The Altars Feed on your soul...").withStyle(ChatFormatting.DARK_RED), true);
+            });
         }
     }
 
@@ -1043,7 +1114,7 @@ public class ModEvents {
         if (entity instanceof Player player) {
             MobEffectInstance newEffect = event.getEffectInstance();
             if (newEffect.getEffect().isBeneficial()) {
-                double magicAmp = player.getAttributeValue(ModAttributes.MAGIC_AMP.get());
+                double magicAmp = player.getAttributeValue(CoreAttributes.MAGIC_AMP.get());
                 //System.out.println("Player Magical Potency: " + magicAmp); //debug code
                 if (magicAmp > 1.0) {
                     int originalDuration = newEffect.getDuration();
@@ -1065,12 +1136,14 @@ public class ModEvents {
             if (curseEffect != null) {
                 MobEffect effect = curseEffect.getEffect();
                 if (CurseRegistry.getCurses().contains(effect)) {
-                    if (PlayerTrialData.isPlayerCursed(player)) {
-                        event.setCanceled(true);
-                        //System.out.println("Prevented removal of curse from player");
-                    } else {
-                        //System.out.println("Allowed removal of curse from player");
-                    }
+                    player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+                        if (trialData.isPlayerCursed()) {
+                            event.setCanceled(true);
+                            //System.out.println("Prevented removal of curse from player");
+                        } else {
+                            //System.out.println("Allowed removal of curse from player");
+                        }
+                    });
                 }
             }
         }
@@ -1125,65 +1198,67 @@ public class ModEvents {
             return;
         }
 
-        if (!PlayerTrialData.isPlayerCursed(player)) {
-            return;
-        }
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            if (!trialData.isPlayerCursed()) {
+                return;
+            }
 
-        ServerLevel serverLevel = (ServerLevel) player.level();
+            ServerLevel serverLevel = (ServerLevel) player.level();
 
-        for (TrialRecord trialRecord : PlayerTrialData.getActiveTrialsByType(player, PlayerTrialData.fetchTrial)) {
-            BlockPos altarPos = trialRecord.getAltarPos();
-            BlockPos lowerBound = altarPos.above(1);
-            BlockPos upperBound = altarPos.above(3);
-            boolean isWithinHeight = itemPos.getY() >= lowerBound.getY() && itemPos.getY() <= upperBound.getY();
-            boolean isWithinRadius = altarPos.getCenter().closerThan(itemEntity.position(), 3.0);
+            for (TrialRecord trialRecord : trialData.getActiveTrialsByType(Trial.fetchTrial)) {
+                BlockPos altarPos = trialRecord.getAltarPos();
+                BlockPos lowerBound = altarPos.above(1);
+                BlockPos upperBound = altarPos.above(3);
+                boolean isWithinHeight = itemPos.getY() >= lowerBound.getY() && itemPos.getY() <= upperBound.getY();
+                boolean isWithinRadius = altarPos.getCenter().closerThan(itemEntity.position(), 3.0);
 
-            if (isWithinHeight && isWithinRadius) {
-                BlockEntity blockEntity = serverLevel.getBlockEntity(altarPos);
-                if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
-                    continue;
-                }
+                if (isWithinHeight && isWithinRadius) {
+                    BlockEntity blockEntity = serverLevel.getBlockEntity(altarPos);
+                    if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
+                        continue;
+                    }
 
-                Trial trial = altar.getPlayerTrial(player.getUUID());
-                if (trial instanceof FetchTrial fetchTrial) {
-                    Item requiredItem = fetchTrial.getRequiredItem();
+                    Trial trial = altar.getPlayerTrial(player.getUUID());
+                    if (trial instanceof FetchTrial fetchTrial) {
+                        Item requiredItem = fetchTrial.getRequiredItem();
 
-                    if (tossedItem.equals(requiredItem)) {
-                        fetchTrial.incrementFetchCount(itemCount);
-                        itemEntity.discard();
-                        serverLevel.sendParticles(
-                                ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
-                                altarPos.getX() + 0.5,
-                                altarPos.getY() + 1.0,
-                                altarPos.getZ() + 0.5,
-                                100,
-                                0.2,
-                                2.0,
-                                0.2,
-                                0.01
-                        );
-                        serverLevel.playSound(
-                                null,
-                                altarPos.getX() + 0.5,
-                                altarPos.getY() + 1.0,
-                                altarPos.getZ() + 0.5,
-                                SoundEvents.GHAST_SHOOT,
-                                SoundSource.HOSTILE,
-                                1.0f,
-                                0.5f
-                        );
-                        trial.trackProgress(player);
+                        if (tossedItem.equals(requiredItem)) {
+                            fetchTrial.incrementFetchCount(player, itemCount);
+                            itemEntity.discard();
+                            serverLevel.sendParticles(
+                                    ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
+                                    altarPos.getX() + 0.5,
+                                    altarPos.getY() + 1.0,
+                                    altarPos.getZ() + 0.5,
+                                    100,
+                                    0.2,
+                                    2.0,
+                                    0.2,
+                                    0.01
+                            );
+                            serverLevel.playSound(
+                                    null,
+                                    altarPos.getX() + 0.5,
+                                    altarPos.getY() + 1.0,
+                                    altarPos.getZ() + 0.5,
+                                    SoundEvents.GHAST_SHOOT,
+                                    SoundSource.HOSTILE,
+                                    1.0f,
+                                    0.5f
+                            );
+                            trial.trackProgress(player);
 
-                        if (fetchTrial.isTrialCompleted(player)) {
-                            fetchTrial.concludeTrial(player);
+                            if (fetchTrial.isTrialCompleted(player)) {
+                                fetchTrial.concludeTrial(player);
+                            }
+
+                            //System.out.println("Player " + player.getName().getString() + " has thrown " + tossedItem.getDescriptionId() + " at altar " + altarPos + ". Collected: " + fetchTrial.getCollectedCount() + "/" + fetchTrial.getRequiredCount());
+                            break;
                         }
-
-                        //System.out.println("Player " + player.getName().getString() + " has thrown " + tossedItem.getDescriptionId() + " at altar " + altarPos + ". Collected: " + fetchTrial.getCollectedCount() + "/" + fetchTrial.getRequiredCount());
-                        break;
                     }
                 }
             }
-        }
+        });
     }
 
     @SubscribeEvent
@@ -1364,11 +1439,15 @@ public class ModEvents {
         MobEffectInstance prideCurse = player.getEffect(ModEffects.CURSE_OF_PRIDE.get());
         if (prideCurse != null && !level.isClientSide) {
             if (player.isSprinting()) {
-                player.setSprinting(false);
+                player.addEffect(new MobEffectInstance(
+                        CoreEffects.STUNNED.get(),
+                        20
+                ));
                 if (prideCurse.getAmplifier() >= 1) {
                     player.hurt(player.level().damageSources().generic(), 1.0F);
                     player.displayClientMessage(Component.literal("Running is for the pathetic!").withStyle(ChatFormatting.RED), true);
                 }
+                player.hurtMarked = true;
             }
 
             if (prideCurse.getAmplifier() >= 2) {
@@ -1398,18 +1477,59 @@ public class ModEvents {
         }
 
         if (event.phase == TickEvent.Phase.END && !player.level().isClientSide()) {
-            if (PlayerTrialData.isPlayerCursed(player)) {
-                BlockPos altarPos = PlayerTrialData.getCurrentAltarPos(player);
-                if (altarPos == null) return;
+            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+                if (trialData.isPlayerCursed()) {
+                    //System.out.println("[Tick] Player " + player.getName().getString() + " is cursed.");
+                    int pending = trialData.getPendingTrialUpdate();
+                    //System.out.println("[Tick] Pending trial update ticks: " + pending);
+                    if (pending > 0) {
+                        trialData.setPendingTrialUpdate(pending - 1);
+                        //System.out.println("[Tick] Decremented pending trial update ticks to: " + trialData.getPendingTrialUpdate());
+                        if (trialData.getPendingTrialUpdate() <= 0) {
+                            ResourceKey<Level> altarDimension = trialData.getAltarDimension();
+                            BlockPos altarPos = trialData.getCurrentAltarPos();
+                            //System.out.println("[Tick] Altar Dimension: " + (altarDimension != null ? altarDimension.location() : "null") +
+                            //        ", Altar Pos: " + (altarPos != null ? altarPos.toShortString() : "null"));
+                            if (altarPos != null) {
+                                MinecraftServer server = player.getServer();
+                                //System.out.println("[Tick] Player server is " + (server != null ? "available" : "null"));
+                                if (altarDimension != null && server != null) {
+                                    ServerLevel altarLevel = server.getLevel(altarDimension);
+                                    //System.out.println("[Tick] Retrieved altar level for dimension " + altarDimension.location() + ": " + (altarLevel != null ? "available" : "null"));
+                                    if (altarLevel != null) {
+                                        BlockEntity blockEntity = altarLevel.getBlockEntity(altarPos);
+                                        if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
+                                            Trial activeTrial = altarEntity.getPlayerTrial(player.getUUID());
+                                            if (activeTrial != null) {
+                                                activeTrial.trackProgress(player);
+                                                //System.out.println("[Tick] Tracked trial progress for player " + player.getName().getString());
+                                            } else {
+                                                //System.out.println("[Tick] No active trial instance found for player " + player.getName().getString());
+                                            }
+                                        }
+                                    } else {
+                                        //System.out.println("[Tick] Altar level not loaded. Retrying...");
+                                        trialData.setPendingTrialUpdate(20);
+                                    }
+                                } else if (altarDimension == null) {
+                                    //System.out.println("[Tick] Altar dimension is null. Retrying...");
+                                    trialData.setPendingTrialUpdate(20);
+                                }
+                            }
+                        }
+                    }
 
-                BlockEntity blockEntity = player.level().getBlockEntity(altarPos);
-                if (!(blockEntity instanceof CursedAltarBlockEntity altar)) return;
-
-                Trial trial = altar.getPlayerTrial(player.getUUID());
-                if (trial != null) {
-                    trial.onPlayerTick(player);
+                    BlockPos currentAltarPos = trialData.getCurrentAltarPos();
+                    if (currentAltarPos == null) return;
+                    BlockEntity blockEntity = player.level().getBlockEntity(currentAltarPos);
+                    if (blockEntity instanceof CursedAltarBlockEntity altar) {
+                        Trial trial = altar.getPlayerTrial(player.getUUID());
+                        if (trial != null) {
+                            trial.onPlayerTick(player);
+                        }
+                    }
                 }
-            }
+            });
         }
     }
 }

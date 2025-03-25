@@ -11,6 +11,8 @@ import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
+import net.turtleboi.turtlecore.network.CoreNetworking;
+import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -25,23 +27,6 @@ public class CurseOfNatureEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
-        if (pLivingEntity.level().isClientSide) {
-            if (pLivingEntity.tickCount % 20 == 0) {
-                int effectColor = this.getColor();
-                float red = ((effectColor >> 16) & 0xFF) / 255.0F;
-                float green = ((effectColor >> 8) & 0xFF) / 255.0F;
-                float blue = (effectColor & 0xFF) / 255.0F;
-                for (int i = 0; i < 5; i++) {
-                    pLivingEntity.level().addParticle(
-                            ModParticleTypes.CURSED_PARTICLE.get(),
-                            pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
-                            pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            red, green, blue);
-                }
-            }
-        }
-
         if (!pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
             if (pLivingEntity.tickCount % 20 == 0) {
                 int effectColor = this.getColor();
@@ -49,12 +34,12 @@ public class CurseOfNatureEffect extends MobEffect {
                 float green = ((effectColor >> 8) & 0xFF) / 255.0F;
                 float blue = (effectColor & 0xFF) / 255.0F;
                 for (int i = 0; i < 5; i++) {
-                    pLivingEntity.level().addParticle(
+                    CoreNetworking.sendToNear(new SendParticlesS2C(
                             ModParticleTypes.CURSED_PARTICLE.get(),
                             pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
                             pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
                             pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            red, green, blue);
+                            red, green, blue), player);
                 }
             }
 

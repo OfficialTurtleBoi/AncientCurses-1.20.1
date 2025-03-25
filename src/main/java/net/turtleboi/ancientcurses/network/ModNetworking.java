@@ -25,12 +25,6 @@ public class ModNetworking {
 
         INSTANCE = net;
 
-        net.messageBuilder(SendParticlesS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-                .decoder(SendParticlesS2C::new)
-                .encoder(SendParticlesS2C::toBytes)
-                .consumerMainThread(SendParticlesS2C::handle)
-                .add();
-
         net.messageBuilder(LustedPacketS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
                 .decoder(LustedPacketS2C::new)
                 .encoder(LustedPacketS2C::toBytes)
@@ -41,12 +35,6 @@ public class ModNetworking {
                 .decoder(VoidPacketS2C::new)
                 .encoder(VoidPacketS2C::toBytes)
                 .consumerMainThread(VoidPacketS2C::handle)
-                .add();
-
-        net.messageBuilder(SleepPacketS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-                .decoder(SleepPacketS2C::new)
-                .encoder(SleepPacketS2C::toBytes)
-                .consumerMainThread(SleepPacketS2C::handle)
                 .add();
 
         net.messageBuilder(SyncTrialDataS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
@@ -71,12 +59,6 @@ public class ModNetworking {
                 .decoder(PortalOverlayPacketC2S::new)
                 .encoder(PortalOverlayPacketC2S::toBytes)
                 .consumerMainThread(PortalOverlayPacketC2S::handle)
-                .add();
-
-        net.messageBuilder(CameraShakeS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-                .decoder(CameraShakeS2C::new)
-                .encoder(CameraShakeS2C::toBytes)
-                .consumerMainThread(CameraShakeS2C::handle)
                 .add();
     }
 

@@ -7,6 +7,14 @@ import net.minecraft.world.entity.player.Player;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 
 public interface Trial {
+    String curseEffect = "CurseEffect";
+    String curseAmplifier = "CurseAmplifier";
+
+    String eliminationTrial = "EliminationTrial";
+    String survivalTrial = "SurvivalTrial";
+    String fetchTrial = "FetchTrial";
+    String seekTrial = "SeekTrial";
+
     void trackProgress(Player player);
     boolean isTrialCompleted(Player player);
     void concludeTrial(Player player);

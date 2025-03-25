@@ -16,10 +16,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
+import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability;
+import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.CameraShakeS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
+import net.turtleboi.turtlecore.network.CoreNetworking;
+import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -48,9 +51,13 @@ public class FetchTrial implements Trial {
         Component itemNameComponent = stack.getDisplayName();
         this.itemName = itemNameComponent.getString();
         this.collectedCount = 0;
-        this.requiredCount = calculateRequiredCount(amplifier);
+        this.requiredCount = calculateRequiredCount(amplifier + 1);
 
-        PlayerTrialData.setCurseEffect(player, effect);
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            trialData.setCurseEffect(effect);
+            trialData.setActiveTrial(this);
+            this.collectedCount = trialData.getFetchItems();
+        });
     }
 
     public FetchTrial(CursedAltarBlockEntity altar) {
@@ -92,10 +99,9 @@ public class FetchTrial implements Trial {
     }
 
     private int calculateRequiredCount(int amplifier) {
-        int effectiveAmplifier = Math.max(amplifier, 1);
         Random random = new Random();
         int base = random.nextInt(9) + 8;
-        return base * (effectiveAmplifier * 2);
+        return base * ((amplifier * amplifier) * 2);
     }
 
     public boolean isTrialActive() {
@@ -123,7 +129,7 @@ public class FetchTrial implements Trial {
 
     @Override
     public String getType() {
-        return PlayerTrialData.fetchTrial;
+        return Trial.fetchTrial;
     }
 
     @Override
@@ -174,7 +180,7 @@ public class FetchTrial implements Trial {
             float progressPercentage = Math.min((float) collectedCount / requiredCount, 1.0f);
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
-                            PlayerTrialData.fetchTrial,
+                            Trial.fetchTrial,
                             "",
                             0,
                             0,
@@ -196,7 +202,7 @@ public class FetchTrial implements Trial {
         // player.displayClientMessage(Component.literal("You have completed the Fetch Trial! Collect your reward.").withStyle(ChatFormatting.GREEN), true);
         ModNetworking.sendToPlayer(
                 new SyncTrialDataS2C(
-                        PlayerTrialData.fetchTrial,
+                        Trial.fetchTrial,
                         "",
                         0,
                         0,
@@ -207,7 +213,7 @@ public class FetchTrial implements Trial {
                         requiredCount),
                 (ServerPlayer) player
         );
-        PlayerTrialData.clearCurseEffect(player);
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(PlayerTrialDataCapability::clearCurseEffect);
 
         List<MobEffect> cursesToRemove = new ArrayList<>();
         for (MobEffectInstance effectInstance : player.getActiveEffects()) {
@@ -221,7 +227,7 @@ public class FetchTrial implements Trial {
             player.removeEffect(effect);
         }
 
-        ModNetworking.sendToPlayer(new CameraShakeS2C(0.125F, 1000), (ServerPlayer) player);
+        CoreNetworking.sendToNear((new CameraShakeS2C(0.125F, 1000)), player);
         if (player.level() instanceof ServerLevel serverLevel) {
             serverLevel.playSound(
                     null,
@@ -235,13 +241,18 @@ public class FetchTrial implements Trial {
             );
         }
 
-        PlayerTrialData.setTrialCompleted(player, altar.getBlockPos());
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData ->
+                trialData.setTrialCompleted(altar.getBlockPos()));
         this.completed = true;
         altar.setPlayerTrialCompleted(player);
     }
 
-    public void incrementFetchCount(int itemCount) {
+    public void incrementFetchCount(Player player, int itemCount) {
         collectedCount += itemCount;
+
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            trialData.setFetchItems(itemCount);
+        });
     }
 
     public Item getRequiredItem() {

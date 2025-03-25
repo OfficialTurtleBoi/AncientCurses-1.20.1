@@ -15,15 +15,15 @@ import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 
-public class ClearCurseCommand {
+public class TrialsCompletedCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("curses")
-                .then(Commands.literal("clearcurses")
+                .then(Commands.literal("trialcompleted")
                         .then(Commands.argument("playerName", StringArgumentType.string())
-                                .executes(ClearCurseCommand::clearCurses))));
+                                .executes(TrialsCompletedCommand::sendCompletedTrials))));
     }
 
-    private static int clearCurses(CommandContext<CommandSourceStack> context) {
+    private static int sendCompletedTrials(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         String playerName = StringArgumentType.getString(context, "playerName");
         ServerPlayer player = source.getServer().getPlayerList().getPlayerByName(playerName);
@@ -33,29 +33,11 @@ public class ClearCurseCommand {
             return 0;
         }
 
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(PlayerTrialDataCapability::clearPlayerCurse);
-        ModNetworking.sendToPlayer(
-                new SyncTrialDataS2C(
-                        "None",
-                        "",
-                        0,
-                        0,
-                        0,
-                        0,
-                        "",
-                        0,
-                        0),
-                player
-        );
+        int trialsCompleted = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
+                .map(PlayerTrialDataCapability::getPlayerTrialsCompleted)
+                .orElse(0);
 
-        for (MobEffectInstance effectInstance : player.getActiveEffects()) {
-            MobEffect effect = effectInstance.getEffect();
-            if (CurseRegistry.getCurses().contains(effect)) {
-                player.removeEffect(effect);
-            }
-        }
-
-        source.sendSuccess(() -> Component.literal("Curses cleared for player: " + playerName), true);
+        source.sendSuccess(() -> Component.literal("Player has completed: " + trialsCompleted + " trials"), true);
         return 1;
     }
 }

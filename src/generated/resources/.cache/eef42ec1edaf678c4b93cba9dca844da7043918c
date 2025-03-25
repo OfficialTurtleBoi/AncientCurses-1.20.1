@@ -1,4 +1,4 @@
-// 1.20.1	2024-09-28T23:44:50.1662984	Item Models: ancientcurses
+// 1.20.1	2025-03-24T19:18:06.3031156	Item Models: ancientcurses
 c259e04cfd455124bbe16bcae46bef82eb223f0a assets/ancientcurses/models/item/ancient_alexandrite.json
 88cf4211890a0d1e9c58b4accd605061eb521cb3 assets/ancientcurses/models/item/ancient_bismuth.json
 5c626940676a1a23241b8db4cd269b5783223ccb assets/ancientcurses/models/item/ancient_chrysoberyl.json
@@ -10,6 +10,7 @@ ba9cae501179d97a060253a52f4a924adadceb8e assets/ancientcurses/models/item/broken
 65ed886065808456889621e26e27bb70d330af7c assets/ancientcurses/models/item/broken_topaz.json
 82a79e6867327173c2b95e6aa8f042fa126142f6 assets/ancientcurses/models/item/cursed_pearl.json
 09b94b118cb70b05fee0c5fcbd49ed3d7ebc7075 assets/ancientcurses/models/item/deprecophobia_music_disc.json
+7428b6e76af4e9faf2e39d2b6a148d7b75fa921e assets/ancientcurses/models/item/first_beacon.json
 ad131cfe2dbcf0bf554168cf180c4519a7289e99 assets/ancientcurses/models/item/perfect_amethyst.json
 a7660ac71bb0c9aba59acddaf29a2538fd912448 assets/ancientcurses/models/item/perfect_diamond.json
 920de205e9fe6befd029c659ac51f59f4a0ea4bb assets/ancientcurses/models/item/perfect_emerald.json

@@ -13,12 +13,15 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
+import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability;
+import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.CameraShakeS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
+import net.turtleboi.turtlecore.network.CoreNetworking;
+import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,12 +45,15 @@ public class SurvivalTrial implements Trial {
         this.effect = effect;
         this.trialDuration = trialDuration;
         //System.out.println(Component.literal("Setting trial duration to: " + this.trialDuration));
-        this.elapsedTime = 0;
         //System.out.println(Component.literal("Setting elapsed time to: " + this.elapsedTime));
         this.pAmplifier = pAmplifier + 1;
         this.completed = false;
         this.portalCooldown = 0;
-        PlayerTrialData.setCurseEffect(player, effect);
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            trialData.setCurseEffect(effect);
+            trialData.setActiveTrial(this);
+            this.elapsedTime = trialData.getSurvivalTicks();
+        });
     }
 
     public SurvivalTrial(CursedAltarBlockEntity altar) {
@@ -80,7 +86,7 @@ public class SurvivalTrial implements Trial {
 
     @Override
     public String getType() {
-        return PlayerTrialData.survivalTrial;
+        return Trial.survivalTrial;
     }
 
     @Override
@@ -114,12 +120,18 @@ public class SurvivalTrial implements Trial {
 
         if (effect != ModEffects.CURSE_OF_PESTILENCE.get()) {
             portalCooldown++;
-            if (portalCooldown >= 600 / pAmplifier) {
-                portalCooldown = 0;
-                //System.out.println(Component.literal("Spawning new summoning portal"));
-                CursedPortalEntity.spawnSummoningPortalOnPlayer(player, altar.getBlockPos(), player.level(), altar);
+            if (pAmplifier > 0) {
+                if (portalCooldown >= 600 / pAmplifier) {
+                    portalCooldown = 0;
+                    //System.out.println(Component.literal("Spawning new summoning portal"));
+                    CursedPortalEntity.spawnSummoningPortalOnPlayer(player, altar.getBlockPos(), player.level(), altar);
+                }
             }
         }
+
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            trialData.setSurvivalTicks((int) elapsedTime);
+        });
 
         trackProgress(player);
         if (isTrialCompleted(player)) {
@@ -139,7 +151,7 @@ public class SurvivalTrial implements Trial {
             float progressPercentage = Math.min((float) elapsedTime / trialDuration, 1.0f);
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
-                            PlayerTrialData.survivalTrial,
+                            Trial.survivalTrial,
                             "",
                             0,
                             0,
@@ -159,7 +171,7 @@ public class SurvivalTrial implements Trial {
         //player.displayClientMessage(Component.literal("You have survived the trial! Collect your reward").withStyle(ChatFormatting.GREEN), true);
         ModNetworking.sendToPlayer(
                 new SyncTrialDataS2C(
-                        PlayerTrialData.survivalTrial,
+                        Trial.survivalTrial,
                         "",
                         0,
                         0,
@@ -169,7 +181,7 @@ public class SurvivalTrial implements Trial {
                         0,
                         0),
                 (ServerPlayer) player);
-        PlayerTrialData.clearCurseEffect(player);
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(PlayerTrialDataCapability::clearCurseEffect);
 
         List<MobEffect> cursesToRemove = new ArrayList<>();
         for (MobEffectInstance effectInstance : player.getActiveEffects()) {
@@ -183,7 +195,7 @@ public class SurvivalTrial implements Trial {
             player.removeEffect(effect);
         }
 
-        ModNetworking.sendToPlayer(new CameraShakeS2C(0.125F, 1000), (ServerPlayer) player);
+        CoreNetworking.sendToNear((new CameraShakeS2C(0.125F, 1000)), player);
         if (player.level() instanceof ServerLevel serverLevel) {
             serverLevel.playSound(
                     null,

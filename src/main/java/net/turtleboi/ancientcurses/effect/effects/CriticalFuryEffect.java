@@ -7,7 +7,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
+import net.turtleboi.turtlecore.init.CoreAttributeModifiers;
 
 public class CriticalFuryEffect extends MobEffect {
     public CriticalFuryEffect(MobEffectCategory pCategory, int pColor) {
@@ -17,7 +17,7 @@ public class CriticalFuryEffect extends MobEffect {
     @Override
     public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
         if (!pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ATTACK_DAMAGE,
                     "CriticalFuryAttackDamage",
@@ -31,7 +31,7 @@ public class CriticalFuryEffect extends MobEffect {
     public void removeAttributeModifiers(LivingEntity pLivingEntity, AttributeMap pAttributeMap, int pAmplifier) {
         super.removeAttributeModifiers(pLivingEntity, pAttributeMap, pAmplifier);
         if (pLivingEntity instanceof Player player) {
-            AttributeModifierUtil.removeModifier(player, Attributes.ATTACK_DAMAGE, "CriticalFuryAttackDamage");
+            CoreAttributeModifiers.removeModifier(player, Attributes.ATTACK_DAMAGE, "CriticalFuryAttackDamage");
         }
     }
 

@@ -114,8 +114,13 @@ public class ModItems {
 
     public static final RegistryObject<Item> CURSED_PEARL = ITEMS.register("cursed_pearl",
             () -> new CursedPearlItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
+
     public static final RegistryObject<Item> GOLDEN_FEATHER = ITEMS.register("golden_feather",
             () -> new GoldenFeatherItem(new Item.Properties().rarity(Rarity.EPIC).stacksTo(1).durability(34)));
+
+    public static final RegistryObject<Item> FIRST_BEACON = ITEMS.register("first_beacon",
+            () -> new FirstBeaconItem(new Item.Properties().rarity(Rarity.EPIC).stacksTo(1)));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

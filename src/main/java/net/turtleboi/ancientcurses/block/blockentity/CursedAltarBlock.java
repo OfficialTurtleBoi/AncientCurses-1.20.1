@@ -35,16 +35,20 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
+import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability;
+import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
+import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.CameraShakeS2C;
 import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.sound.ModSounds;
-import net.turtleboi.ancientcurses.trials.PlayerTrialData;
 import net.turtleboi.ancientcurses.util.ModTags;
+import net.turtleboi.turtlecore.network.CoreNetworking;
+import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -172,11 +176,15 @@ public class CursedAltarBlock extends BaseEntityBlock {
                     }
                 }
 
+                altarEntity.releaseDimensionActive();
+
                 for (Player player : level.players()) {
-                    BlockPos playerAltarPos = PlayerTrialData.getCurrentAltarPos(player);
-                    if (playerAltarPos != null && playerAltarPos.equals(pos)) {
-                        PlayerTrialData.resetAltarAtPos(player, playerAltarPos);
-                    }
+                    player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+                        BlockPos playerAltarPos = trialData.getCurrentAltarPos();
+                        if (playerAltarPos != null && playerAltarPos.equals(pos)) {
+                            trialData.resetAltarAtPos(playerAltarPos);
+                        }
+                    });
                 }
             }
         }
@@ -193,18 +201,23 @@ public class CursedAltarBlock extends BaseEntityBlock {
                     return InteractionResult.FAIL;
                 }
 
-                if (PlayerTrialData.isPlayerCursed(player)) {
-                    //player.sendSystemMessage(Component.literal("You are already cursed! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
+                InteractionResult playerTrialDataResult = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
+                        .map(trialData -> {
+                            if (trialData.isPlayerCursed()) {
+                                // player.sendSystemMessage(Component.literal("You are already cursed! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
+                                return InteractionResult.FAIL;
+                            }
+                            if (trialData.getCurrentAltarPos() != null &&
+                                    !Objects.equals(trialData.getCurrentAltarPos(), altarEntity.getBlockPos())) {
+                                // player.sendSystemMessage(Component.literal("You have an altar! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
+                                return InteractionResult.FAIL;
+                            }
+                            return InteractionResult.PASS;
+                        }).orElse(InteractionResult.PASS);
+
+                if (playerTrialDataResult == InteractionResult.FAIL) {
                     return InteractionResult.FAIL;
                 }
-
-                if (PlayerTrialData.getCurrentAltarPos(player) != null) {
-                    if (!Objects.equals(PlayerTrialData.getCurrentAltarPos(player), altarEntity.getBlockPos())) {
-                        //player.sendSystemMessage(Component.literal("You have an altar! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
-                        return InteractionResult.FAIL;
-                    }
-                }
-
 
                 if (altarEntity.hasPlayerCompletedTrial(player)){
                     rewardPlayer(player, altarEntity, level, pos);
@@ -273,7 +286,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 } else {
                     if (!altarEntity.hasPlayerCompletedTrial(player) && altarEntity.canPlayerUse(player)) {
                         convertSoulTorches(altarEntity, level);
-                        ModNetworking.sendToPlayer(new CameraShakeS2C(0.125F, 1000), (ServerPlayer) player);
+                        CoreNetworking.sendToNear(new CameraShakeS2C(0.125F, 1000), player);
                         startTrial(player, altarEntity);
                         return InteractionResult.SUCCESS;
                     } else if (!altarEntity.hasPlayerCompletedTrial(player) && !altarEntity.canPlayerUse(player)){
@@ -313,7 +326,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
         BlockPos playerPos = player.blockPosition();
         Level level = player.level();
-        int randomAmplifier = CursedAltarBlockEntity.getRandomAmplifier(player,SoulTorchAround(level,altarEntity.getBlockPos()));
+        int randomAmplifier = CursedAltarBlockEntity.getRandomAmplifier(player);
 
         level.playSound(
                 null,
@@ -343,16 +356,18 @@ public class CursedAltarBlock extends BaseEntityBlock {
     }
 
     private void rewardPlayer(Player player, CursedAltarBlockEntity altarEntity, Level level, BlockPos pos) {
-        int amplifier = PlayerTrialData.getCurseAmplifier(player);
+        int amplifier = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
+                .map(PlayerTrialDataCapability::getCurseAmplifier)
+                .orElse(0);
         if (altarEntity.hasCollectedReward(player)) {
             //player.sendSystemMessage(Component.literal("You have already received your reward for this trial.").withStyle(ChatFormatting.RED));
             return;
         }
 
-        //System.out.println(Component.literal("Giving player loot of amplifier: " + amplifier));
+        //System.out.println(Component.literal("Giving player loot of amplifier: " + amplifier - 1));
 
         if (player instanceof ServerPlayer) {
-            ModNetworking.sendToPlayer(new CameraShakeS2C(0.125F, 1000), (ServerPlayer) player);
+            CoreNetworking.sendToNear((new CameraShakeS2C(0.125F, 1000)), player);
             rewardPlayerWithLootTable(player, amplifier, level, pos);
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
@@ -366,7 +381,10 @@ public class CursedAltarBlock extends BaseEntityBlock {
                             0,
                             0),
                     (ServerPlayer) player);
-            PlayerTrialData.clearCurseAmplifier(player);
+            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent( trialData -> {
+                trialData.clearCurseAmplifier();
+                trialData.resetTrialProgress();
+            });
             altarEntity.markRewardCollected(player);
         }
 
@@ -396,11 +414,15 @@ public class CursedAltarBlock extends BaseEntityBlock {
     }
 
     private void rewardPlayerWithLootTable(Player player, int pAmplifier, Level level, BlockPos pos) {
+        int adjustedAmplifier = pAmplifier - 1;
+        //System.out.println("pAmplifier: " + adjustedAmplifier);
         ResourceLocation[] lootTableLocations = {
-                new ResourceLocation("ancientcurses", "amplifier_0"),
-                new ResourceLocation("ancientcurses", "amplifier_1"),
-                new ResourceLocation("ancientcurses", "amplifier_2")};
-        int lootIndex = Math.min(pAmplifier, lootTableLocations.length - 1);
+                new ResourceLocation(AncientCurses.MOD_ID, "amplifier_0"),
+                new ResourceLocation(AncientCurses.MOD_ID, "amplifier_1"),
+                new ResourceLocation(AncientCurses.MOD_ID, "amplifier_2")};
+        int lootIndex = Math.max(0, Math.min(adjustedAmplifier, lootTableLocations.length - 1));
+        //System.out.println("Calculated lootIndex: " + lootIndex + " using lootTableLocations: " + lootTableLocations[lootIndex]);
+
 
         ServerLevel serverLevel = (ServerLevel) player.level();
         LootTable lootTable = serverLevel.getServer().getLootData().getElement(LootDataType.TABLE, lootTableLocations[lootIndex]);
@@ -411,19 +433,27 @@ public class CursedAltarBlock extends BaseEntityBlock {
         }
 
         Random random = new Random();
+
+        int completedTrials = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
+                .map(PlayerTrialDataCapability::getPlayerTrialsCompleted)
+                .orElse(0);
+
         int minRolls, maxRolls;
-        if (pAmplifier == 0) {
+        if (completedTrials > 25) {
             minRolls = 3;
             maxRolls = 5;
-        } else if (pAmplifier == 1) {
+        } else if (completedTrials > 10) {
             minRolls = 2;
             maxRolls = 3;
         } else {
             minRolls = 1;
-            maxRolls = 1;
+            maxRolls = 2;
         }
 
+        //System.out.println("Rolls parameters: minRolls = " + minRolls + ", maxRolls = " + maxRolls);
+
         int rollCount = random.nextInt(maxRolls - minRolls + 1) + minRolls;
+        //System.out.println("Calculated rollCount: " + rollCount);
 
         List<ItemStack> totalGeneratedLoot = new ArrayList<>();
 
@@ -439,10 +469,10 @@ public class CursedAltarBlock extends BaseEntityBlock {
         }
 
         ResourceLocation[] gemLootLocations = {
-                new ResourceLocation("ancientcurses", "ancient_gems"),
-                new ResourceLocation("ancientcurses", "perfect_gems"),
-                new ResourceLocation("ancientcurses", "polished_gems"),
-                new ResourceLocation("ancientcurses", "broken_gems")
+                new ResourceLocation(AncientCurses.MOD_ID, "ancient_gems"),
+                new ResourceLocation(AncientCurses.MOD_ID, "perfect_gems"),
+                new ResourceLocation(AncientCurses.MOD_ID, "polished_gems"),
+                new ResourceLocation(AncientCurses.MOD_ID, "broken_gems")
         };
 
         int[][] lootChances = {
@@ -451,13 +481,15 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 {10, 66, 100, 100}
         };
 
-        int ampIndex = Math.min(pAmplifier, lootChances.length - 1);
         for (int tier = 0; tier < gemLootLocations.length; tier++) {
             ResourceLocation gemLootLocation = gemLootLocations[tier];
             LootTable gemLootTable = serverLevel.getServer().getLootData().getElement(LootDataType.TABLE, gemLootLocation);
 
+            //System.out.println("Processing gem loot for tier " + tier + " at location " + gemLootLocation);
             if (gemLootTable != null) {
-                int gemLootChance = lootChances[ampIndex][tier];
+                int amplifierIndex = Math.max(0, Math.min(adjustedAmplifier, lootChances.length - 1));
+                int gemLootChance = lootChances[amplifierIndex][tier];
+                //System.out.println("For amplifierIndex " + amplifierIndex + ", gemLootChance for tier " + tier + ": " + gemLootChance);
                 if (random.nextInt(100) < gemLootChance) {
                     LootParams.Builder gemLootParamsBuilder = new LootParams.Builder(serverLevel)
                             .withParameter(LootContextParams.THIS_ENTITY, player)
@@ -468,12 +500,12 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
                     if (!gemLoot.isEmpty()) {
                         totalGeneratedLoot.add(gemLoot.get(0));
+                        //System.out.println("Added gem loot item: " + gemLoot.get(0));
                         break;
                     }
                 }
             }
         }
-
 
         for (ItemStack item : totalGeneratedLoot) {
             if (!item.isEmpty()) {

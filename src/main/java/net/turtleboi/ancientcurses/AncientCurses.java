@@ -14,12 +14,12 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.command.ClearCurseCommand;
+import net.turtleboi.ancientcurses.command.TrialsCompletedCommand;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.enchantment.ModEnchantments;
 import net.turtleboi.ancientcurses.entity.ModEntities;
-import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModCreativeModeTabs;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.network.ModNetworking;
@@ -54,8 +54,6 @@ public class AncientCurses {
 
         ModStructures.register(modEventBus);
 
-        ModAttributes.REGISTRY.register(modEventBus);
-
         modEventBus.addListener(this::commonSetup);
 
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, AncientCursesConfig.SPEC, "ancientcurses-common.toml");
@@ -81,5 +79,6 @@ public class AncientCurses {
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         ClearCurseCommand.register(event.getServer().getCommands().getDispatcher());
+        TrialsCompletedCommand.register(event.getServer().getCommands().getDispatcher());
     }
 }

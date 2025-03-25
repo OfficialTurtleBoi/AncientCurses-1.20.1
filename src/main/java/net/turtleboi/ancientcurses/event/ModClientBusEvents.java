@@ -8,7 +8,6 @@ import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraftforge.api.distmarker.Dist;
@@ -24,9 +23,10 @@ import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.entity.client.CursedPortalModel;
 import net.turtleboi.ancientcurses.entity.client.renderer.CursedPortalRenderer;
 import net.turtleboi.ancientcurses.item.ModItems;
-import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
-import net.turtleboi.ancientcurses.particle.custom.*;
+import net.turtleboi.ancientcurses.particle.custom.CursedFlameParticle;
+import net.turtleboi.ancientcurses.particle.custom.CursedParticle;
+import net.turtleboi.ancientcurses.particle.custom.GoldenFeatherParticle;
 import net.turtleboi.ancientcurses.screen.LapidaristTableContainerScreen;
 import net.turtleboi.ancientcurses.screen.ModMenuTypes;
 
@@ -71,12 +71,8 @@ public class ModClientBusEvents {
 
     @SubscribeEvent
     public static void registerParticleFactories(RegisterParticleProvidersEvent event){
-        event.registerSpriteSet(ModParticleTypes.HEAL_PARTICLE.get(),
-                HealParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.CURSED_PARTICLE.get(),
                 CursedParticle.Provider::new);
-        event.registerSpriteSet(ModParticleTypes.SLEEP_PARTICLE.get(),
-                SleepParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
                 CursedFlameParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.GOLDEN_FEATHER_PARTICLE.get(),

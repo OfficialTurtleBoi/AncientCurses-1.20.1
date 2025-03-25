@@ -1,9 +1,8 @@
 package net.turtleboi.ancientcurses.client;
 
-import net.turtleboi.ancientcurses.trials.PlayerTrialData;
+import net.turtleboi.ancientcurses.trials.Trial;
 
 public class PlayerClientData {
-    public static boolean isAsleep = false;
     public static boolean isLusted = false;
     public static boolean isVoid = false;
     public static int voidTimer = 0;
@@ -18,16 +17,7 @@ public class PlayerClientData {
     public static int fetchItems = 0;
     public static int fetchItemsRequired = 0;
     private static float portalOverlayAlpha = 0;
-    private static float cameraShakeIntensity = 0;
-    private static int cameraShakeDuration = 0;
 
-    public static boolean isAsleep() {
-        return isAsleep;
-    }
-
-    public static void setAsleep(boolean sleep) {
-        isAsleep = sleep;
-    }
 
     public static boolean isLusted() {
         return isLusted;
@@ -142,17 +132,17 @@ public class PlayerClientData {
 
     public static float getTrialProgress() {
         String trialType = getTrialType();
-        if (trialType.equalsIgnoreCase(PlayerTrialData.survivalTrial)) {
+        if (trialType.equalsIgnoreCase(Trial.survivalTrial)) {
             long elapsedTime = getTrialDurationElapsed();
             long totalDuration = getTrialDurationTotal();
             if (totalDuration == 0) return 0.0F;
             return Math.min(1.0F, (float) elapsedTime / (float) totalDuration);
-        } else if (trialType.equalsIgnoreCase(PlayerTrialData.eliminationTrial)) {
+        } else if (trialType.equalsIgnoreCase(Trial.eliminationTrial)) {
             int kills = getEliminationKills();
             int requiredKills = getEliminationKillsRequired();
             if (requiredKills == 0) return 0.0F;
             return Math.min(1.0F, (float) kills / (float) requiredKills);
-        } else if (trialType.equalsIgnoreCase(PlayerTrialData.fetchTrial)) {
+        } else if (trialType.equalsIgnoreCase(Trial.fetchTrial)) {
             int items = getFetchItems();
             int requiredItems = getFetchItemsRequired();
             if (requiredItems == 0) return 0.0F;
@@ -169,20 +159,6 @@ public class PlayerClientData {
         portalOverlayAlpha = overlayAlpha;
     }
 
-    public static Float getCameraShakeIntensity(){
-        return cameraShakeIntensity;
-    }
 
-    public static void setCameraShakeIntensity(float intensity) {
-        cameraShakeIntensity = intensity;
-    }
-
-    public static Integer getCameraShakeDuration(){
-        return cameraShakeDuration;
-    }
-
-    public static void setCameraShakeDuration(int duration) {
-        cameraShakeDuration = duration;
-    }
 
 }

@@ -12,8 +12,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
-import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
+import net.turtleboi.turtlecore.init.CoreAttributeModifiers;
+import net.turtleboi.turtlecore.network.CoreNetworking;
+import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
 
 public class CurseOfAvariceEffect extends MobEffect {
     private static final ResourceLocation COGrhealthUpdateTag = new ResourceLocation("ancientcurses", "cogr_healthupdated");
@@ -24,23 +26,6 @@ public class CurseOfAvariceEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
-        if (pLivingEntity.level().isClientSide) {
-            if (pLivingEntity.tickCount % 20 == 0) {
-                int effectColor = this.getColor();
-                float red = ((effectColor >> 16) & 0xFF) / 255.0F;
-                float green = ((effectColor >> 8) & 0xFF) / 255.0F;
-                float blue = (effectColor & 0xFF) / 255.0F;
-                for (int i = 0; i < 5; i++) {
-                    pLivingEntity.level().addParticle(
-                            ModParticleTypes.CURSED_PARTICLE.get(),
-                            pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
-                            pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            red, green, blue);
-                }
-            }
-        }
-
         Level level = pLivingEntity.level();
         if (!level.isClientSide && pLivingEntity instanceof Player player) {
             if (pLivingEntity.tickCount % 20 == 0) {
@@ -49,12 +34,12 @@ public class CurseOfAvariceEffect extends MobEffect {
                 float green = ((effectColor >> 8) & 0xFF) / 255.0F;
                 float blue = (effectColor & 0xFF) / 255.0F;
                 for (int i = 0; i < 5; i++) {
-                    pLivingEntity.level().addParticle(
+                    CoreNetworking.sendToNear(new SendParticlesS2C(
                             ModParticleTypes.CURSED_PARTICLE.get(),
                             pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
                             pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
                             pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            red, green, blue);
+                            red, green, blue), player);
                 }
             }
 
@@ -96,7 +81,7 @@ public class CurseOfAvariceEffect extends MobEffect {
 
         if (penaltyMultiplier > 0) {
             double healthReduction = 2.0 * penaltyMultiplier;
-            AttributeModifierUtil.applyTransientModifier(
+            CoreAttributeModifiers.applyTransientModifier(
                     player,
                     Attributes.MAX_HEALTH,
                     "COGrMaxHealth",
@@ -105,7 +90,7 @@ public class CurseOfAvariceEffect extends MobEffect {
             );
 
             double attackReduction = 1.0 * penaltyMultiplier;
-            AttributeModifierUtil.applyTransientModifier(
+            CoreAttributeModifiers.applyTransientModifier(
                     player,
                     Attributes.ATTACK_DAMAGE,
                     "COGrAttackDamage",
@@ -137,8 +122,8 @@ public class CurseOfAvariceEffect extends MobEffect {
     }
 
     public static void resetInventoryValue(Player player){
-        AttributeModifierUtil.removeModifier(player, Attributes.MAX_HEALTH, "COGrMaxHealth");
-        AttributeModifierUtil.removeModifier(player, Attributes.ATTACK_DAMAGE, "COGrAttackDamage");
+        CoreAttributeModifiers.removeModifier(player, Attributes.MAX_HEALTH, "COGrMaxHealth");
+        CoreAttributeModifiers.removeModifier(player, Attributes.ATTACK_DAMAGE, "COGrAttackDamage");
         setHealthUpdated(player, false);
     }
 

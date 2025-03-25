@@ -73,9 +73,11 @@ public class GoldenFeatherItem extends Item {
         }
 
     }
+
     public static boolean isDashEnabled(ItemStack pGoldenFeatherStack) {
         return pGoldenFeatherStack.getDamageValue() < pGoldenFeatherStack.getMaxDamage() - 1;
     }
+
     @Override
     public void inventoryTick(ItemStack pStack, Level pLevel, Entity pEntity, int pSlotId, boolean pIsSelected) {
 

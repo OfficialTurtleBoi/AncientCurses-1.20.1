@@ -15,6 +15,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
@@ -31,11 +33,13 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.client.TrialEventBar;
+import net.turtleboi.ancientcurses.client.renderer.ArcaneAuraRenderer;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
 import net.turtleboi.ancientcurses.network.packets.TrialOverlayPacketC2S;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
+import net.turtleboi.turtlecore.client.data.ScreenEffectsData;
 import org.joml.Matrix4f;
 
 import java.util.Random;
@@ -79,6 +83,15 @@ public class ModClientEvents {
                 renderPurpleOverlay(event.getGuiGraphics());
             }
         }
+    }
+
+    @SubscribeEvent
+    public static void onRenderFirstPerson(RenderHandEvent event) {
+        MultiBufferSource bufferSource = event.getMultiBufferSource();
+        PoseStack poseStack = event.getPoseStack();
+        InteractionHand interactionHand = event.getHand();
+        ItemStack itemStack = event.getItemStack();
+        ArcaneAuraRenderer.renderFirstPersonAura(bufferSource, poseStack, interactionHand, itemStack);
     }
 
     @SubscribeEvent
@@ -159,7 +172,7 @@ public class ModClientEvents {
 
     @SubscribeEvent
     public static void onRenderTick(RenderLevelStageEvent event) {
-        if (PlayerClientData.getCameraShakeDuration() > 0) {
+        if (ScreenEffectsData.getCameraShakeDuration() > 0) {
             applyShake(event);
         }
     }
@@ -167,15 +180,15 @@ public class ModClientEvents {
     private static final Random random = new Random();
     private static int ticksElapsed = 0;
     private static void applyShake(RenderLevelStageEvent event) {
-        if (PlayerClientData.getCameraShakeDuration() <= 0) {
+        if (ScreenEffectsData.getCameraShakeDuration() <= 0) {
             return;
         }
 
         ticksElapsed++;
 
-        if (ticksElapsed > PlayerClientData.getCameraShakeDuration()) {
-            PlayerClientData.setCameraShakeIntensity(0.0F);
-            PlayerClientData.setCameraShakeDuration(0);
+        if (ticksElapsed > ScreenEffectsData.getCameraShakeDuration()) {
+            ScreenEffectsData.setCameraShakeIntensity(0.0F);
+            ScreenEffectsData.setCameraShakeDuration(0);
             ticksElapsed = 0;
             return;
         }
@@ -185,7 +198,7 @@ public class ModClientEvents {
             return;
         }
 
-        float currentIntensity = PlayerClientData.getCameraShakeIntensity() * (1.0f - ((float) ticksElapsed / PlayerClientData.getCameraShakeDuration()));
+        float currentIntensity = ScreenEffectsData.getCameraShakeIntensity() * (1.0f - ((float) ticksElapsed / ScreenEffectsData.getCameraShakeDuration()));
 
         double offsetX = (random.nextDouble() - 0.5) * 2 * currentIntensity;
         double offsetY = (random.nextDouble() - 0.5) * 2 * currentIntensity;

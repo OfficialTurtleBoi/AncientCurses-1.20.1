@@ -11,6 +11,8 @@ public class AncientCursesConfig {
     public static final ForgeConfigSpec.ConfigValue<Double> CURSED_TRIAL_TIER2_CHANCE;
     public static final ForgeConfigSpec.ConfigValue<Double> CURSED_TRIAL_TIER3_CHANCE;
     public static final ForgeConfigSpec.ConfigValue<Integer> CURSED_TRIAL_MAX;
+    public static final ForgeConfigSpec.ConfigValue<Integer> CURSED_TRIAL_TIER2_THRESHOLD;
+    public static final ForgeConfigSpec.ConfigValue<Integer> CURSED_TRIAL_TIER3_THRESHOLD;
 
     public static final ForgeConfigSpec.ConfigValue<Integer> CURSE_TIME_MIN;
     public static final ForgeConfigSpec.ConfigValue<Integer> CURSE_TIME_MAX;
@@ -40,6 +42,14 @@ public class AncientCursesConfig {
                 .comment("Base chance for player to be cursed with a Tier 3 trial")
                 .comment("All values for trials chances should ideally add up to 10 to avoid bugs")
                 .defineInRange("cursedTrialTier3Chance", 1.0, 0.0, 10.0);
+
+        CURSED_TRIAL_TIER2_THRESHOLD = BUILDER
+                .comment("Amount of trials for player to complete before Tier 2 trials become available")
+                .defineInRange("cursedTrialTier2Threshold", 5, 1, 256);
+
+        CURSED_TRIAL_TIER3_THRESHOLD = BUILDER
+                .comment("Amount of trials for player to complete before Tier 3 trials become available")
+                .defineInRange("cursedTrialTier3Threshold", 15, 1, 256);
 
         CURSED_TRIAL_MAX = BUILDER
                 .comment("Max amount of trials for player to complete before Tier 3 trials are guaranteed")

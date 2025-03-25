@@ -21,7 +21,9 @@ import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.LustedPacketS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
-import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
+import net.turtleboi.turtlecore.init.CoreAttributeModifiers;
+import net.turtleboi.turtlecore.network.CoreNetworking;
+import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,23 +35,6 @@ public class CurseOfObessionEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
-        if (pLivingEntity.level().isClientSide) {
-            if (pLivingEntity.tickCount % 20 == 0) {
-                int effectColor = this.getColor();
-                float red = ((effectColor >> 16) & 0xFF) / 255.0F;
-                float green = ((effectColor >> 8) & 0xFF) / 255.0F;
-                float blue = (effectColor & 0xFF) / 255.0F;
-                for (int i = 0; i < 5; i++) {
-                    pLivingEntity.level().addParticle(
-                            ModParticleTypes.CURSED_PARTICLE.get(),
-                            pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
-                            pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            red, green, blue);
-                }
-            }
-        }
-
         if (!pLivingEntity.level().isClientSide) {
             if (pLivingEntity.tickCount % 20 == 0) {
                 int effectColor = this.getColor();
@@ -57,12 +42,12 @@ public class CurseOfObessionEffect extends MobEffect {
                 float green = ((effectColor >> 8) & 0xFF) / 255.0F;
                 float blue = (effectColor & 0xFF) / 255.0F;
                 for (int i = 0; i < 5; i++) {
-                    pLivingEntity.level().addParticle(
+                    CoreNetworking.sendToNear(new SendParticlesS2C(
                             ModParticleTypes.CURSED_PARTICLE.get(),
                             pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
                             pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
                             pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            red, green, blue);
+                            red, green, blue), pLivingEntity);
                 }
             }
 
@@ -71,7 +56,7 @@ public class CurseOfObessionEffect extends MobEffect {
                     if (getLustTimer(player) > 0) {
                         getNearbyMob(player, pAmplifier);
                         forcePOVControl(player);
-                        AttributeModifierUtil.applyTransientModifier(
+                        CoreAttributeModifiers.applyTransientModifier(
                                 player,
                                 Attributes.MOVEMENT_SPEED,
                                 "COLStun",
@@ -109,19 +94,19 @@ public class CurseOfObessionEffect extends MobEffect {
     public void removeAttributeModifiers(LivingEntity pLivingEntity, AttributeMap pAttributeMap, int pAmplifier) {
         super.removeAttributeModifiers(pLivingEntity, pAttributeMap, pAmplifier);
         if (pLivingEntity instanceof Player player) {
-            AttributeModifierUtil.removeModifier(player, Attributes.MOVEMENT_SPEED, "COLStun");
+            CoreAttributeModifiers.removeModifier(player, Attributes.MOVEMENT_SPEED, "COLStun");
         }
 
         if (pLivingEntity instanceof Monster monster) {
             String movementName = "COLMovementSpeed";
-            UUID movementUUID = AttributeModifierUtil.generateUUIDFromName(movementName);
+            UUID movementUUID = CoreAttributeModifiers.generateUUIDFromName(movementName);
             AttributeInstance movementInstance = monster.getAttribute(Attributes.MOVEMENT_SPEED);
             if (movementInstance != null) {
                 movementInstance.removeModifier(movementUUID);
             }
 
             String damageName = "COLAttackDamage";
-            UUID damageUUID = AttributeModifierUtil.generateUUIDFromName(damageName);
+            UUID damageUUID = CoreAttributeModifiers.generateUUIDFromName(damageName);
             AttributeInstance damageInstance = monster.getAttribute(Attributes.ATTACK_DAMAGE);
             if (damageInstance != null) {
                 damageInstance.removeModifier(damageUUID);
@@ -186,7 +171,7 @@ public class CurseOfObessionEffect extends MobEffect {
         setLustTimer(player, 0);
         setLustTimer(player, getLustTime(pAmplifier));
         clearLustTarget(player);
-        AttributeModifierUtil.removeModifier(player, Attributes.MOVEMENT_SPEED, "COLStun");
+        CoreAttributeModifiers.removeModifier(player, Attributes.MOVEMENT_SPEED, "COLStun");
         setLustCooldown(player, minLustTime + player.getRandom().nextInt(maxLustTime - minLustTime + 1));
     }
 
@@ -264,7 +249,7 @@ public class CurseOfObessionEffect extends MobEffect {
 
     private static void applyBerserkAttributes(Mob monster) {
         String movementName = "COLMovementSpeed";
-        UUID movementUUID = AttributeModifierUtil.generateUUIDFromName(movementName);
+        UUID movementUUID = CoreAttributeModifiers.generateUUIDFromName(movementName);
         AttributeInstance movementInstance = monster.getAttribute(Attributes.MOVEMENT_SPEED);
         if (movementInstance != null) {
             if (movementInstance.getModifier(movementUUID) != null) {
@@ -274,7 +259,7 @@ public class CurseOfObessionEffect extends MobEffect {
         }
 
         String damageName = "COLAttackDamage";
-        UUID damageUUID = AttributeModifierUtil.generateUUIDFromName(damageName);
+        UUID damageUUID = CoreAttributeModifiers.generateUUIDFromName(damageName);
         AttributeInstance damageInstance = monster.getAttribute(Attributes.ATTACK_DAMAGE);
         if (damageInstance != null) {
             if (damageInstance.getModifier(damageUUID) != null) {

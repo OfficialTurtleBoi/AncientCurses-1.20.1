@@ -15,9 +15,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.effect.ModEffects;
-import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.item.ModItems;
-import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
+import net.turtleboi.turtlecore.init.CoreAttributeModifiers;
+import net.turtleboi.turtlecore.init.CoreAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -50,7 +50,7 @@ public class PreciousGemItem extends Item {
         String slotName = "_slot_" + slotIndex;
         String amulet = "amulet_";
         if (this == ModItems.POLISHED_AMETHYST.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.MAX_HEALTH,
                     amulet + "polished_amethyst_bonus" + slotName,
@@ -58,7 +58,7 @@ public class PreciousGemItem extends Item {
                     AttributeModifier.Operation.ADDITION);
             setHealthUpdated(player, false);
         } else if (this == ModItems.PERFECT_AMETHYST.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.MAX_HEALTH,
                     amulet + "perfect_amethyst_bonus" + slotName,
@@ -70,26 +70,26 @@ public class PreciousGemItem extends Item {
                 player.addEffect(new MobEffectInstance(ModEffects.LIFEBLOOM.get(), 200, 0, true, true));
             }
         } else if (this == ModItems.POLISHED_DIAMOND.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ARMOR,
                     amulet + "polished_diamond_armor_bonus" + slotName,
                     4.0,
                     AttributeModifier.Operation.ADDITION);
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ARMOR_TOUGHNESS,
                     amulet + "polished_diamond_armortoughness_bonus" + slotName,
                     1.0,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.PERFECT_DIAMOND.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ARMOR,
                     amulet + "perfect_diamond_bonus" + slotName,
                     8.0,
                     AttributeModifier.Operation.ADDITION);
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ARMOR_TOUGHNESS,
                     amulet + "perfect_diamond_armortoughness_bonus" + slotName,
@@ -100,14 +100,14 @@ public class PreciousGemItem extends Item {
                 player.addEffect(new MobEffectInstance(ModEffects.CRYSTALLINE_HARDENING.get(), 200, 0, true, true));
             }
         } else if (this == ModItems.POLISHED_EMERALD.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.LUCK,
                     amulet + "polished_emerald_bonus" + slotName,
                     1.0,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.PERFECT_EMERALD.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.LUCK,
                     amulet + "perfect_emerald_bonus" + slotName,
@@ -118,54 +118,54 @@ public class PreciousGemItem extends Item {
                 player.addEffect(new MobEffectInstance(ModEffects.FORTUNES_FAVOR.get(), 200, 0, true, true));
             }
         } else if (this == ModItems.POLISHED_RUBY.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ATTACK_DAMAGE,
                     amulet + "polished_ruby_bonus" + slotName,
                     2.0,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.PERFECT_RUBY.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ATTACK_DAMAGE,
                     amulet + "perfect_ruby_bonus" + slotName,
                     4.0,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.POLISHED_SAPPHIRE.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
-                    ModAttributes.MAGIC_AMP.get(),
+                    CoreAttributes.MAGIC_AMP.get(),
                     amulet + "polished_sapphire_bonus" + slotName,
                     0.4,
                     AttributeModifier.Operation.MULTIPLY_BASE);
         } else if (this == ModItems.PERFECT_SAPPHIRE.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
-                    ModAttributes.MAGIC_AMP.get(),
+                    CoreAttributes.MAGIC_AMP.get(),
                     amulet + "perfect_sapphire_bonus" + slotName,
                     0.67,
                     AttributeModifier.Operation.MULTIPLY_BASE);
         } else if (this == ModItems.POLISHED_TOPAZ.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ATTACK_SPEED,
                     amulet + "polished_topaz_attackspeed_bonus" + slotName,
                     0.25,
                     AttributeModifier.Operation.MULTIPLY_BASE);
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.MOVEMENT_SPEED,
                     amulet + "polished_topaz_movementspeed_bonus" + slotName,
                     0.25,
                     AttributeModifier.Operation.MULTIPLY_BASE);
         } else if (this == ModItems.PERFECT_TOPAZ.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ATTACK_SPEED,
                     amulet + "perfect_topaz_attackspeed_bonus" + slotName,
                     0.67,
                     AttributeModifier.Operation.MULTIPLY_BASE);
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.MOVEMENT_SPEED,
                     amulet + "perfect_topaz_movementspeed_bonus" + slotName,
@@ -173,12 +173,12 @@ public class PreciousGemItem extends Item {
                     AttributeModifier.Operation.MULTIPLY_BASE);
         } else if (this == ModItems.ANCIENT_ALEXANDRITE.get()) {
             if (!player.level().isDay()) {
-                AttributeModifierUtil.removeModifier(
+                CoreAttributeModifiers.removeModifier(
                         player,
                         Attributes.ARMOR,
                         "ancient_alexandrite_armor_bonus"
                 );
-                AttributeModifierUtil.removeModifier(
+                CoreAttributeModifiers.removeModifier(
                         player,
                         Attributes.ARMOR_TOUGHNESS,
                         "ancient_alexandrite_armortoughness_bonus"
@@ -187,50 +187,50 @@ public class PreciousGemItem extends Item {
                         (player.hasEffect(MobEffects.NIGHT_VISION) && Objects.requireNonNull(player.getEffect(MobEffects.NIGHT_VISION)).getDuration() <= 220)) {
                     player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 300, 0, true, true));
                 }
-                AttributeModifierUtil.applyPermanentModifier(
+                CoreAttributeModifiers.applyPermanentModifier(
                         player,
                         Attributes.ATTACK_DAMAGE,
                         amulet + "ancient_alexandrite_attackdamage_bonus" + slotName,
                         0.25,
                         AttributeModifier.Operation.MULTIPLY_TOTAL);
-                AttributeModifierUtil.applyPermanentModifier(
+                CoreAttributeModifiers.applyPermanentModifier(
                         player,
                         Attributes.ATTACK_SPEED,
                         amulet + "ancient_alexandrite_attackspeed_bonus" + slotName,
                         0.25,
                         AttributeModifier.Operation.MULTIPLY_TOTAL);
-                AttributeModifierUtil.applyPermanentModifier(
+                CoreAttributeModifiers.applyPermanentModifier(
                         player,
-                        ModAttributes.DODGE_CHANCE.get(),
+                        CoreAttributes.DODGE_CHANCE.get(),
                         amulet + "ancient_alexandrite_dodgechance_bonus" + slotName,
                         -0.33,
                         AttributeModifier.Operation.ADDITION);
             } else {
-                AttributeModifierUtil.removeModifier(
+                CoreAttributeModifiers.removeModifier(
                         player,
                         Attributes.ATTACK_DAMAGE,
                         "ancient_alexandrite_attackdamage_bonus"
                 );
-                AttributeModifierUtil.removeModifier(
+                CoreAttributeModifiers.removeModifier(
                         player,
                         Attributes.ATTACK_SPEED,
                         "ancient_alexandrite_attackspeed_bonus"
                 );
-                AttributeModifierUtil.removeModifier(
+                CoreAttributeModifiers.removeModifier(
                         player,
-                        ModAttributes.DODGE_CHANCE.get(),
+                        CoreAttributes.DODGE_CHANCE.get(),
                         "ancient_alexandrite_dodgechance_bonus"
                 );
                 if (!player.hasEffect(MobEffects.REGENERATION)) {
                     player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 0, true, true));
                 }
-                AttributeModifierUtil.applyPermanentModifier(
+                CoreAttributeModifiers.applyPermanentModifier(
                         player,
                         Attributes.ARMOR,
                         amulet + "ancient_alexandrite_armor_bonus" + slotName,
                         0.25,
                         AttributeModifier.Operation.MULTIPLY_TOTAL);
-                AttributeModifierUtil.applyPermanentModifier(
+                CoreAttributeModifiers.applyPermanentModifier(
                         player,
                         Attributes.ARMOR_TOUGHNESS,
                         amulet + "ancient_alexandrite_armortoughness_bonus" + slotName,
@@ -251,19 +251,19 @@ public class PreciousGemItem extends Item {
                 player.addEffect(new MobEffectInstance(ModEffects.ELEMENTAL_CONVERGENCE.get(), 200, 0, true, true));
             }
         } else if (this == ModItems.ANCIENT_CHRYSOBERYL.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ATTACK_SPEED,
                     amulet + "ancient_chrysoberyl_attackspeed_bonus" + slotName,
                     0.5,
                     AttributeModifier.Operation.MULTIPLY_TOTAL);
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.MOVEMENT_SPEED,
                     amulet + "ancient_chrysoberyl_movementspeed_bonus" + slotName,
                     0.5,
                     AttributeModifier.Operation.MULTIPLY_TOTAL);
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.LUCK,
                     amulet + "ancient_chrysoberyl_luck_bonus" + slotName,
@@ -282,7 +282,7 @@ public class PreciousGemItem extends Item {
         String slotName = "_slot_" + slotIndex;
         String amulet = "amulet_";
         if (this == ModItems.BROKEN_AMETHYST.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.MAX_HEALTH,
                     amulet + "broken_amethyst_bonus" + slotName,
@@ -290,7 +290,7 @@ public class PreciousGemItem extends Item {
                     AttributeModifier.Operation.ADDITION);
             setHealthUpdated(player, false);
         } else if (this == ModItems.POLISHED_AMETHYST.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.MAX_HEALTH,
                     amulet + "polished_amethyst_bonus" + slotName,
@@ -298,7 +298,7 @@ public class PreciousGemItem extends Item {
                     AttributeModifier.Operation.ADDITION);
             setHealthUpdated(player, false);
         } else if (this == ModItems.PERFECT_AMETHYST.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.MAX_HEALTH,
                     amulet + "perfect_amethyst_bonus" + slotName,
@@ -306,135 +306,135 @@ public class PreciousGemItem extends Item {
                     AttributeModifier.Operation.ADDITION);
             setHealthUpdated(player, false);
         } else if (this == ModItems.BROKEN_DIAMOND.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ARMOR,
                     amulet + "broken_diamond_bonus" + slotName,
                     1.0,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.POLISHED_DIAMOND.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ARMOR,
                     amulet + "polished_diamond_armor_bonus" + slotName,
                     2.0,
                     AttributeModifier.Operation.ADDITION);
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ARMOR_TOUGHNESS,
                     amulet + "polished_diamond_armortoughness_bonus" + slotName,
                     0.5,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.PERFECT_DIAMOND.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ARMOR,
                     amulet + "perfect_diamond_bonus" + slotName,
                     4.0,
                     AttributeModifier.Operation.ADDITION);
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ARMOR_TOUGHNESS,
                     amulet + "perfect_diamond_armortoughness_bonus" + slotName,
                     1.0,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.BROKEN_EMERALD.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.LUCK,
                     amulet + "broken_emerald_bonus" + slotName,
                     0.25,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.POLISHED_EMERALD.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.LUCK,
                     amulet + "polished_emerald_bonus" + slotName,
                     0.5,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.PERFECT_EMERALD.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.LUCK,
                     amulet + "perfect_emerald_bonus" + slotName,
                     1.0,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.BROKEN_RUBY.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ATTACK_DAMAGE,
                     amulet + "broken_ruby_bonus" + slotName,
                     0.5,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.POLISHED_RUBY.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ATTACK_DAMAGE,
                     amulet + "polished_ruby_bonus" + slotName,
                     1.0,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.PERFECT_RUBY.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ATTACK_DAMAGE,
                     amulet + "perfect_ruby_bonus" + slotName,
                     2.0,
                     AttributeModifier.Operation.ADDITION);
         } else if (this == ModItems.BROKEN_SAPPHIRE.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
-                    ModAttributes.MAGIC_AMP.get(),
+                    CoreAttributes.MAGIC_AMP.get(),
                     amulet + "broken_sapphire_bonus" + slotName,
                     0.1,
                     AttributeModifier.Operation.MULTIPLY_BASE);
         } else if (this == ModItems.POLISHED_SAPPHIRE.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
-                    ModAttributes.MAGIC_AMP.get(),
+                    CoreAttributes.MAGIC_AMP.get(),
                     amulet + "polished_sapphire_bonus" + slotName,
                     0.2,
                     AttributeModifier.Operation.MULTIPLY_BASE);
         } else if (this == ModItems.PERFECT_SAPPHIRE.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
-                    ModAttributes.MAGIC_AMP.get(),
+                    CoreAttributes.MAGIC_AMP.get(),
                     amulet + "perfect_sapphire_bonus" + slotName,
                     0.33,
                     AttributeModifier.Operation.MULTIPLY_BASE);
         } else if (this == ModItems.BROKEN_TOPAZ.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ATTACK_SPEED,
                     amulet + "broken_topaz_attackspeed_bonus" + slotName,
                     0.075,
                     AttributeModifier.Operation.MULTIPLY_BASE);
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.MOVEMENT_SPEED,
                     amulet + "broken_topaz_movementspeed_bonus" + slotName,
                     0.075,
                     AttributeModifier.Operation.MULTIPLY_BASE);
         } else if (this == ModItems.POLISHED_TOPAZ.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ATTACK_SPEED,
                     amulet + "polished_topaz_attackspeed_bonus" + slotName,
                     0.125,
                     AttributeModifier.Operation.MULTIPLY_BASE);
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.MOVEMENT_SPEED,
                     amulet + "polished_topaz_movementspeed_bonus" + slotName,
                     0.125,
                     AttributeModifier.Operation.MULTIPLY_BASE);
         } else if (this == ModItems.PERFECT_TOPAZ.get()) {
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.ATTACK_SPEED,
                     amulet + "perfect_topaz_attackspeed_bonus" + slotName,
                     0.33,
                     AttributeModifier.Operation.MULTIPLY_BASE);
-            AttributeModifierUtil.applyPermanentModifier(
+            CoreAttributeModifiers.applyPermanentModifier(
                     player,
                     Attributes.MOVEMENT_SPEED,
                     amulet + "perfect_topaz_movementspeed_bonus" + slotName,
@@ -444,15 +444,15 @@ public class PreciousGemItem extends Item {
     }
 
     public static void removeBonus(Player player) {
-        AttributeModifierUtil.removeModifiersByPrefix(player, Attributes.ARMOR, "amulet");
-        AttributeModifierUtil.removeModifiersByPrefix(player, Attributes.ARMOR_TOUGHNESS, "amulet");
-        AttributeModifierUtil.removeModifiersByPrefix(player, Attributes.ATTACK_DAMAGE, "amulet");
-        AttributeModifierUtil.removeModifiersByPrefix(player, Attributes.ATTACK_SPEED, "amulet");
-        AttributeModifierUtil.removeModifiersByPrefix(player, Attributes.LUCK, "amulet");
-        AttributeModifierUtil.removeModifiersByPrefix(player, ModAttributes.MAGIC_AMP.get(), "amulet");
-        AttributeModifierUtil.removeModifiersByPrefix(player, Attributes.MAX_HEALTH, "amulet");
-        AttributeModifierUtil.removeModifiersByPrefix(player, Attributes.MOVEMENT_SPEED, "amulet");
-        AttributeModifierUtil.removeModifiersByPrefix(player, ModAttributes.DODGE_CHANCE.get(), "amulet");
+        CoreAttributeModifiers.removeModifiersByPrefix(player, Attributes.ARMOR, "amulet");
+        CoreAttributeModifiers.removeModifiersByPrefix(player, Attributes.ARMOR_TOUGHNESS, "amulet");
+        CoreAttributeModifiers.removeModifiersByPrefix(player, Attributes.ATTACK_DAMAGE, "amulet");
+        CoreAttributeModifiers.removeModifiersByPrefix(player, Attributes.ATTACK_SPEED, "amulet");
+        CoreAttributeModifiers.removeModifiersByPrefix(player, Attributes.LUCK, "amulet");
+        CoreAttributeModifiers.removeModifiersByPrefix(player, CoreAttributes.MAGIC_AMP.get(), "amulet");
+        CoreAttributeModifiers.removeModifiersByPrefix(player, Attributes.MAX_HEALTH, "amulet");
+        CoreAttributeModifiers.removeModifiersByPrefix(player, Attributes.MOVEMENT_SPEED, "amulet");
+        CoreAttributeModifiers.removeModifiersByPrefix(player, CoreAttributes.DODGE_CHANCE.get(), "amulet");
 
         if (!isHealthUpdated(player)) {
             updatePlayerHealth(player);

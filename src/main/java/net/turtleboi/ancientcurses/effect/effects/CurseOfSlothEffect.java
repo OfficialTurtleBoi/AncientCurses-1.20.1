@@ -2,27 +2,26 @@ package net.turtleboi.ancientcurses.effect.effects;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3;
-import net.turtleboi.ancientcurses.client.PlayerClientData;
-import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.SleepPacketS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
-import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
+import net.turtleboi.turtlecore.effect.CoreEffects;
+import net.turtleboi.turtlecore.init.CoreAttributeModifiers;
+import net.turtleboi.turtlecore.network.CoreNetworking;
+import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
+
 import java.util.Random;
 
 
 public class CurseOfSlothEffect extends MobEffect {
     private static final Random random = new Random();
-    private static final ResourceLocation sleepTicksTag = new ResourceLocation("ancientcurses", "sleep_ticks");
     private static final int sleepDuration = 60;
     public CurseOfSlothEffect(MobEffectCategory pCategory, int pColor) {
         super(pCategory, pColor);
@@ -30,98 +29,48 @@ public class CurseOfSlothEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
-        if (pLivingEntity.level().isClientSide) {
-            if (PlayerClientData.isAsleep()) {
-                if (pLivingEntity.tickCount % 20 == 0 || pLivingEntity.tickCount % 20 == 3 || pLivingEntity.tickCount % 20 == 6) {
-                    Vec3 lookVector = pLivingEntity.getLookAngle();
-                    double velocityX = lookVector.x * 0.05 + 0.1;
-                    double velocityY = 0.1;
-                    double velocityZ = lookVector.z * 0.05;
-                    double particleX = pLivingEntity.getX();
-                    double particleY = pLivingEntity.getY() + pLivingEntity.getBbHeight();
-                    double particleZ = pLivingEntity.getZ();
-
-                    if (pLivingEntity.tickCount % 20 == 0) {
-                        pLivingEntity.level().addParticle(
-                                ModParticleTypes.SLEEP_PARTICLE.get(),
-                                particleX, particleY, particleZ,
-                                velocityX * 1.5, velocityY * 1.5, velocityZ * 1.5);
-                    } else if (pLivingEntity.tickCount % 20 == 3) {
-                        pLivingEntity.level().addParticle(
-                                ModParticleTypes.SLEEP_PARTICLE.get(),
-                                particleX, particleY, particleZ,
-                                velocityX, velocityY, velocityZ);
-                    } else if (pLivingEntity.tickCount % 20 == 6) {
-                        pLivingEntity.level().addParticle(
-                                ModParticleTypes.SLEEP_PARTICLE.get(),
-                                particleX, particleY, particleZ,
-                                velocityX * 0.66, velocityY * 0.66, velocityZ * 0.66);
-                    }
-                }
-            }
-
-            if (pLivingEntity.tickCount % 20 == 0){
-                int effectColor = this.getColor();
-                float red = ((effectColor >> 16) & 0xFF) / 255.0F;
-                float green = ((effectColor >> 8) & 0xFF) / 255.0F;
-                float blue = (effectColor & 0xFF) / 255.0F;
-                for (int i = 0; i < 5; i++) {
-                    pLivingEntity.level().addParticle(
-                            ModParticleTypes.CURSED_PARTICLE.get(),
-                            pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
-                            pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            red, green, blue);
-                }
-            }
-        }
-
-        if (!pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
+        if (!pLivingEntity.level().isClientSide) {
             if (pLivingEntity.tickCount % 20 == 0) {
                 int effectColor = this.getColor();
                 float red = ((effectColor >> 16) & 0xFF) / 255.0F;
                 float green = ((effectColor >> 8) & 0xFF) / 255.0F;
                 float blue = (effectColor & 0xFF) / 255.0F;
                 for (int i = 0; i < 5; i++) {
-                    pLivingEntity.level().addParticle(
+                    CoreNetworking.sendToNear(new SendParticlesS2C(
                             ModParticleTypes.CURSED_PARTICLE.get(),
                             pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
                             pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
                             pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            red, green, blue);
+                            red, green, blue), pLivingEntity);
                 }
             }
 
             double movementMultiplier = getMovementMultiplier(pAmplifier);
-            AttributeModifierUtil.applyTransientModifier(
-                    player,
+            CoreAttributeModifiers.applyTransientModifier(
+                    pLivingEntity,
                     Attributes.MOVEMENT_SPEED,
                     "COSMovementSpeed",
                     movementMultiplier,
                     AttributeModifier.Operation.MULTIPLY_BASE);
 
             double swingSpeedMultiplier = getSwingSpeedMultiplier(pAmplifier);
-            AttributeModifierUtil.applyTransientModifier(
-                    player,
+            CoreAttributeModifiers.applyTransientModifier(
+                    pLivingEntity,
                     Attributes.ATTACK_SPEED,
                     "COSSwingSpeed",
                     swingSpeedMultiplier,
                     AttributeModifier.Operation.MULTIPLY_BASE);
 
             if (pAmplifier >= 1) {
-                if (isSleeping(player)) {
-                    if (player instanceof ServerPlayer serverPlayer) {
-                        ModNetworking.sendToPlayer(new SleepPacketS2C(true), serverPlayer);
-                    }
-                    makePlayerFallAsleep(player);
-                    decrementSleepTimer(player);
-                } else if (shouldFallAsleep(pAmplifier)) {
-                    setSleepTimer(player, sleepDuration);
+                if (shouldFallAsleep(pLivingEntity ,pAmplifier)) {
+                    makeEntitySleep(pLivingEntity);
                 }
             }
 
             if (pAmplifier >= 2) {
-                limitInventoryToToolbar(player);
+                if (pLivingEntity instanceof Player player) {
+                    limitInventoryToToolbar(player);
+                }
             }
         }
         super.applyEffectTick(pLivingEntity, pAmplifier);
@@ -131,9 +80,9 @@ public class CurseOfSlothEffect extends MobEffect {
     public void removeAttributeModifiers(LivingEntity pLivingEntity, AttributeMap pAttributeMap, int pAmplifier) {
         super.removeAttributeModifiers(pLivingEntity, pAttributeMap, pAmplifier);
         if (pLivingEntity instanceof Player player) {
-            AttributeModifierUtil.removeModifier(player, Attributes.MOVEMENT_SPEED, "COSMovementSpeed");
-            AttributeModifierUtil.removeModifier(player, Attributes.ATTACK_SPEED, "COSSwingSpeed");
-            wakePlayerUp(player);
+            CoreAttributeModifiers.removeModifier(player, Attributes.MOVEMENT_SPEED, "COSMovementSpeed");
+            CoreAttributeModifiers.removeModifier(player, Attributes.ATTACK_SPEED, "COSSwingSpeed");
+            wakeEntityUp(player);
         }
     }
 
@@ -154,50 +103,26 @@ public class CurseOfSlothEffect extends MobEffect {
         return swingSpeedValues[index];
     }
 
-    private boolean shouldFallAsleep(int pAmplifier) {
+    private boolean shouldFallAsleep(LivingEntity livingEntity, int pAmplifier) {
+        if (isSleeping(livingEntity)) {
+            return false;
+        }
         int chance = pAmplifier == 1 ? 100 : 66;
         return random.nextInt(chance) == 0;
     }
 
-    private void makePlayerFallAsleep(Player player) {
-        player.setSprinting(false);
-        AttributeModifierUtil.applyTransientModifier(
-                player,
-                Attributes.MOVEMENT_SPEED,
-                "COSSleepSpeed",
-                -10,
-                AttributeModifier.Operation.ADDITION);
+
+    private void makeEntitySleep(LivingEntity livingEntity) {
+        livingEntity.addEffect(new MobEffectInstance(CoreEffects.SLEEP.get(), sleepDuration));
     }
 
-    private boolean isSleeping(Player player) {
-        return getSleepTimer(player) > 0;
+    private boolean isSleeping(LivingEntity livingEntity) {
+        return livingEntity.hasEffect(CoreEffects.SLEEP.get());
     }
 
-    private void decrementSleepTimer(Player player) {
-        int sleepTicks = getSleepTimer(player);
-        if (sleepTicks > 0) {
-            setSleepTimer(player, sleepTicks - 1);
-            if (sleepTicks == 1) {
-                wakePlayerUp(player);
-            }
-        }
-    }
 
-    private void wakePlayerUp(Player player) {
-        AttributeModifierUtil.removeModifier(player, Attributes.MOVEMENT_SPEED, "COSSleepSpeed");
-        if (player instanceof ServerPlayer serverPlayer) {
-            ModNetworking.sendToPlayer(new SleepPacketS2C(false), serverPlayer);
-        }
-    }
-
-    private int getSleepTimer(Player player) {
-        CompoundTag data = player.getPersistentData();
-        return data.getInt(sleepTicksTag.toString());
-    }
-
-    private void setSleepTimer(Player player, int ticks) {
-        CompoundTag data = player.getPersistentData();
-        data.putInt(sleepTicksTag.toString(), ticks);
+    private void wakeEntityUp(LivingEntity livingEntity) {
+        livingEntity.removeEffect(CoreEffects.SLEEP.get());
     }
 
     private void limitInventoryToToolbar(Player player) {

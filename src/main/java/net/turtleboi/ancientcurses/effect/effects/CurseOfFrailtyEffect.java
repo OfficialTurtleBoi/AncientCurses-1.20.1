@@ -12,9 +12,11 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.turtleboi.ancientcurses.init.ModAttributes;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
-import net.turtleboi.ancientcurses.util.AttributeModifierUtil;
+import net.turtleboi.turtlecore.init.CoreAttributeModifiers;
+import net.turtleboi.turtlecore.init.CoreAttributes;
+import net.turtleboi.turtlecore.network.CoreNetworking;
+import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
 
 import java.util.Random;
 
@@ -29,23 +31,6 @@ public class CurseOfFrailtyEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
-        if (pLivingEntity.level().isClientSide) {
-            if (pLivingEntity.tickCount % 20 == 0) {
-                int effectColor = this.getColor();
-                float red = ((effectColor >> 16) & 0xFF) / 255.0F;
-                float green = ((effectColor >> 8) & 0xFF) / 255.0F;
-                float blue = (effectColor & 0xFF) / 255.0F;
-                for (int i = 0; i < 5; i++) {
-                    pLivingEntity.level().addParticle(
-                            ModParticleTypes.CURSED_PARTICLE.get(),
-                            pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
-                            pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            red, green, blue);
-                }
-            }
-        }
-
         if (!pLivingEntity.level().isClientSide && pLivingEntity instanceof Player player) {
             if (pLivingEntity.tickCount % 20 == 0) {
                 int effectColor = this.getColor();
@@ -53,17 +38,17 @@ public class CurseOfFrailtyEffect extends MobEffect {
                 float green = ((effectColor >> 8) & 0xFF) / 255.0F;
                 float blue = (effectColor & 0xFF) / 255.0F;
                 for (int i = 0; i < 5; i++) {
-                    pLivingEntity.level().addParticle(
+                    CoreNetworking.sendToNear(new SendParticlesS2C(
                             ModParticleTypes.CURSED_PARTICLE.get(),
                             pLivingEntity.getX() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
                             pLivingEntity.getY() + pLivingEntity.getRandom().nextDouble() * pLivingEntity.getBbHeight(),
                             pLivingEntity.getZ() + (pLivingEntity.getRandom().nextDouble() - 0.5) * pLivingEntity.getBbWidth(),
-                            red, green, blue);
+                            red, green, blue), player);
                 }
             }
 
             double healthReduction = getHealthReduction(pAmplifier);
-            AttributeModifierUtil.applyTransientModifier(
+            CoreAttributeModifiers.applyTransientModifier(
                     player,
                     Attributes.MAX_HEALTH,
                     "COFMaxHealth",
@@ -75,7 +60,7 @@ public class CurseOfFrailtyEffect extends MobEffect {
             }
 
             double damageReduction = getAttackDamageReduction(pAmplifier);
-            AttributeModifierUtil.applyTransientModifier(
+            CoreAttributeModifiers.applyTransientModifier(
                     player,
                     Attributes.ATTACK_DAMAGE,
                     "COFAttackDamage",
@@ -84,9 +69,9 @@ public class CurseOfFrailtyEffect extends MobEffect {
 
             if (pAmplifier >= 1) {
                 double hitChanceReduction = getHitChanceReduction(pAmplifier);
-                AttributeModifierUtil.applyTransientModifier(
+                CoreAttributeModifiers.applyTransientModifier(
                         player,
-                        ModAttributes.HIT_CHANCE.get(),
+                        CoreAttributes.HIT_CHANCE.get(),
                         "COFHitChance",
                         hitChanceReduction,
                         AttributeModifier.Operation.ADDITION);
@@ -108,9 +93,9 @@ public class CurseOfFrailtyEffect extends MobEffect {
     public void removeAttributeModifiers(LivingEntity pLivingEntity, AttributeMap pAttributeMap, int pAmplifier) {
         super.removeAttributeModifiers(pLivingEntity, pAttributeMap, pAmplifier);
         if (pLivingEntity instanceof Player player) {
-            AttributeModifierUtil.removeModifier(player, Attributes.MAX_HEALTH, "COFMaxHealth");
-            AttributeModifierUtil.removeModifier(player, Attributes.ATTACK_DAMAGE, "COFAttackDamage");
-            AttributeModifierUtil.removeModifier(player, ModAttributes.HIT_CHANCE.get(), "COFHitChance");
+            CoreAttributeModifiers.removeModifier(player, Attributes.MAX_HEALTH, "COFMaxHealth");
+            CoreAttributeModifiers.removeModifier(player, Attributes.ATTACK_DAMAGE, "COFAttackDamage");
+            CoreAttributeModifiers.removeModifier(player, CoreAttributes.HIT_CHANCE.get(), "COFHitChance");
             setHealthUpdated(player, false);
         }
     }

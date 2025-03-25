@@ -7,9 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.turtleboi.ancientcurses.AncientCurses;
-import net.turtleboi.ancientcurses.trials.PlayerTrialData;
-
-import java.awt.*;
+import net.turtleboi.ancientcurses.trials.Trial;
 
 public class TrialEventBar {
     private static final ResourceLocation TRIAL_BOSS_BAR =
@@ -62,25 +60,21 @@ public class TrialEventBar {
         if (trialProgress < 1.0F) {
             String trialType = PlayerClientData.getTrialType();
 
-            if (trialType.equalsIgnoreCase(PlayerTrialData.survivalTrial)) {
+            if (trialType.equalsIgnoreCase(Trial.survivalTrial)) {
                 int percentComplete = (int) (PlayerClientData.getTrialProgress() * 100);
-                // Use translation key "trial.survival" with percent complete
                 return Component.translatable("trial.ancientcurses.survival", percentComplete);
-            } else if (trialType.equalsIgnoreCase(PlayerTrialData.eliminationTrial)) {
+            } else if (trialType.equalsIgnoreCase(Trial.eliminationTrial)) {
                 String targetName = PlayerClientData.getEliminationTarget();
                 int eliminationCount = PlayerClientData.getEliminationKills();
                 int requiredEliminations = PlayerClientData.getEliminationKillsRequired();
-                // Use translation key "trial.elimination" with target name, elimination count, and required eliminations
                 return Component.translatable("trial.ancientcurses.elimination", targetName, eliminationCount, requiredEliminations);
-            } else if (trialType.equalsIgnoreCase(PlayerTrialData.fetchTrial)) {
+            } else if (trialType.equalsIgnoreCase(Trial.fetchTrial)) {
                 String fetchItem = PlayerClientData.getFetchItem();
                 int fetchItemCount = PlayerClientData.getFetchItems();
                 int requiredFetchitems = PlayerClientData.getFetchItemsRequired();
-                // Use translation key "trial.fetch" with fetch item count, required fetch items, and fetch item name
                 return Component.translatable("trial.ancientcurses.fetch", fetchItemCount, requiredFetchitems, fetchItem);
             }
         } else {
-            // Use translation key "trial.complete"
             return Component.translatable("trial.ancientcurses.complete");
         }
 

@@ -30,6 +30,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.items.ItemStackHandler;
 import net.turtleboi.ancientcurses.block.ModBlocks;
+import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability;
+import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.item.ModItems;
@@ -202,8 +204,10 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public boolean canPlayerUse(Player player) {
         UUID playerUUID = player.getUUID();
 
-        if (PlayerTrialData.isPlayerCursed(player)) {
-            //player.sendSystemMessage(Component.literal("You're cursed!").withStyle(ChatFormatting.RED));
+        if (player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
+                .map(PlayerTrialDataCapability::isPlayerCursed)
+                .orElse(false)) {
+            // player.sendSystemMessage(Component.literal("You're cursed!").withStyle(ChatFormatting.RED));
             return false;
         }
 
@@ -241,13 +245,17 @@ public class CursedAltarBlockEntity extends BlockEntity {
         Trial trial = createTrialForCurse(player, curse, curseDuration, curseAmplifier);
         addPlayerTrial(playerUUID, trial);
 
-        PlayerTrialData.setCurseEffect(player, curse);
-        PlayerTrialData.setCurseAmplifier(player, curseAmplifier);
-        PlayerTrialData.setCurrentAltarPos(player, altarPos);
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            trialData.setCurseEffect(curse);
+            trialData.setCurseAmplifier(curseAmplifier);
+            trialData.setCurrentAltarPos(altarPos);
+            //System.out.println("Setting altar dimension to: " + this.getLevel().dimension());
+            trialData.setAltarDimension(Objects.requireNonNull(this.getLevel()).dimension());
 
-        String trialType = trial.getType();
-        TrialRecord trialRecord = new TrialRecord(altarPos, trialType, false, false);
-        PlayerTrialData.addOrUpdateTrialRecord(player, trialRecord);
+            String trialType = trial.getType();
+            TrialRecord trialRecord = new TrialRecord(altarPos, trialType, false, false);
+            trialData.addOrUpdateTrialRecord(trialRecord);
+        });
 
         player.addEffect(new MobEffectInstance(curse, trial instanceof SurvivalTrial ? curseDuration : MobEffectInstance.INFINITE_DURATION, curseAmplifier, false, false, true));
 
@@ -256,8 +264,9 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public boolean hasPlayerCompletedTrial(Player player) {
         BlockPos altarPos = this.getBlockPos();
-        //System.out.println("Checking if player " + player.getName().getString() + " has completed trial at altar " + altarPos + ": " + completed);
-        return PlayerTrialData.hasCompletedTrial(player, altarPos);
+        return player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
+                .map(trialData -> trialData.hasCompletedTrial(altarPos))
+                .orElse(false);
     }
 
     private boolean anyActiveTrialsRemaining() {
@@ -270,30 +279,36 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     public void setPlayerTrialCompleted(Player player) {
-        UUID playerUUID = player.getUUID();
-        Trial trial = playerTrials.get(playerUUID);
-        if (trial != null) {
-            BlockPos altarPos = this.getBlockPos();
-            PlayerTrialData.setTrialCompleted(player, this.getBlockPos());
-            trial.setCompleted(true);
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            UUID playerUUID = player.getUUID();
+            Trial trial = playerTrials.get(playerUUID);
+            if (trial != null) {
+                BlockPos altarPos = this.getBlockPos();
+                trialData.setTrialCompleted(altarPos);
+                trial.setCompleted(true);
 
-            if (!anyActiveTrialsRemaining()) {
-                releaseDimensionActive();
+                if (!anyActiveTrialsRemaining()) {
+                    releaseDimensionActive();
+                }
+                setChanged();
             }
-
-            setChanged();
-        }
+        });
     }
 
     public boolean hasCollectedReward(Player player) {
         BlockPos altarPos = this.getBlockPos();
-        return PlayerTrialData.hasCollectedReward(player, altarPos);
+        return player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
+                .map(trialData -> trialData.hasCollectedReward(altarPos))
+                .orElse(false);
     }
 
     public void markRewardCollected(Player player) {
-        PlayerTrialData.setRewardCollected(player, this.getBlockPos());
-        PlayerTrialData.clearCurrentAltarPos(player);
-        setChanged();
+        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            BlockPos altarPos = this.getBlockPos();
+            trialData.setRewardCollected(altarPos);
+            trialData.clearCurrentAltarPos();
+            setChanged();
+        });
     }
 
     public Trial getPlayerTrial(UUID playerUUID) {
@@ -340,8 +355,11 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return curses.get(new Random().nextInt(curses.size()));
     }
 
-    public static int getRandomAmplifier(Player player, int SoulTorchAround) {
-        int trialsCompleted = PlayerTrialData.getPlayerTrialsCompleted(player)+SoulTorchAround*3;
+    public static int getRandomAmplifier(Player player) {
+        int trialsCompleted = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
+                .map(PlayerTrialDataCapability::getPlayerTrialsCompleted)
+                .orElse(0);
+
         List<Integer> weightedAmplifiers = getWeightedAmplifier(trialsCompleted);
 
         if (weightedAmplifiers.isEmpty()) {
@@ -365,9 +383,9 @@ public class CursedAltarBlockEntity extends BlockEntity {
         }
 
         int total = weightedAmplifiers.size();
-        double chance0 = total > 0 ? (count0 * 100.0 / total) : 0.0;
-        double chance1 = total > 0 ? (count1 * 100.0 / total) : 0.0;
-        double chance2 = total > 0 ? (count2 * 100.0 / total) : 0.0;
+        double chance0 = count0 * 100.0 / total;
+        double chance1 = count1 * 100.0 / total;
+        double chance2 = count2 * 100.0 / total;
 
         Component message = Component.literal("Trials Completed: ")
                 .append(Component.literal(String.valueOf(trialsCompleted)).withStyle(ChatFormatting.GREEN))
@@ -384,20 +402,48 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     private static @NotNull List<Integer> getWeightedAmplifier(int trialsCompleted) {
-        double completionFactor = Math.min(trialsCompleted / AncientCursesConfig.CURSED_TRIAL_MAX.get(), 1.0);
+        int thresholdTier2 = AncientCursesConfig.CURSED_TRIAL_TIER2_THRESHOLD.get();
+        int thresholdTier3 = AncientCursesConfig.CURSED_TRIAL_TIER3_THRESHOLD.get();
+        int maxTrials = AncientCursesConfig.CURSED_TRIAL_MAX.get();
 
-        int amplifier0Weight = (int) Math.max(AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get() * (1.0 - completionFactor), 0);
-        int amplifier1Weight = (int) Math.max(AncientCursesConfig.CURSED_TRIAL_TIER2_CHANCE.get() * (1.0 - completionFactor), 0);
-        int amplifier2Weight = (int) Math.max(AncientCursesConfig.CURSED_TRIAL_TIER3_CHANCE.get() + (10 * completionFactor), 1);
+        double weight0, weight1, weight2;
+
+        if (trialsCompleted < thresholdTier2) {
+            weight0 = AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get();
+            weight1 = 0;
+            weight2 = 0;
+        } else if (trialsCompleted < thresholdTier3) {
+            double factor = (trialsCompleted - thresholdTier2) / (double)(thresholdTier3 - thresholdTier2);
+            weight0 = AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get() * (1.0 - factor);
+            weight1 = AncientCursesConfig.CURSED_TRIAL_TIER2_CHANCE.get() * factor;
+            weight2 = 0;
+        } else if (trialsCompleted < maxTrials) {
+            double factor = (trialsCompleted - thresholdTier3) / (double)(maxTrials - thresholdTier3);
+            weight0 = AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get() * (1.0 - factor);
+            weight1 = AncientCursesConfig.CURSED_TRIAL_TIER2_CHANCE.get() * (1.0 - factor);
+            weight2 = AncientCursesConfig.CURSED_TRIAL_TIER3_CHANCE.get() * factor;
+        } else {
+            weight0 = 0;
+            weight1 = 0;
+            weight2 = 1;
+        }
+
         List<Integer> weightedAmplifiers = new ArrayList<>();
-        for (int i = 0; i < amplifier0Weight; i++) weightedAmplifiers.add(0);
-        for (int i = 0; i < amplifier1Weight; i++) weightedAmplifiers.add(1);
-        for (int i = 0; i < amplifier2Weight; i++) weightedAmplifiers.add(2);
+        for (int i = 0; i < (int)Math.round(weight0); i++) {
+            weightedAmplifiers.add(0);
+        }
+        for (int i = 0; i < (int)Math.round(weight1); i++) {
+            weightedAmplifiers.add(1);
+        }
+        for (int i = 0; i < (int)Math.round(weight2); i++) {
+            weightedAmplifiers.add(2);
+        }
 
+        if (weightedAmplifiers.isEmpty()) {
+            weightedAmplifiers.add(0);
+        }
         return weightedAmplifiers;
     }
-
-
 
     public Trial createTrialForCurse(Player player, MobEffect curseType, int curseDuration, int curseAmplifier) {
         if (curseType == ModEffects.CURSE_OF_AVARICE.get()) {
@@ -423,7 +469,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
         } else if (curseType == ModEffects.CURSE_OF_SLOTH.get()) {
             return new FetchTrial(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_WRATH.get()) {
-            return new EliminationTrial(player, curseType, curseAmplifier, this);
+          return new EliminationTrial(player, curseType, curseAmplifier, this);
         }
         return null;
     }
@@ -478,13 +524,18 @@ public class CursedAltarBlockEntity extends BlockEntity {
                 stopAnimation();
             }
         }
+
+        if (!anyActiveTrialsRemaining()) {
+            if (this.level instanceof ServerLevel serverLevel) {
+                if (hasOccupantEntity(serverLevel)){
+                    Entity occupant = serverLevel.getEntity(occupantUuid);
+                    occupant.remove(Entity.RemovalReason.DISCARDED);
+                }
+            }
+        }
     }
 
-    public static final TicketType<ChunkPos> CURSED_ALTAR_TICKET = TicketType.create(
-            "cursed_altar_ticket",
-            Comparator.comparingLong(ChunkPos::toLong), // How to compare positions
-            33 // Tick timeout - typically 33 is standard for chunk-based tickets
-    );
+    public static final TicketType<ChunkPos> CURSED_ALTAR_TICKET = TicketType.create("cursed_altar_ticket", Comparator.comparingLong(ChunkPos::toLong),33);
 
     public boolean isChunkLoaded() {
         return chunkLoaded;
@@ -504,7 +555,6 @@ public class CursedAltarBlockEntity extends BlockEntity {
         setChanged();
     }
 
-
     public void releaseChunkLoad() {
         if (!(this.level instanceof ServerLevel serverLevel)) return;
         ChunkPos chunkPos = new ChunkPos(this.worldPosition);
@@ -523,34 +573,24 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public void forceDimensionActive() {
         if (!(this.level instanceof ServerLevel serverLevel)) return;
-
-        // 1) Force the chunk to load
         forceLoadChunk();
-
-        // 2) Check if occupant already exists
         if (!hasOccupantEntity(serverLevel)) {
-            // Spawn occupant
             ArmorStand occupant = OCCUPANT_TYPE.create(serverLevel);
             if (occupant != null) {
-                occupant.setPos(this.worldPosition.getX() + 0.5, this.worldPosition.getY(), this.worldPosition.getZ() + 0.5);
+                occupant.setPos(this.worldPosition.getX() + 0.5, this.worldPosition.getY() - 2, this.worldPosition.getZ() + 0.5);
                 occupant.setInvulnerable(true);
                 occupant.setInvisible(true);
                 occupant.setCustomName(Component.literal("Cursed Altar Occupant"));
                 occupant.setCustomNameVisible(false);
                 occupant.setNoGravity(true);
-
                 serverLevel.addFreshEntity(occupant);
-                // store occupant's UUID or some reference to remove later
                 occupantUuid = occupant.getUUID();
             }
         }
     }
 
-    // Called if occupant is no longer needed
     public void releaseDimensionActive() {
         if (!(this.level instanceof ServerLevel serverLevel)) return;
-
-        // remove occupant
         if (occupantUuid != null) {
             Entity occupantEntity = serverLevel.getEntity(occupantUuid);
             if (occupantEntity != null) {
@@ -558,12 +598,9 @@ public class CursedAltarBlockEntity extends BlockEntity {
             }
             occupantUuid = null;
         }
-
-        // release chunk
         releaseChunkLoad();
     }
 
-    // Simple check for occupant existence
     private boolean hasOccupantEntity(ServerLevel serverLevel) {
         if (occupantUuid != null) {
             Entity occupantEntity = serverLevel.getEntity(occupantUuid);
@@ -572,13 +609,12 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return false;
     }
 
-
     private Trial reconstructTrialFromNBT(String trialType, CompoundTag trialData) {
-        if (trialType.equals(PlayerTrialData.survivalTrial)) {
+        if (trialType.equals(Trial.survivalTrial)) {
             SurvivalTrial trial = new SurvivalTrial(this);
             trial.loadFromNBT(trialData);
             return trial;
-        } else if (trialType.equals(PlayerTrialData.eliminationTrial)) {
+        } else if (trialType.equals(Trial.eliminationTrial)) {
             EliminationTrial trial = new EliminationTrial(this);
             trial.loadFromNBT(trialData);
             return trial;
