@@ -43,7 +43,7 @@ import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability
 import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.ancientcurses.util.ModTags;
@@ -346,7 +346,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 0.5F
         );
 
-        altarEntity.cursePlayer(player, randomCurse, randomAmplifier);
+        altarEntity.cursePlayer(player, ModEffects.CURSE_OF_WRATH.get(), randomAmplifier);
         //player.displayClientMessage(Component.literal(
         //        "You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE), true); //debug code
     }
@@ -372,7 +372,9 @@ public class CursedAltarBlock extends BaseEntityBlock {
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
                             "None",
+                            false,
                             "",
+                            0,
                             0,
                             0,
                             0,

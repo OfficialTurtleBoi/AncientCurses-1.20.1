@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.network.packets;
+package net.turtleboi.ancientcurses.network.packets.trials;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,7 +28,9 @@ public class TrialOverlayPacketC2S {
                         ModNetworking.sendToPlayer(
                                 new SyncTrialDataS2C(
                                         "None",
+                                        false,
                                         "",
+                                        0,
                                         0,
                                         0,
                                         0,

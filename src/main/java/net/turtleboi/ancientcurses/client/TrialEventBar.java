@@ -9,6 +9,8 @@ import net.minecraft.util.Mth;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.trials.Trial;
 
+import java.util.Objects;
+
 public class TrialEventBar {
     private static final ResourceLocation TRIAL_BOSS_BAR =
             new ResourceLocation(AncientCurses.MOD_ID, "textures/gui/quest_bar.png");
@@ -36,14 +38,14 @@ public class TrialEventBar {
             guiGraphics.blit(TRIAL_BOSS_BAR, x + barBuffer, y, barBuffer, 9, progressWidth, barHeight, barWidth, barHeight * 3);
         }
 
-        if (PlayerClientData.getTrialProgress() >= 1.0F) {
+        if (PlayerClientData.isTrialComplete()) {
             guiGraphics.blit(TRIAL_BOSS_BAR, x + barBuffer, y, barBuffer, 18, barWidth - (barBuffer * 2), barHeight, barWidth, barHeight * 3);
         }
 
         Component displayText = getTrialDisplayText();
         int titleWidth = minecraft.font.width(displayText);
         int color = 0xFFFFFF;
-        if (PlayerClientData.getTrialProgress() >= 1.0F){
+        if (PlayerClientData.isTrialComplete()){
             color = 0xFFAA00;
         }
         guiGraphics.drawString(minecraft.font, displayText, x + (barWidth / 2) - (titleWidth / 2), y - 9, color);
@@ -55,19 +57,19 @@ public class TrialEventBar {
     }
 
     private static Component getTrialDisplayText() {
-        float trialProgress = PlayerClientData.getTrialProgress();
-
-        if (trialProgress < 1.0F) {
+        if (!PlayerClientData.isTrialComplete()) {
             String trialType = PlayerClientData.getTrialType();
-
             if (trialType.equalsIgnoreCase(Trial.survivalTrial)) {
                 int percentComplete = (int) (PlayerClientData.getTrialProgress() * 100);
                 return Component.translatable("trial.ancientcurses.survival", percentComplete);
             } else if (trialType.equalsIgnoreCase(Trial.eliminationTrial)) {
                 String targetName = PlayerClientData.getEliminationTarget();
-                int eliminationCount = PlayerClientData.getEliminationKills();
-                int requiredEliminations = PlayerClientData.getEliminationKillsRequired();
-                return Component.translatable("trial.ancientcurses.elimination", targetName, eliminationCount, requiredEliminations);
+                int waveCountVal = PlayerClientData.getWaveCount();
+                String waveCount = (waveCountVal == 0) ? "~" : String.valueOf(waveCountVal);
+                int killsRemainingVal = PlayerClientData.getKillsRemaining();
+                String killsRemaining = (killsRemainingVal == 0) ? "~" : String.valueOf(killsRemainingVal);
+                return Component.translatable("trial.ancientcurses.elimination", targetName, waveCount, killsRemaining);
+
             } else if (trialType.equalsIgnoreCase(Trial.fetchTrial)) {
                 String fetchItem = PlayerClientData.getFetchItem();
                 int fetchItemCount = PlayerClientData.getFetchItems();

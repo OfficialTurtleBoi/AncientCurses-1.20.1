@@ -4,7 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -16,16 +15,13 @@ import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -33,11 +29,11 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.client.TrialEventBar;
-import net.turtleboi.ancientcurses.client.renderer.ArcaneAuraRenderer;
+import net.turtleboi.ancientcurses.client.renderer.FirstBeaconEffectRenderer;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
-import net.turtleboi.ancientcurses.network.packets.TrialOverlayPacketC2S;
+import net.turtleboi.ancientcurses.network.packets.trials.TrialOverlayPacketC2S;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import net.turtleboi.turtlecore.client.data.ScreenEffectsData;
 import org.joml.Matrix4f;
@@ -91,7 +87,7 @@ public class ModClientEvents {
         PoseStack poseStack = event.getPoseStack();
         InteractionHand interactionHand = event.getHand();
         ItemStack itemStack = event.getItemStack();
-        ArcaneAuraRenderer.renderFirstPersonAura(bufferSource, poseStack, interactionHand, itemStack);
+        FirstBeaconEffectRenderer.renderFirstPerson(bufferSource, poseStack, interactionHand, itemStack);
     }
 
     @SubscribeEvent

@@ -8,11 +8,13 @@ public class PlayerClientData {
     public static int voidTimer = 0;
     public static int voidTotalTime = 0;
     public static String trialType = "None";
+    public static boolean trialComplete;
     public static String eliminationTarget = "None";
-    public static int eliminationKills = 0;
-    public static int eliminationKillsRequired = 0;
-    private static long trialDurationElapsed = 0;
-    private static long trialDurationTotal = 0;
+    public static int waveCount = 0;
+    public static int killsRemaining = 0;
+    public static int waveKillTotal = 0;
+    private static long durationElapsed = 0;
+    private static long durationTotal = 0;
     public static String fetchItem = "";
     public static int fetchItems = 0;
     public static int fetchItemsRequired = 0;
@@ -74,36 +76,44 @@ public class PlayerClientData {
         eliminationTarget = targetString;
     }
 
-    public static Integer getEliminationKills(){
-        return eliminationKills;
+    public static Integer getWaveCount(){
+        return waveCount;
     }
 
-    public static void setEliminationKills(int kills) {
-        eliminationKills = kills;
+    public static void setWaveCount(int kills) {
+        waveCount = kills;
     }
 
-    public static Integer getEliminationKillsRequired(){
-        return eliminationKillsRequired;
+    public static Integer getKillsRemaining(){
+        return killsRemaining;
     }
 
-    public static void setEliminationKillsRequired(int killsRequired) {
-        eliminationKillsRequired = killsRequired;
+    public static void setKillsRemaining(int killsRemaining) {
+        PlayerClientData.killsRemaining = killsRemaining;
     }
 
-    public static Long getTrialDurationElapsed(){
-        return trialDurationElapsed;
+    public static Integer getWaveKillTotal(){
+        return waveKillTotal;
     }
 
-    public static void setTrialDurationElapsed(long durationElapsed) {
-        trialDurationElapsed = durationElapsed;
+    public static void setWaveKillTotal(int waveKillTotal) {
+        PlayerClientData.waveKillTotal = waveKillTotal;
     }
 
-    public static Long getTrialDurationTotal(){
-        return trialDurationTotal;
+    public static Long getDurationElapsed(){
+        return durationElapsed;
     }
 
-    public static void setTrialDurationTotal(long durationTotal) {
-        trialDurationTotal = durationTotal;
+    public static void setDurationElapsed(long durationElapsed) {
+        PlayerClientData.durationElapsed = durationElapsed;
+    }
+
+    public static Long getDurationTotal(){
+        return durationTotal;
+    }
+
+    public static void setDurationTotal(long durationTotal) {
+        PlayerClientData.durationTotal = durationTotal;
     }
 
     public static String getFetchItem(){
@@ -133,15 +143,20 @@ public class PlayerClientData {
     public static float getTrialProgress() {
         String trialType = getTrialType();
         if (trialType.equalsIgnoreCase(Trial.survivalTrial)) {
-            long elapsedTime = getTrialDurationElapsed();
-            long totalDuration = getTrialDurationTotal();
+            long elapsedTime = getDurationElapsed();
+            long totalDuration = getDurationTotal();
             if (totalDuration == 0) return 0.0F;
             return Math.min(1.0F, (float) elapsedTime / (float) totalDuration);
         } else if (trialType.equalsIgnoreCase(Trial.eliminationTrial)) {
-            int kills = getEliminationKills();
-            int requiredKills = getEliminationKillsRequired();
-            if (requiredKills == 0) return 0.0F;
-            return Math.min(1.0F, (float) kills / (float) requiredKills);
+            long remainingDelay = getDurationElapsed();
+            long totalDelay = getDurationTotal();
+            if (remainingDelay < totalDelay || (getWaveCount() == 5 && remainingDelay != 0)) {
+                return Math.min(1.0F, 1.0F - ((float) remainingDelay / (float) totalDelay));
+            } else {
+                int killsRemaining = getKillsRemaining();
+                int waveKillTotal = getWaveKillTotal();
+                return Math.min(1.0F, (float) killsRemaining / (float) waveKillTotal);
+            }
         } else if (trialType.equalsIgnoreCase(Trial.fetchTrial)) {
             int items = getFetchItems();
             int requiredItems = getFetchItemsRequired();
@@ -149,6 +164,14 @@ public class PlayerClientData {
             return Math.min(1.0F, (float) items / (float) requiredItems);
         }
         return 0.0F;
+    }
+
+    public static boolean isTrialComplete(){
+        return trialComplete;
+    }
+
+    public static void setTrialComplete(boolean complete) {
+        trialComplete = complete;
     }
 
     public static Float getPortalOverlayAlpha(){

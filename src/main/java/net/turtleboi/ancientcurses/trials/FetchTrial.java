@@ -20,7 +20,7 @@ import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability
 import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 
@@ -181,7 +181,9 @@ public class FetchTrial implements Trial {
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
                             Trial.fetchTrial,
+                            isTrialCompleted(player),
                             "",
+                            0,
                             0,
                             0,
                             0,
@@ -203,7 +205,9 @@ public class FetchTrial implements Trial {
         ModNetworking.sendToPlayer(
                 new SyncTrialDataS2C(
                         Trial.fetchTrial,
+                        isTrialCompleted(player),
                         "",
+                        0,
                         0,
                         0,
                         0,

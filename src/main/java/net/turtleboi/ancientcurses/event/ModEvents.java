@@ -74,13 +74,10 @@ import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.trials.*;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
-import net.turtleboi.turtlecore.TurtleCore;
-import net.turtleboi.turtlecore.capabilities.party.PlayerPartyProvider;
-import net.turtleboi.turtlecore.capabilities.targeting.PlayerTargetingProvider;
 import net.turtleboi.turtlecore.effect.CoreEffects;
 import net.turtleboi.turtlecore.init.CoreAttributes;
 import net.turtleboi.turtlecore.network.CoreNetworking;
@@ -538,22 +535,28 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onLivingDrops(LivingDropsEvent event) {
-        if (!(event.getSource().getEntity() instanceof Player player)) return;
+        if (event.getEntity() instanceof Mob mob) {
+            if (mob.getPersistentData().getBoolean("noDrops")) {
+                event.setCanceled(true);
+            }
+        }
 
-        MobEffectInstance fortuneFavor = player.getEffect(ModEffects.FORTUNES_FAVOR.get());
-        if (fortuneFavor != null) {
-            double chance = 0.33;
-            for (ItemEntity itemEntity : event.getDrops()) {
-                //System.out.println(Component.literal("Doubling loot!"));
-                ItemStack original = itemEntity.getItem();
-                ItemStack multiplied = original.copy();
-                int multiplier = 2;
-                if (random.nextDouble() < chance) {
-                    multiplier = 3;
-                    //System.out.println(Component.literal("Tripling loot!"));
+        if (event.getSource().getEntity() instanceof Player player) {
+            MobEffectInstance fortuneFavor = player.getEffect(ModEffects.FORTUNES_FAVOR.get());
+            if (fortuneFavor != null) {
+                double chance = 0.33;
+                for (ItemEntity itemEntity : event.getDrops()) {
+                    //System.out.println(Component.literal("Doubling loot!"));
+                    ItemStack original = itemEntity.getItem();
+                    ItemStack multiplied = original.copy();
+                    int multiplier = 2;
+                    if (random.nextDouble() < chance) {
+                        multiplier = 3;
+                        //System.out.println(Component.literal("Tripling loot!"));
+                    }
+                    multiplied.setCount(original.getCount() * multiplier);
+                    itemEntity.setItem(multiplied);
                 }
-                multiplied.setCount(original.getCount() * multiplier);
-                itemEntity.setItem(multiplied);
             }
         }
     }
@@ -1018,7 +1021,9 @@ public class ModEvents {
                     ModNetworking.sendToPlayer(
                             new SyncTrialDataS2C(
                                     "None",
+                                    false,
                                     "",
+                                    0,
                                     0,
                                     0,
                                     0,

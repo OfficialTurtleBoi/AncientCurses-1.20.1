@@ -13,7 +13,7 @@ import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability
 import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
 
 public class ClearCurseCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -37,7 +37,9 @@ public class ClearCurseCommand {
         ModNetworking.sendToPlayer(
                 new SyncTrialDataS2C(
                         "None",
+                        false,
                         "",
+                        0,
                         0,
                         0,
                         0,

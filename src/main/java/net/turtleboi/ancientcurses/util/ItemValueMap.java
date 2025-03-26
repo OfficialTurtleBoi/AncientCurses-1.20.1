@@ -9,11 +9,10 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.turtleboi.turtlecore.item.CoreItems;
 
 import java.util.*;
 import java.util.function.Predicate;
-
-import static net.turtleboi.ancientcurses.item.ModItems.LEGENDARY;
 
 public class ItemValueMap {
 
@@ -143,7 +142,7 @@ public class ItemValueMap {
             return 50;
         } else if (rarity == Rarity.EPIC) {
             return 100;
-        } else if (rarity == LEGENDARY) {
+        } else if (rarity == CoreItems.LEGENDARY) {
             return 500;
         } else {
             return 0;

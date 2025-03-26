@@ -8,6 +8,8 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.network.packets.*;
+import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.trials.TrialOverlayPacketC2S;
 
 public class ModNetworking {
     private static SimpleChannel INSTANCE;

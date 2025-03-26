@@ -290,13 +290,13 @@ public class CursedPortalEntity extends Entity {
                 }
 
                 livingMob.setPos(this.getX(), this.getY(), this.getZ());
-                Player nearestPlayer = livingMob.level().getNearestPlayer(livingMob, 64.0D);
                 if (livingMob instanceof Mob mob) {
-                    mob.setTarget(nearestPlayer);
+                    mob.skipDropExperience();
+                    mob.getPersistentData().putBoolean("noDrops", true);
                 }
 
                 this.level().addFreshEntity(livingMob);
-                System.out.println("[CursedPortal] Spawned mob: " + spawnedMob);
+                //System.out.println("[CursedPortal] Spawned mob: " + spawnedMob);
             }
         }
     }

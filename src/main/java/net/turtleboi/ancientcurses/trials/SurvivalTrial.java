@@ -1,7 +1,6 @@
 package net.turtleboi.ancientcurses.trials;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,7 +18,7 @@ import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 
@@ -152,7 +151,9 @@ public class SurvivalTrial implements Trial {
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
                             Trial.survivalTrial,
+                            isTrialCompleted(player),
                             "",
+                            0,
                             0,
                             0,
                             elapsedTime,
@@ -172,7 +173,9 @@ public class SurvivalTrial implements Trial {
         ModNetworking.sendToPlayer(
                 new SyncTrialDataS2C(
                         Trial.survivalTrial,
+                        isTrialCompleted(player),
                         "",
+                        0,
                         0,
                         0,
                         trialDuration,

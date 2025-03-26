@@ -7,13 +7,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability;
 import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
-import net.turtleboi.ancientcurses.effect.CurseRegistry;
-import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
 
 public class TrialsCompletedCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {

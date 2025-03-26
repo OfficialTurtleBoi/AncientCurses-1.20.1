@@ -15,6 +15,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -25,7 +26,7 @@ import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 
@@ -45,6 +46,7 @@ public class EliminationTrial implements Trial {
     private EntityType<?> eliminationTarget;
     private String eliminationTargetString;
     private int eliminationKills;
+    private int waveKillTotal;
 
     private List<Entity> activeMobs = new ArrayList<>();
 
@@ -169,9 +171,31 @@ public class EliminationTrial implements Trial {
         }
     }
 
-
     @Override
     public void onPlayerTick(Player player) {
+        trackProgress(player);
+
+        Iterator<Entity> mobIterator = activeMobs.iterator();
+        while (mobIterator.hasNext()) {
+            Entity mob = mobIterator.next();
+            if (mob instanceof LivingEntity livingMob) {
+                if (!livingMob.isAlive()) {
+                    mobIterator.remove();
+                } else {
+                    if (livingMob instanceof Mob trialMob){
+                        trialMob.setTarget(player);
+                    }
+
+                    if ((currentWave == firstDegreeThreshold || currentWave == secondDegreeThreshold || currentWave == thirdDegreeThreshold) && waveDelay <= 0) {
+                        if (!livingMob.hasEffect(MobEffects.GLOWING)) {
+                            livingMob.addEffect(new MobEffectInstance(MobEffects.GLOWING, 72000, 0));
+                            //System.out.println("Come kill this guy! At: " + livingMob.getX() + ", " + livingMob.getY() + ", " + livingMob.getZ());
+                        }
+                    }
+                }
+            }
+        }
+
         if (!completedFirstDegree) {
             if (waveDelay > 0 ) {
                 waveDelay--;
@@ -180,28 +204,15 @@ public class EliminationTrial implements Trial {
             if (currentWave < firstDegreeThreshold) {
                 if (waveDelay <= 0) {
                     if (currentWave != 0) {
-                        System.out.println("[Elimination Trial] Wave " + currentWave + ": Timed out! Spawning wave: " + (currentWave + 1));
+                        //System.out.println("[Elimination Trial] Wave " + currentWave + ": Timed out! Spawning wave: " + (currentWave + 1));
                     }
                     spawnWave(player);
                     currentWave++;
                 }
             } else if (currentWave == firstDegreeThreshold && waveDelay <= 0) {
-                Iterator<Entity> mobIterator = activeMobs.iterator();
-                while (mobIterator.hasNext()) {
-                    Entity mob = mobIterator.next();
-                    if (mob instanceof LivingEntity livingMob) {
-                        if (!livingMob.isAlive()) {
-                            mobIterator.remove();
-                        } else if (!livingMob.hasEffect(MobEffects.GLOWING)) {
-                            livingMob.addEffect(new MobEffectInstance(MobEffects.GLOWING, 72000, 0));
-                            System.out.println("Come kill this guy! At: " + livingMob.getX() + ", " + livingMob.getY() + ", " + livingMob.getZ());
-                        }
-                    }
-                }
-
                 if (activeMobs.isEmpty()) {
                     completedFirstDegree = true;
-                    System.out.println("[Elimination Trial] Wave " + currentWave + ": Done! First degree complete!");
+                    //System.out.println("[Elimination Trial] Wave " + currentWave + ": Done! First degree complete!");
                 }
             }
         }
@@ -259,15 +270,18 @@ public class EliminationTrial implements Trial {
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
                             Trial.eliminationTrial,
+                            isTrialCompleted(player),
                             eliminationTargetString,
-                            eliminationKills,
-                            256,
-                            0,
-                            0,
+                            currentWave,
+                            activeMobs.size(),
+                            waveKillTotal,
+                            waveDelay,
+                            getDefaultWaveDelay(),
                             "",
                             0,
                             0),
                     (ServerPlayer) player);
+
         }
     }
 
@@ -277,9 +291,11 @@ public class EliminationTrial implements Trial {
         ModNetworking.sendToPlayer(
                 new SyncTrialDataS2C(
                         Trial.eliminationTrial,
+                        isTrialCompleted(player),
                         eliminationTargetString,
-                        256,
-                        265,
+                        0,
+                        0,
+                        0,
                         0,
                         0,
                         "",
@@ -407,10 +423,11 @@ public class EliminationTrial implements Trial {
             int mobCount = calculateRequiredKillCount(amplifier);
             List<Entity> mobsToSpawn = buildWaveMobList(level, mobCount);
             activeMobs.addAll(mobsToSpawn);
+            waveKillTotal = activeMobs.size();
             CursedPortalEntity.spawnSummoningPortalAtPos(level, altar, portalPos, mobsToSpawn);
-            System.out.println("[EliminationTrial] Spawned wave with " + mobCount + " enemies via portal at " + portalPos);
+            //System.out.println("[EliminationTrial] Spawned wave with " + mobCount + " enemies via portal at " + portalPos);
             addWaveDelay((mobsToSpawn.size() + 1) * CursedPortalEntity.spawnDelay);
-            System.out.println("[EliminationTrial] Time until next wave: " + (mobsToSpawn.size() + 1) * CursedPortalEntity.spawnDelay);
+            //System.out.println("[EliminationTrial] Time until next wave: " + (mobsToSpawn.size() + 1) * CursedPortalEntity.spawnDelay);
         }
     }
 
@@ -442,7 +459,8 @@ public class EliminationTrial implements Trial {
                 new WeightedMob(EntityType.WITCH, 5.0),
                 new WeightedMob(EntityType.EVOKER, 3.0),
                 new WeightedMob(EntityType.WITHER_SKELETON, 2.0),
-                new WeightedMob(EntityType.GHAST, 1.0),
+                new WeightedMob(EntityType.GHAST, 3.0),
+                new WeightedMob(EntityType.VILLAGER, 1.0),
                 new WeightedMob(EntityType.BLAZE, 5.0),
                 new WeightedMob(EntityType.HUSK, 15.0),
                 new WeightedMob(EntityType.STRAY, 15.0)

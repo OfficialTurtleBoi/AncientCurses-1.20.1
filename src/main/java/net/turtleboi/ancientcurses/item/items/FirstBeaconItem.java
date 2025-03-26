@@ -32,6 +32,7 @@ public class FirstBeaconItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level pLevel, Player pPlayer, InteractionHand pUsedHand) {
         ItemStack pItemStack = pPlayer.getItemInHand(pUsedHand);
+        setRemainingUseDuration(getUseDuration(pItemStack));
 
         pPlayer.startUsingItem(pUsedHand);
         return InteractionResultHolder.success(pItemStack);
@@ -44,13 +45,14 @@ public class FirstBeaconItem extends Item {
             beingUsed = true;
             Vec3 lookVec = pPlayer.getLookAngle();
             Vec3 startVec = pPlayer.getEyePosition(1.0f);
-            Vec3 endVec = startVec.add(lookVec.scale(range));
+            float chargeProgress = Math.min(1.0f, (float) (getUseDuration(pStack) - getRemainingUseDuration()) / maxChargeTicks);
+            Vec3 endVec = startVec.add(lookVec.scale(range * (chargeProgress * chargeProgress)));
             setRemainingUseDuration(pRemainingUseDuration);
-            int chargeProgress = getUseDuration(pStack) - getRemainingUseDuration();
+
 
             List<EntityHitResult> hitResults = TargetingUtils.rayTraceEntities(pPlayer, startVec, endVec);
             if (!hitResults.isEmpty()) {
-                float baseDamage = 5.0f * Math.min(1.0f, (float) chargeProgress / maxChargeTicks);
+                float baseDamage = 10.0f * chargeProgress;
                 for (int i = 0; i < hitResults.size(); i++) {
                     EntityHitResult hit = hitResults.get(i);
                     if (hit.getEntity() instanceof LivingEntity targetEntity) {
@@ -59,18 +61,17 @@ public class FirstBeaconItem extends Item {
 
                         float adjustedDamage = baseDamage * damageMultiplier;
                         //System.out.println("Hurting " + targetEntity + " with " + adjustedDamage + " damage (multiplier: " + damageMultiplier + ")");
-                        targetEntity.hurt(pLevel.damageSources().magic(), adjustedDamage);
+                        targetEntity.hurt(pPlayer.level().damageSources().magic(), adjustedDamage);
                     }
                 }
             }
         }
     }
 
-
     @Override
-    public boolean useOnRelease(ItemStack pStack) {
+    public void releaseUsing(ItemStack pStack, Level pLevel, LivingEntity pLivingEntity, int pTimeCharged) {
+        super.releaseUsing(pStack, pLevel, pLivingEntity, pTimeCharged);
         beingUsed = false;
-        return super.useOnRelease(pStack);
     }
 
     @Override

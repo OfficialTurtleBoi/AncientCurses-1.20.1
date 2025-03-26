@@ -15,10 +15,9 @@ import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.enchantment.ModEnchantments;
 import net.turtleboi.ancientcurses.item.items.*;
 import net.turtleboi.ancientcurses.sound.ModSounds;
+import net.turtleboi.turtlecore.item.CoreItems;
 
 public class ModItems {
-    public static final Rarity LEGENDARY = Rarity.create("LEGENDARY", ChatFormatting.GOLD);
-
     public static final DeferredRegister<Item> ITEMS =
             DeferredRegister.create(ForgeRegistries.ITEMS, AncientCurses.MOD_ID);
 
@@ -80,13 +79,13 @@ public class ModItems {
             () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC), PreciousGemType.PERFECT_TOPAZ));
 
     public static final RegistryObject<Item> ANCIENT_ALEXANDRITE = ITEMS.register("ancient_alexandrite",
-            () -> new PreciousGemItem(new Item.Properties().rarity(ModItems.LEGENDARY), PreciousGemType.ANCIENT_ALEXANDRITE));
+            () -> new PreciousGemItem(new Item.Properties().rarity(CoreItems.LEGENDARY), PreciousGemType.ANCIENT_ALEXANDRITE));
 
     public static final RegistryObject<Item> ANCIENT_BISMUTH = ITEMS.register("ancient_bismuth",
-            () -> new PreciousGemItem(new Item.Properties().rarity(ModItems.LEGENDARY), PreciousGemType.ANCIENT_BISMUTH));
+            () -> new PreciousGemItem(new Item.Properties().rarity(CoreItems.LEGENDARY), PreciousGemType.ANCIENT_BISMUTH));
 
     public static final RegistryObject<Item> ANCIENT_CHRYSOBERYL = ITEMS.register("ancient_chrysoberyl",
-            () -> new PreciousGemItem(new Item.Properties().rarity(ModItems.LEGENDARY), PreciousGemType.ANCIENT_CHRYSOBERYL));
+            () -> new PreciousGemItem(new Item.Properties().rarity(CoreItems.LEGENDARY), PreciousGemType.ANCIENT_CHRYSOBERYL));
 
     public static final RegistryObject<Item> DEPRECOPHOBIA_MUSIC_DISC = ITEMS.register("deprecophobia_music_disc",
             () -> new RecordItem(13, ModSounds.DEPRECOPHOBIA, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC), 2780));
@@ -116,10 +115,10 @@ public class ModItems {
             () -> new CursedPearlItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
 
     public static final RegistryObject<Item> GOLDEN_FEATHER = ITEMS.register("golden_feather",
-            () -> new GoldenFeatherItem(new Item.Properties().rarity(Rarity.EPIC).stacksTo(1).durability(34)));
+            () -> new GoldenFeatherItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1).durability(32)));
 
     public static final RegistryObject<Item> FIRST_BEACON = ITEMS.register("first_beacon",
-            () -> new FirstBeaconItem(new Item.Properties().rarity(Rarity.EPIC).stacksTo(1)));
+            () -> new FirstBeaconItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

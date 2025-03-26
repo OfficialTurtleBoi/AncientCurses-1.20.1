@@ -36,7 +36,6 @@
   "block.ancientcurses.sconced_unlit_torch": "Sconced Unlit Torch",
   "block.ancientcurses.sconced_unlit_soul_torch": "Sconced Unlit Soul Torch",
 
-
   "item.ancientcurses.golden_amulet": "Golden Amulet",
   "item.ancientcurses.deprecophobia_music_disc": "Music Disc",
   "item.ancientcurses.deprecophobia_music_disc.desc": "KindaGlumm - Deprecophobia",
@@ -91,7 +90,7 @@
   "item.ancientcurses.ancient_chrysoberyl.tooltip": "Electric Skies: When slotted in Main Gem socket, gain the ability to fly|+50% Attack Speed|+50% Movement Speed|+3 Luck",
 
   "trial.ancientcurses.survival": "Survive: %s%%",
-  "trial.ancientcurses.elimination": "Eliminate %ss: %s/%s",
+  "trial.ancientcurses.elimination": "Eliminate %s | Wave: %d | Remaining: %d",
   "trial.ancientcurses.fetch": "Feed the altar: %s/%s %s",
   "trial.ancientcurses.complete": "The altar beckons your return...",
 
