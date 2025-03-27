@@ -45,7 +45,6 @@ public class EliminationTrial implements Trial {
 
     private EntityType<?> eliminationTarget;
     private String eliminationTargetString;
-    private int eliminationKills;
     private int waveKillTotal;
 
     private List<Entity> activeMobs = new ArrayList<>();
@@ -67,7 +66,7 @@ public class EliminationTrial implements Trial {
         this.altar = altar;
         this.eliminationTarget = selectRandomTargetMob();
         this.currentWave = 0;
-        this.waveDelay = getDefaultWaveDelay();
+        this.waveDelay = 200;
         this.completedFirstDegree = false;
         this.completedSecondDegree = false;
         this.completedThirdDegree = false;
@@ -79,10 +78,10 @@ public class EliminationTrial implements Trial {
         player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
             trialData.setCurseEffect(effect);
             trialData.setActiveTrial(this);
-            if (trialData.getEliminationKills() == 0) {
-                trialData.setEliminationKills(0);
+            if (trialData.getCurrentWave() == 0) {
+                trialData.setCurrentWave(0);
             }
-            this.eliminationKills = trialData.getEliminationKills();
+            this.currentWave = trialData.getCurrentWave();
         });
     }
 
@@ -101,7 +100,6 @@ public class EliminationTrial implements Trial {
         tag.putString("Effect", Objects.requireNonNull(ForgeRegistries.MOB_EFFECTS.getKey(effect)).toString());
         tag.putString("EliminationTarget", Objects.requireNonNull(ForgeRegistries.ENTITY_TYPES.getKey(eliminationTarget)).toString());
         tag.putString("EliminationTargetString", eliminationTargetString != null ? eliminationTargetString : "");
-        tag.putInt(eliminationCount, eliminationKills);
         tag.putBoolean("Completed", completed);
     }
 
@@ -119,7 +117,6 @@ public class EliminationTrial implements Trial {
         } else {
             this.eliminationTargetString = "";
         }
-        this.eliminationKills = tag.getInt(eliminationCount);
         this.completed = tag.getBoolean("Completed");
     }
 
@@ -157,9 +154,8 @@ public class EliminationTrial implements Trial {
         }
         if (entity.getType() == eliminationTarget) {
             player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-                int newKills = trialData.getEliminationKills() + 1;
-                trialData.setEliminationKills(newKills);
-                this.eliminationKills = newKills;
+                int newKills = trialData.getCurrentWave() + 1;
+                trialData.setCurrentWave(newKills);
                 activeMobs.removeIf(mob -> mob == entity);
             });
 
@@ -198,19 +194,29 @@ public class EliminationTrial implements Trial {
 
         if (!completedFirstDegree) {
             if (waveDelay > 0 ) {
+                //System.out.println("[Elimination Trial] Subtracting wave delay");
                 waveDelay--;
             }
 
             if (currentWave < firstDegreeThreshold) {
-                if (waveDelay <= 0) {
-                    if (currentWave != 0) {
-                        //System.out.println("[Elimination Trial] Wave " + currentWave + ": Timed out! Spawning wave: " + (currentWave + 1));
+                if (waveDelay <= 0 || (activeMobs.isEmpty() && currentWave != 0)) {
+                    //System.out.println("[Elimination Trial] Wave " + currentWave + ": Timed out! Spawning wave: " + (currentWave + 1));
+                    if (waveDelay <= 0) {
+                        spawnWave(player);
+                        currentWave++;
                     }
-                    spawnWave(player);
-                    currentWave++;
+
+                    if (activeMobs.isEmpty()) {
+                        if (currentWave != 0 && waveDelay > 200) {
+                            waveDelay = 200;
+                        }
+                    }
                 }
-            } else if (currentWave == firstDegreeThreshold && waveDelay <= 0) {
+            } else if (currentWave == firstDegreeThreshold && (waveDelay <= 0 || activeMobs.isEmpty())) {
                 if (activeMobs.isEmpty()) {
+                    if (waveDelay > 200) {
+                        waveDelay = 200;
+                    }
                     completedFirstDegree = true;
                     //System.out.println("[Elimination Trial] Wave " + currentWave + ": Done! First degree complete!");
                 }
@@ -221,15 +227,23 @@ public class EliminationTrial implements Trial {
             }
 
             if (currentWave < secondDegreeThreshold) {
-                if (waveDelay <= 0) {
-                    if (currentWave != 0) {
-                        //System.out.println("[Elimination Trial] Wave " + currentWave + ": Timed out! Spawning wave: " + (currentWave + 1));
+                if (waveDelay <= 0 || activeMobs.isEmpty()) {
+                    if (waveDelay <= 0) {
+                        spawnWave(player);
+                        currentWave++;
                     }
-                    spawnWave(player);
-                    currentWave++;
+
+                    if (activeMobs.isEmpty()) {
+                        if (waveDelay > 200) {
+                            waveDelay = 200;
+                        }
+                    }
                 }
-            } else if (currentWave == secondDegreeThreshold && waveDelay <= 0) {
+            } else if (currentWave == secondDegreeThreshold && (waveDelay <= 0 || activeMobs.isEmpty())) {
                 if (activeMobs.isEmpty()) {
+                    if (waveDelay > 200) {
+                        waveDelay = 200;
+                    }
                     completedSecondDegree = true;
                     //System.out.println("[Elimination Trial] Wave " + currentWave + ": Done! First degree complete!");
                 }
@@ -240,15 +254,23 @@ public class EliminationTrial implements Trial {
             }
 
             if (currentWave < thirdDegreeThreshold) {
-                if (waveDelay <= 0) {
-                    if (currentWave != 0) {
-                        //System.out.println("[Elimination Trial] Wave " + currentWave + ": Timed out! Spawning wave: " + (currentWave + 1));
+                if (waveDelay <= 0 || activeMobs.isEmpty()) {
+                    if (waveDelay <= 0) {
+                        spawnWave(player);
+                        currentWave++;
                     }
-                    spawnWave(player);
-                    currentWave++;
+
+                    if (activeMobs.isEmpty()) {
+                        if (waveDelay > 200) {
+                            waveDelay = 200;
+                        }
+                    }
                 }
-            } else if (currentWave == thirdDegreeThreshold && waveDelay <= 0) {
+            } else if (currentWave == thirdDegreeThreshold && (waveDelay <= 0 || activeMobs.isEmpty())) {
                 if (activeMobs.isEmpty()) {
+                    if (waveDelay > 200) {
+                        waveDelay = 200;
+                    }
                     completedThirdDegree = true;
                     //System.out.println("[Elimination Trial] Wave " + currentWave + ": Done! First degree complete!");
                 }
@@ -263,14 +285,7 @@ public class EliminationTrial implements Trial {
     @Override
     public void trackProgress(Player player) {
         if (player != null) {
-            float progressPercentage = Math.min((float) eliminationKills / 256, 1.0f);
-            //player.displayClientMessage(
-            //        Component.literal("Eliminations: " + eliminationKills + "/" + eliminationKillsRequired)
-            //                .withStyle(ChatFormatting.YELLOW), true);
-
             player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-                trialData.setEliminationKills(eliminationKills);
-
                 BlockPos altarPos = trialData.getCurrentAltarPos();
                 ResourceKey<Level> altarDimension = trialData.getAltarDimension();
                 if (altarPos != null && altarDimension != null) {
@@ -298,15 +313,15 @@ public class EliminationTrial implements Trial {
                 }
             });
 
-            System.out.println("Trial Type: " + Trial.eliminationTrial);
-            System.out.println("Trial Completed: " + isTrialCompleted(player));
-            System.out.println("Elimination Target: " + eliminationTarget);
-            System.out.println("Elimination Target String: " + eliminationTargetString);
-            System.out.println("Current Wave: " + currentWave);
-            System.out.println("Kills Remaining: " + activeMobs.size());
-            System.out.println("Total kill required this wave: " + waveKillTotal);
-            System.out.println("Time until next wave: " + waveDelay);
-            System.out.println("Total wave delay: " + getDefaultWaveDelay());
+            //System.out.println("Trial Type: " + Trial.eliminationTrial);
+            //System.out.println("Trial Completed: " + isTrialCompleted(player));
+            //System.out.println("Elimination Target: " + eliminationTarget);
+            //System.out.println("Elimination Target String: " + eliminationTargetString);
+            //System.out.println("Current Wave: " + currentWave);
+            //System.out.println("Kills Remaining: " + activeMobs.size());
+            //System.out.println("Total kill required this wave: " + waveKillTotal);
+            //System.out.println("Time until next wave: " + waveDelay);
+            //System.out.println("Total wave delay: " + getDefaultWaveDelay());
 
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
@@ -317,7 +332,7 @@ public class EliminationTrial implements Trial {
                             activeMobs.size(),
                             waveKillTotal,
                             waveDelay,
-                            getDefaultWaveDelay(),
+                            200,
                             "",
                             0,
                             0),
@@ -387,37 +402,19 @@ public class EliminationTrial implements Trial {
         this.completed = completed;
     }
 
-    public static class WeightedMob {
-        private final EntityType<?> mobType;
-        private final double weight;
-
-        public WeightedMob(EntityType<?> mobType, double weight) {
-            this.mobType = mobType;
-            this.weight = weight;
-        }
-
-        public EntityType<?> getMobType() {
-            return mobType;
-        }
-
-        public double getWeight() {
-            return weight;
-        }
-    }
-
     private EntityType<?> selectRandomTargetMob() {
         List<WeightedMob> mobList = MobList.ELIMINATION_TRIAL_MOBS;
-        double totalWeight = mobList.stream().mapToDouble(WeightedMob::getWeight).sum();
+        double totalWeight = mobList.stream().mapToDouble(WeightedMob::weight).sum();
         double randomValue = ThreadLocalRandom.current().nextDouble(totalWeight);
         double cumulativeWeight = 0.0;
-        for (WeightedMob wm : mobList) {
-            cumulativeWeight += wm.getWeight();
+        for (WeightedMob weightedMob : mobList) {
+            cumulativeWeight += weightedMob.weight();
             if (randomValue <= cumulativeWeight) {
-                this.eliminationTargetString = wm.getMobType().getDescription().getString();
-                return wm.getMobType();
+                this.eliminationTargetString = weightedMob.mobType().getDescription().getString();
+                return weightedMob.mobType();
             }
         }
-        return mobList.get(mobList.size() - 1).getMobType();
+        return mobList.get(mobList.size() - 1).mobType();
     }
 
     private int calculateRequiredKillCount(int amplifier) {
@@ -426,22 +423,15 @@ public class EliminationTrial implements Trial {
         double waveMultiplier = 1.0 + ((double) currentWave / 10.0);
         int baseKillCount = (int) Math.round(base * variation * waveMultiplier);
         if (eliminationTarget.equals(EntityType.GHAST) ||
-                eliminationTarget.equals(EntityType.WITHER_SKELETON) ||
-                eliminationTarget.equals(EntityType.WITCH) ||
-                eliminationTarget.equals(EntityType.EVOKER) ||
-                eliminationTarget.equals(EntityType.PIGLIN_BRUTE)) {
+                eliminationTarget.equals(EntityType.SLIME) ||
+                eliminationTarget.equals(EntityType.MAGMA_CUBE)) {
             baseKillCount = Math.max(1, baseKillCount / 2);
         } else if (eliminationTarget.equals(EntityType.RAVAGER)) {
             baseKillCount = Math.max(1, baseKillCount / 4);
-        } else if (eliminationTarget.equals(EntityType.CAVE_SPIDER)) {
+        } else if (eliminationTarget.equals(EntityType.CAVE_SPIDER) ||
+                eliminationTarget.equals(EntityType.VILLAGER)) {
             baseKillCount = baseKillCount * 2;
         }
-
-        if (ThreadLocalRandom.current().nextDouble() <= 0.01) {
-            eliminationTarget = EntityType.VILLAGER;
-            baseKillCount = baseKillCount * 2;
-        }
-
         return baseKillCount;
     }
 
@@ -480,26 +470,28 @@ public class EliminationTrial implements Trial {
         waveDelay = getDefaultWaveDelay() + delayTicks;
     }
 
+    public record WeightedMob(EntityType<?> mobType, double weight) { }
+    
     public static class MobList {
         public static final List<WeightedMob> ELIMINATION_TRIAL_MOBS = Arrays.asList(
                 new WeightedMob(EntityType.ZOMBIE, 20.0),
                 new WeightedMob(EntityType.SKELETON, 20.0),
                 new WeightedMob(EntityType.CREEPER, 15.0),
                 new WeightedMob(EntityType.SPIDER, 15.0),
+                new WeightedMob(EntityType.ENDERMAN, 15.0),
                 new WeightedMob(EntityType.PILLAGER, 10.0),
                 new WeightedMob(EntityType.VINDICATOR, 10.0),
                 new WeightedMob(EntityType.RAVAGER, 2.0),
                 new WeightedMob(EntityType.ZOMBIFIED_PIGLIN, 10.0),
-                new WeightedMob(EntityType.PIGLIN_BRUTE, 10.0),
-                new WeightedMob(EntityType.DROWNED, 10.0),
+                new WeightedMob(EntityType.DROWNED, 12.0),
                 new WeightedMob(EntityType.GUARDIAN, 5.0),
                 new WeightedMob(EntityType.PHANTOM, 12.0),
-                new WeightedMob(EntityType.SLIME, 15.0),
-                new WeightedMob(EntityType.MAGMA_CUBE, 15.0),
-                new WeightedMob(EntityType.CAVE_SPIDER, 5.0),
+                new WeightedMob(EntityType.SLIME, 10.0),
+                new WeightedMob(EntityType.MAGMA_CUBE, 10.0),
+                new WeightedMob(EntityType.CAVE_SPIDER, 7.5),
                 new WeightedMob(EntityType.WITCH, 5.0),
                 new WeightedMob(EntityType.EVOKER, 3.0),
-                new WeightedMob(EntityType.WITHER_SKELETON, 2.0),
+                new WeightedMob(EntityType.WITHER_SKELETON, 5.0),
                 new WeightedMob(EntityType.GHAST, 3.0),
                 new WeightedMob(EntityType.VILLAGER, 1.0),
                 new WeightedMob(EntityType.BLAZE, 5.0),

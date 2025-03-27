@@ -79,7 +79,6 @@ public class TrialEventBar {
         } else {
             return Component.translatable("trial.ancientcurses.complete");
         }
-
         return Component.empty();
     }
 

@@ -2,6 +2,7 @@ package net.turtleboi.ancientcurses.trials;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -9,6 +10,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
@@ -22,10 +24,8 @@ import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class SurvivalTrial implements Trial {
     private UUID playerUUID;
@@ -123,7 +123,12 @@ public class SurvivalTrial implements Trial {
                 if (portalCooldown >= 600 / pAmplifier) {
                     portalCooldown = 0;
                     //System.out.println(Component.literal("Spawning new summoning portal"));
-                    CursedPortalEntity.spawnSummoningPortalOnPlayer(player, altar.getBlockPos(), player.level(), altar);
+                    MinecraftServer server = player.getServer();
+                    if (server != null) {
+                        ServerLevel level = (ServerLevel) player.level();
+                        List<Entity> mobsToSpawn = buildPortalSpawnList(level, 3 * this.pAmplifier);
+                        CursedPortalEntity.spawnSummoningPortalAtPos(level, altar, player.getOnPos(), mobsToSpawn);
+                    }
                 }
             }
         }
@@ -231,5 +236,30 @@ public class SurvivalTrial implements Trial {
     @Override
     public void setCompleted(boolean completed) {
         this.completed = completed;
+    }
+
+    private List<Entity> buildPortalSpawnList(ServerLevel level, int mobCount) {
+        List<Entity> mobs = new ArrayList<>();
+        for (int i = 0; i < mobCount; i++) {
+            Entity mob = selectRandomTargetMob().create(level);
+            if (mob != null) {
+                mobs.add(mob);
+            }
+        }
+        return mobs;
+    }
+
+    private EntityType<?> selectRandomTargetMob() {
+        List<EliminationTrial.WeightedMob> mobList = EliminationTrial.MobList.ELIMINATION_TRIAL_MOBS;
+        double totalWeight = mobList.stream().mapToDouble(EliminationTrial.WeightedMob::weight).sum();
+        double randomValue = ThreadLocalRandom.current().nextDouble(totalWeight);
+        double cumulativeWeight = 0.0;
+        for (EliminationTrial.WeightedMob weightedMob : mobList) {
+            cumulativeWeight += weightedMob.weight();
+            if (randomValue <= cumulativeWeight) {
+                return weightedMob.mobType();
+            }
+        }
+        return mobList.get(mobList.size() - 1).mobType();
     }
 }

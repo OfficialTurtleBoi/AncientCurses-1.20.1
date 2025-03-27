@@ -134,6 +134,35 @@ public class ModEvents {
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         Player player = event.getEntity();
         player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            Trial playerTrial = trialData.getActiveTrial();
+            if (playerTrial instanceof EliminationTrial) {
+                trialData.clearPlayerCurse();
+
+                if (player instanceof ServerPlayer serverPlayer) {
+                    ModNetworking.sendToPlayer(
+                            new SyncTrialDataS2C(
+                                    "None",
+                                    false,
+                                    "",
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    "",
+                                    0,
+                                    0),
+                            serverPlayer);
+                }
+
+                for (MobEffectInstance effectInstance : player.getActiveEffects()) {
+                    MobEffect effect = effectInstance.getEffect();
+                    if (CurseRegistry.getCurses().contains(effect)) {
+                        player.removeEffect(effect);
+                    }
+                }
+            }
+
             CompoundTag compound = new CompoundTag();
             trialData.saveNBTData(compound);
             player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(updatedTrialData -> {
@@ -174,6 +203,35 @@ public class ModEvents {
         Player player = event.getEntity();
         player.reviveCaps();
         player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            Trial playerTrial = trialData.getActiveTrial();
+            if (playerTrial instanceof EliminationTrial) {
+                trialData.clearPlayerCurse();
+
+                if (player instanceof ServerPlayer serverPlayer) {
+                    ModNetworking.sendToPlayer(
+                            new SyncTrialDataS2C(
+                                    "None",
+                                    false,
+                                    "",
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    "",
+                                    0,
+                                    0),
+                            serverPlayer);
+                }
+
+                for (MobEffectInstance effectInstance : player.getActiveEffects()) {
+                    MobEffect effect = effectInstance.getEffect();
+                    if (CurseRegistry.getCurses().contains(effect)) {
+                        player.removeEffect(effect);
+                    }
+                }
+            }
+
             CompoundTag compound = new CompoundTag();
             trialData.saveNBTData(compound);
             player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(updatedTrialData -> {
@@ -190,87 +248,6 @@ public class ModEvents {
 
         if (entity instanceof Mob mob && !level.isClientSide) {
             for (Player player : level.players()) {
-                MobEffectInstance wrathCurse = player.getEffect(ModEffects.CURSE_OF_WRATH.get());
-                if (wrathCurse != null && player.distanceTo(entity) <= 25) {
-                    int amplifier = wrathCurse.getAmplifier();
-
-                    if (amplifier >= 1 ) {
-                        if (mob instanceof Animal animal) {
-                            animal.getLookControl().setLookAt(player, 30.0F, 30.0F);
-                            if (animal.goalSelector.getRunningGoals().noneMatch(goal -> goal.getGoal() instanceof FollowMobGoal)) {
-                                animal.goalSelector.addGoal(1, new AnimalFollowPlayerGoal(animal, player, 1.25D, 25.0D));
-                            }
-                            if (animal.distanceTo(player) < 1.75) {
-                                if (tickCounter <= 0) {
-                                    player.hurt(level.damageSources().mobAttack(animal), 1.0F);
-                                }
-                            }
-                        }
-                        if (mob instanceof AbstractFish fish) {
-                            fish.getLookControl().setLookAt(player, 30.0F, 30.0F);
-                            if (fish.goalSelector.getRunningGoals().noneMatch(goal -> goal.getGoal() instanceof FollowMobGoal)) {
-                                fish.goalSelector.addGoal(1, new FishFollowPlayerGoal(fish, player, 1.25D, 25.0D));
-                            }
-                            if (fish.distanceTo(player) < 1.75) {
-                                if (tickCounter <= 0) {
-                                    player.hurt(level.damageSources().mobAttack(fish), 1.0F);
-                                }
-                            }
-                        }
-                        if (mob instanceof NeutralMob neutralMob) {
-                            if (neutralMob instanceof Monster && !(neutralMob instanceof Piglin) || neutralMob instanceof EnderMan) {
-                                return;
-                            } else if (neutralMob.getTarget() != player){
-                                 neutralMob.setTarget(player);
-                            }
-                        }
-                        if (mob instanceof TamableAnimal tameableAnimal) {
-                            if (!tameableAnimal.isTame()) {
-                                if (tameableAnimal.getTarget() != player){
-                                    tameableAnimal.setTarget(player);
-                                }
-                            } else if (tameableAnimal.isTame()){
-                                if (tameableAnimal.getTarget() == player){
-                                    tameableAnimal.setTarget(null);
-                                }
-                            }
-                        }
-                        if (mob instanceof Piglin piglin && !piglin.isAggressive()) {
-                            if (piglin.getTarget() != player){
-                                piglin.setTarget(player);
-                            }
-                        }
-                        if (mob instanceof IronGolem golem) {
-                            if (!golem.isPlayerCreated()) {
-                                if (golem.getTarget() != player){
-                                    golem.setTarget(player);
-                                }
-                            } else if (golem.isPlayerCreated()){
-                                if (golem.getTarget() == player){
-                                    golem.setTarget(null);
-                                }
-                            }
-                        }
-
-                            if (tickCounter <= 0) {
-                                for (int i = 0; i < 3; i++) {
-                                    CoreNetworking.sendToNear(new SendParticlesS2C(
-                                            ParticleTypes.ANGRY_VILLAGER,
-                                            mob.getX(),
-                                            mob.getEyeY() + 0.25,
-                                            mob.getZ(),
-                                            0.1,
-                                            0.25,
-                                            0.1
-                                    ), mob);
-                                }
-                                tickCounter = random.nextInt(11) + 10;
-                            } else {
-                                tickCounter--;
-                            }
-
-                    }
-                }
                 if (mob instanceof Monster monster) {
                     MobEffectInstance lustCurse = monster.getEffect(ModEffects.CURSE_OF_OBESSSION.get());
                     if (lustCurse != null) {
@@ -868,27 +845,6 @@ public class ModEvents {
             for (Player player : level.players()) {
                 MobEffectInstance wrathCurse = player.getEffect(ModEffects.CURSE_OF_WRATH.get());
                 if (wrathCurse != null && player.distanceTo(entity) <= 25) {
-                    int amplifier = wrathCurse.getAmplifier();
-
-                    double healthBoost = 1.5;
-                    double damageBoost = 1.5;
-                    if (amplifier == 1) {
-                        healthBoost = 2.0;
-                        damageBoost = 2.0;
-                    } else if (amplifier >= 2) {
-                        healthBoost = 3.0;
-                        damageBoost = 3.0;
-                    }
-
-                    if (mob.getAttribute(Attributes.MAX_HEALTH) != null) {
-                        mob.getAttribute(Attributes.MAX_HEALTH).setBaseValue(mob.getMaxHealth() * healthBoost);
-                        mob.setHealth(mob.getMaxHealth());
-                    }
-
-                    if (mob.getAttribute(Attributes.ATTACK_DAMAGE) != null) {
-                        mob.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(mob.getAttribute(Attributes.ATTACK_DAMAGE).getValue() * damageBoost);
-                    }
-
 
                 }
             }

@@ -210,17 +210,22 @@ public class CursedAltarBlock extends BaseEntityBlock {
                                 if (playerTrial instanceof EliminationTrial eliminationTrial){
                                     if (eliminationTrial.completedFirstDegree || eliminationTrial.completedSecondDegree) {
                                         eliminationTrial.concludeTrial(player);
+                                        return InteractionResult.SUCCESS;
+                                    } else {
+                                        return InteractionResult.FAIL;
                                     }
-                                } else {
+                                } else if (playerTrial == null){
                                     return InteractionResult.FAIL;
                                 }
-                                // player.sendSystemMessage(Component.literal("You are already cursed! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
+                                //player.sendSystemMessage(Component.literal("You are already cursed! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
                             }
+
                             if (trialData.getCurrentAltarPos() != null &&
                                     !Objects.equals(trialData.getCurrentAltarPos(), altarEntity.getBlockPos())) {
                                 // player.sendSystemMessage(Component.literal("You have an altar! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
                                 return InteractionResult.FAIL;
                             }
+
                             return InteractionResult.PASS;
                         }).orElse(InteractionResult.PASS);
 
@@ -308,7 +313,6 @@ public class CursedAltarBlock extends BaseEntityBlock {
         return InteractionResult.PASS;
     }
 
-
     public static int SoulTorchAround(BlockGetter world, BlockPos centerPos ) {
         int soultorchamount = 0;
         for (int x = -2; x <= 2; x++) {
@@ -355,7 +359,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 0.5F
         );
 
-        altarEntity.cursePlayer(player, ModEffects.CURSE_OF_WRATH.get(), randomAmplifier);
+        altarEntity.cursePlayer(player, randomCurse, randomAmplifier);
         //player.displayClientMessage(Component.literal(
         //        "You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE), true); //debug code
     }
@@ -370,8 +374,13 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 .orElse(0);
 
         Trial trial = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
+                .resolve()
                 .map(PlayerTrialDataCapability::getActiveTrial)
                 .orElse(null);
+
+        if (trial == null) {
+            return;
+        }
 
         if (altarEntity.hasCollectedReward(player)) {
             //player.sendSystemMessage(Component.literal("You have already received your reward for this trial.").withStyle(ChatFormatting.RED));
@@ -400,6 +409,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
             player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent( trialData -> {
                 trialData.clearCurseAmplifier();
                 trialData.resetTrialProgress();
+                trialData.setActiveTrial(null);
             });
             altarEntity.markRewardCollected(player);
         }

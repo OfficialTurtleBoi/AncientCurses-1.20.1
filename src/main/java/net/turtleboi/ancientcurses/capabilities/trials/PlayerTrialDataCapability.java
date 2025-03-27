@@ -1,25 +1,20 @@
 package net.turtleboi.ancientcurses.capabilities.trials;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.AutoRegisterCapability;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.trials.Trial;
 import net.turtleboi.ancientcurses.trials.TrialRecord;
-import net.turtleboi.turtlecore.capabilities.targeting.PlayerTargetingData;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @AutoRegisterCapability
 public class PlayerTrialDataCapability {
@@ -30,7 +25,7 @@ public class PlayerTrialDataCapability {
     private ResourceKey<Level> altarDimension = null;
     private Trial activeTrial;
     private int pendingTrialUpdateTicks = 0;
-    private int eliminationKills = 0;
+    private int currentWave = 0;
     private int survivalTicks = 0;
     private int fetchItems = 0;
 
@@ -206,12 +201,12 @@ public class PlayerTrialDataCapability {
         return pendingTrialUpdateTicks;
     }
 
-    public int getEliminationKills() {
-        return eliminationKills;
+    public int getCurrentWave() {
+        return currentWave;
     }
 
-    public void setEliminationKills(int eliminationKills) {
-        this.eliminationKills = eliminationKills;
+    public void setCurrentWave(int currentWave) {
+        this.currentWave = currentWave;
     }
 
     public int getSurvivalTicks() {
@@ -231,7 +226,7 @@ public class PlayerTrialDataCapability {
     }
 
     public void resetTrialProgress(){
-        this.eliminationKills = 0;
+        this.currentWave = 0;
         this.survivalTicks = 0;
         this.fetchItems = 0;
     }
@@ -255,7 +250,7 @@ public class PlayerTrialDataCapability {
         }
 
         nbt.putInt("PendingTrialUpdateTicks", pendingTrialUpdateTicks);
-        nbt.putInt("EliminationKills", eliminationKills);
+        nbt.putInt("EliminationKills", currentWave);
         nbt.putInt("SurvivalTicks", survivalTicks);
         nbt.putInt("FetchItems", fetchItems);
 
@@ -283,7 +278,7 @@ public class PlayerTrialDataCapability {
             altarDimension = null;
         }
         pendingTrialUpdateTicks = nbt.getInt("PendingTrialUpdateTicks");
-        eliminationKills = nbt.getInt("EliminationKills");
+        currentWave = nbt.getInt("EliminationKills");
         survivalTicks = nbt.getInt("SurvivalTicks");
         fetchItems = nbt.getInt("FetchItems");
 

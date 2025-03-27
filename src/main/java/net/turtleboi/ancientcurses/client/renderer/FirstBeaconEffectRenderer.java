@@ -143,7 +143,7 @@ public class FirstBeaconEffectRenderer {
         Matrix3f normalMatrix = pose.normal();
 
         float nearFace = -1.0F;
-        float farFace = 16.0F * (4 * (progress * progress));
+        float farFace = 4096 * (progress * progress * progress);
         float faceScale = 2.0F;
 
         // Front Face
