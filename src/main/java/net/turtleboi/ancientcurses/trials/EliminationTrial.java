@@ -50,12 +50,12 @@ public class EliminationTrial implements Trial {
 
     private List<Entity> activeMobs = new ArrayList<>();
 
-    private final int firstDegreeThreshold = 5;
-    private boolean completedFirstDegree;
-    private final int secondDegreeThreshold = 10;
-    private boolean completedSecondDegree;
-    private final int thirdDegreeThreshold = 20;
-    private boolean completedThirdDegree;
+    public static final int firstDegreeThreshold = 5;
+    public boolean completedFirstDegree;
+    public static final int secondDegreeThreshold = 10;
+    public boolean completedSecondDegree;
+    public static final int thirdDegreeThreshold = 20;
+    public boolean completedThirdDegree;
 
     public static final String eliminationCount = "EliminationCount";
     public static final String eliminationRequirement = "EliminationRequirement";
@@ -147,7 +147,7 @@ public class EliminationTrial implements Trial {
 
     @Override
     public boolean isTrialCompleted(Player player) {
-        return (currentWave >= firstDegreeThreshold && activeMobs.isEmpty());
+        return (completedThirdDegree && activeMobs.isEmpty());
     }
 
     @Override
@@ -215,6 +215,44 @@ public class EliminationTrial implements Trial {
                     //System.out.println("[Elimination Trial] Wave " + currentWave + ": Done! First degree complete!");
                 }
             }
+        } else if (!completedSecondDegree) {
+            if (waveDelay > 0 ) {
+                waveDelay--;
+            }
+
+            if (currentWave < secondDegreeThreshold) {
+                if (waveDelay <= 0) {
+                    if (currentWave != 0) {
+                        //System.out.println("[Elimination Trial] Wave " + currentWave + ": Timed out! Spawning wave: " + (currentWave + 1));
+                    }
+                    spawnWave(player);
+                    currentWave++;
+                }
+            } else if (currentWave == secondDegreeThreshold && waveDelay <= 0) {
+                if (activeMobs.isEmpty()) {
+                    completedSecondDegree = true;
+                    //System.out.println("[Elimination Trial] Wave " + currentWave + ": Done! First degree complete!");
+                }
+            }
+        } else if (!completedThirdDegree) {
+            if (waveDelay > 0 ) {
+                waveDelay--;
+            }
+
+            if (currentWave < thirdDegreeThreshold) {
+                if (waveDelay <= 0) {
+                    if (currentWave != 0) {
+                        //System.out.println("[Elimination Trial] Wave " + currentWave + ": Timed out! Spawning wave: " + (currentWave + 1));
+                    }
+                    spawnWave(player);
+                    currentWave++;
+                }
+            } else if (currentWave == thirdDegreeThreshold && waveDelay <= 0) {
+                if (activeMobs.isEmpty()) {
+                    completedThirdDegree = true;
+                    //System.out.println("[Elimination Trial] Wave " + currentWave + ": Done! First degree complete!");
+                }
+            }
         }
 
         if (isTrialCompleted(player)) {
@@ -229,13 +267,6 @@ public class EliminationTrial implements Trial {
             //player.displayClientMessage(
             //        Component.literal("Eliminations: " + eliminationKills + "/" + eliminationKillsRequired)
             //                .withStyle(ChatFormatting.YELLOW), true);
-
-            //System.out.println("Trial Type: " + Trial.eliminationTrial);
-            //System.out.println("Elimination Target: " + eliminationTarget);
-            //System.out.println("Elimination Target String: " + eliminationTargetString);
-            //System.out.println("Elimination Kills: " + eliminationKills);
-            //System.out.println("Elimination Kills Required: " + eliminationKillsRequired);
-            //System.out.println("Progress Percentage: " + progressPercentage);
 
             player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
                 trialData.setEliminationKills(eliminationKills);
@@ -266,6 +297,16 @@ public class EliminationTrial implements Trial {
                     }
                 }
             });
+
+            System.out.println("Trial Type: " + Trial.eliminationTrial);
+            System.out.println("Trial Completed: " + isTrialCompleted(player));
+            System.out.println("Elimination Target: " + eliminationTarget);
+            System.out.println("Elimination Target String: " + eliminationTargetString);
+            System.out.println("Current Wave: " + currentWave);
+            System.out.println("Kills Remaining: " + activeMobs.size());
+            System.out.println("Total kill required this wave: " + waveKillTotal);
+            System.out.println("Time until next wave: " + waveDelay);
+            System.out.println("Total wave delay: " + getDefaultWaveDelay());
 
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(

@@ -1,5 +1,6 @@
 package net.turtleboi.ancientcurses.client;
 
+import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import net.turtleboi.ancientcurses.trials.Trial;
 
 public class PlayerClientData {
@@ -150,7 +151,7 @@ public class PlayerClientData {
         } else if (trialType.equalsIgnoreCase(Trial.eliminationTrial)) {
             long remainingDelay = getDurationElapsed();
             long totalDelay = getDurationTotal();
-            if (remainingDelay < totalDelay || (getWaveCount() == 5 && remainingDelay != 0)) {
+            if (remainingDelay < totalDelay && remainingDelay != 0) {
                 return Math.min(1.0F, 1.0F - ((float) remainingDelay / (float) totalDelay));
             } else {
                 int killsRemaining = getKillsRemaining();

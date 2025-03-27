@@ -46,6 +46,8 @@ import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.sound.ModSounds;
+import net.turtleboi.ancientcurses.trials.EliminationTrial;
+import net.turtleboi.ancientcurses.trials.Trial;
 import net.turtleboi.ancientcurses.util.ModTags;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
@@ -204,8 +206,15 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 InteractionResult playerTrialDataResult = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
                         .map(trialData -> {
                             if (trialData.isPlayerCursed()) {
+                                Trial playerTrial = trialData.getActiveTrial();
+                                if (playerTrial instanceof EliminationTrial eliminationTrial){
+                                    if (eliminationTrial.completedFirstDegree || eliminationTrial.completedSecondDegree) {
+                                        eliminationTrial.concludeTrial(player);
+                                    }
+                                } else {
+                                    return InteractionResult.FAIL;
+                                }
                                 // player.sendSystemMessage(Component.literal("You are already cursed! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
-                                return InteractionResult.FAIL;
                             }
                             if (trialData.getCurrentAltarPos() != null &&
                                     !Objects.equals(trialData.getCurrentAltarPos(), altarEntity.getBlockPos())) {
@@ -359,6 +368,11 @@ public class CursedAltarBlock extends BaseEntityBlock {
         int amplifier = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
                 .map(PlayerTrialDataCapability::getCurseAmplifier)
                 .orElse(0);
+
+        Trial trial = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
+                .map(PlayerTrialDataCapability::getActiveTrial)
+                .orElse(null);
+
         if (altarEntity.hasCollectedReward(player)) {
             //player.sendSystemMessage(Component.literal("You have already received your reward for this trial.").withStyle(ChatFormatting.RED));
             return;
@@ -368,7 +382,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
         if (player instanceof ServerPlayer) {
             CoreNetworking.sendToNear((new CameraShakeS2C(0.125F, 1000)), player);
-            rewardPlayerWithLootTable(player, amplifier, level, pos);
+            rewardPlayerWithLootTable(level,player, amplifier, trial, pos);
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
                             "None",
@@ -415,7 +429,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
         }
     }
 
-    private void rewardPlayerWithLootTable(Player player, int pAmplifier, Level level, BlockPos pos) {
+    private void rewardPlayerWithLootTable(Level level, Player player, int pAmplifier, Trial trial, BlockPos pos) {
         int adjustedAmplifier = pAmplifier - 1;
         //System.out.println("pAmplifier: " + adjustedAmplifier);
         ResourceLocation[] lootTableLocations = {
@@ -436,20 +450,18 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
         Random random = new Random();
 
-        int completedTrials = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
-                .map(PlayerTrialDataCapability::getPlayerTrialsCompleted)
-                .orElse(0);
-
-        int minRolls, maxRolls;
-        if (completedTrials > 25) {
-            minRolls = 3;
-            maxRolls = 5;
-        } else if (completedTrials > 10) {
-            minRolls = 2;
-            maxRolls = 3;
-        } else {
-            minRolls = 1;
-            maxRolls = 2;
+        int minRolls = 0, maxRolls = 0;
+        if (trial instanceof EliminationTrial eliminationTrial) {
+            if (eliminationTrial.completedThirdDegree) {
+                minRolls = 3;
+                maxRolls = 5;
+            } else if (eliminationTrial.completedSecondDegree) {
+                minRolls = 2;
+                maxRolls = 3;
+            } else if (eliminationTrial.completedFirstDegree){
+                minRolls = 1;
+                maxRolls = 2;
+            }
         }
 
         //System.out.println("Rolls parameters: minRolls = " + minRolls + ", maxRolls = " + maxRolls);
@@ -480,7 +492,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
         int[][] lootChances = {
                 {0, 0, 10, 100},
                 {0, 10, 75, 100},
-                {10, 66, 100, 100}
+                {5, 66, 100, 100}
         };
 
         for (int tier = 0; tier < gemLootLocations.length; tier++) {
