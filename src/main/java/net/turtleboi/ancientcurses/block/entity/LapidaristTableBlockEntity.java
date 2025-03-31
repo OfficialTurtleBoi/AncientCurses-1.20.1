@@ -25,7 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LapidaristTableBlockEntity extends BlockEntity implements MenuProvider {
-    private final ItemStackHandler itemStackHandler = new ItemStackHandler(7){
+    private final int maxSlots = 7;
+    private final ItemStackHandler itemStackHandler = new ItemStackHandler(maxSlots){
         @Override
         public int getSlotLimit(int slot) {
             return 1;
@@ -59,7 +60,7 @@ public class LapidaristTableBlockEntity extends BlockEntity implements MenuProvi
 
             @Override
             public int getCount() {
-                return 7;
+                return maxSlots;
             }
         };
     }

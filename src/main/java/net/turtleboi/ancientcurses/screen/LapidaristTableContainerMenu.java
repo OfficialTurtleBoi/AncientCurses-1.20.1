@@ -1,6 +1,7 @@
 package net.turtleboi.ancientcurses.screen;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
@@ -11,8 +12,9 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.SlotItemHandler;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.LapidaristTableBlockEntity;
-import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
-import net.turtleboi.ancientcurses.util.ModTags;
+import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.RefreshLapidaryScreenS2C;
+import net.turtleboi.turtlecore.client.util.ParticleSpawnQueue;
 import org.jetbrains.annotations.NotNull;
 
 public class LapidaristTableContainerMenu extends AbstractContainerMenu {
@@ -20,20 +22,28 @@ public class LapidaristTableContainerMenu extends AbstractContainerMenu {
     private final Level level;
     private final ContainerData data;
     private static final int MAX_SOCKETS = 6;
+    private static final int TE_SLOT_COUNT = 7;
+    private ServerPlayer serverPlayer = null;
 
     public LapidaristTableContainerMenu(int pContainerId, Inventory pPlayerInventory, FriendlyByteBuf pData) {
-        this(pContainerId, pPlayerInventory, pPlayerInventory.player.level().getBlockEntity(pData.readBlockPos()), new SimpleContainerData(7));
+        this(pContainerId, pPlayerInventory, pPlayerInventory.player.level().getBlockEntity(pData.readBlockPos()), new SimpleContainerData(TE_SLOT_COUNT));
     }
 
     public LapidaristTableContainerMenu(int pContainerId, Inventory pPlayerInventory, BlockEntity pEntity, ContainerData pData){
         super(ModMenuTypes.LAPIDARIST_MENU.get(), pContainerId);
-        checkContainerSize(pPlayerInventory, 7);
+        checkContainerSize(pPlayerInventory, TE_SLOT_COUNT);
         blockEntity = ((LapidaristTableBlockEntity) pEntity);
         this.level = pPlayerInventory.player.level();
         this.data = pData;
 
         addPlayerInventory(pPlayerInventory);
         addPlayerHotbar(pPlayerInventory);
+
+        if (pPlayerInventory.player instanceof ServerPlayer){
+            serverPlayer = (ServerPlayer) pPlayerInventory.player;
+        }
+
+        ItemStack socketableItem = blockEntity.getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
 
         this.blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(iItemHandler -> {
             this.addSlot(new SlotItemHandler(iItemHandler, 0, 14, 32) {
@@ -58,70 +68,38 @@ public class LapidaristTableContainerMenu extends AbstractContainerMenu {
                 public void setChanged() {
                     super.setChanged();
                     blockEntity.onSlotChanged();
+                    if (serverPlayer != null) {
+                        ModNetworking.sendToPlayer(new RefreshLapidaryScreenS2C(blockEntity.getBlockPos()), serverPlayer);
+                    }
+
                 }
             });
 
-            this.addSlot(new PreciousGemSlot(iItemHandler, 2, 80, 9, blockEntity) {
-                @Override
-                public boolean mayPlace(@NotNull ItemStack stack){
-                    ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
-                    return !socketableItem.isEmpty() &&
-                            super.mayPlace(stack) &&
-                            stack.getItem() instanceof PreciousGemItem &&
-                            !stack.is(ModTags.Items.ANCIENT_GEMS);
-                }
-            });
-            this.addSlot(new PreciousGemSlot(iItemHandler, 3, 53, 29, blockEntity) {
-                @Override
-                public boolean mayPlace(@NotNull ItemStack stack){
-                    ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
-                    return !socketableItem.isEmpty() &&
-                            super.mayPlace(stack) &&
-                            stack.getItem() instanceof PreciousGemItem &&
-                            !stack.is(ModTags.Items.ANCIENT_GEMS);
-                }
-            });
-            this.addSlot(new PreciousGemSlot(iItemHandler, 4, 107, 29, blockEntity) {
-                @Override
-                public boolean mayPlace(@NotNull ItemStack stack){
-                    ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
-                    return !socketableItem.isEmpty() &&
-                            super.mayPlace(stack) &&
-                            stack.getItem() instanceof PreciousGemItem &&
-                            !stack.is(ModTags.Items.ANCIENT_GEMS);
-                }
-            });
-            this.addSlot(new PreciousGemSlot(iItemHandler, 5, 62, 59, blockEntity) {
-                @Override
-                public boolean mayPlace(@NotNull ItemStack stack){
-                    ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
-                    return !socketableItem.isEmpty() &&
-                            super.mayPlace(stack) &&
-                            stack.getItem() instanceof PreciousGemItem &&
-                            !stack.is(ModTags.Items.ANCIENT_GEMS);
-                }
-            });
-            this.addSlot(new PreciousGemSlot(iItemHandler, 6, 98, 59, blockEntity) {
-                @Override
-                public boolean mayPlace(@NotNull ItemStack stack){
-                    ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
-                    return !socketableItem.isEmpty() &&
-                            super.mayPlace(stack) &&
-                            stack.getItem() instanceof PreciousGemItem &&
-                            !stack.is(ModTags.Items.ANCIENT_GEMS);
-                }
-            });
+            int socketCount = getSocketSlotCount(socketableItem);
 
-            this.addSlot(new PreciousGemSlot(iItemHandler, 1, 80, 34, blockEntity) {
-                @Override
-                public boolean mayPlace(@NotNull ItemStack stack) {
-                    ItemStack socketableItem = ((LapidaristTableBlockEntity) pEntity).getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot);
-                    return !socketableItem.isEmpty() &&
-                            super.mayPlace(stack) &&
-                            stack.getItem() instanceof PreciousGemItem &&
-                            !stack.is(ModTags.Items.MINOR_GEMS);
-                }
-            });
+            if (socketCount == 6) {
+                this.addSlot(new PreciousGemSlot(iItemHandler, 2, 80, 9, blockEntity, false));
+                this.addSlot(new PreciousGemSlot(iItemHandler, 3, 53, 29, blockEntity, false));
+                this.addSlot(new PreciousGemSlot(iItemHandler, 4, 107, 29, blockEntity, false));
+                this.addSlot(new PreciousGemSlot(iItemHandler, 5, 62, 59, blockEntity, false));
+                this.addSlot(new PreciousGemSlot(iItemHandler, 6, 98, 59, blockEntity, false));
+
+                this.addSlot(new PreciousGemSlot(iItemHandler, 1, 80, 34, blockEntity, true));
+            } else if (socketCount == 1) {
+                this.addSlot(new PreciousGemSlot(iItemHandler, 2, 80, 9, blockEntity, false));
+            } else if (socketCount == 2) {
+                this.addSlot(new PreciousGemSlot(iItemHandler, 2, 80, 9, blockEntity, false));
+                this.addSlot(new PreciousGemSlot(iItemHandler, 3, 53, 29, blockEntity, false));
+            } else if (socketCount == 3) {
+                this.addSlot(new PreciousGemSlot(iItemHandler, 2, 80, 9, blockEntity, false));
+                this.addSlot(new PreciousGemSlot(iItemHandler, 3, 53, 29, blockEntity, false));
+                this.addSlot(new PreciousGemSlot(iItemHandler, 4, 107, 29, blockEntity, false));
+            } else if (socketCount == 4) {
+                this.addSlot(new PreciousGemSlot(iItemHandler, 2, 80, 9, blockEntity, false));
+                this.addSlot(new PreciousGemSlot(iItemHandler, 3, 53, 29, blockEntity, false));
+                this.addSlot(new PreciousGemSlot(iItemHandler, 4, 107, 29, blockEntity, false));
+                this.addSlot(new PreciousGemSlot(iItemHandler, 5, 62, 59, blockEntity, false));
+            }
         });
 
         addDataSlots(pData);
@@ -141,6 +119,26 @@ public class LapidaristTableContainerMenu extends AbstractContainerMenu {
         }
     }
 
+    public void refreshContainer() {
+        for (int i = 0; i < slots.size(); i++) {
+            //lastSlots.set(i, ItemStack.EMPTY);
+        }
+
+        this.broadcastFullState();
+    }
+
+
+    public static int getSocketSlotCount(ItemStack stack) {
+        if (stack == null || stack.isEmpty() || !stack.hasTag()) {
+            return 0;
+        }
+
+        if (stack.getTag().getBoolean("Socketable")) {
+            return stack.getTag().getInt("SocketCount");
+        }
+        return 0;
+    }
+
     // CREDIT GOES TO: diesieben07 | https://github.com/diesieben07/SevenCommons
     // must assign a slot number to each of the slots used by the GUI.
     // For this container, we can see both the tile inventory's slots as well as the player inventory slots and the hotbar.
@@ -157,7 +155,7 @@ public class LapidaristTableContainerMenu extends AbstractContainerMenu {
     private static final int TE_INVENTORY_FIRST_SLOT_INDEX = VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT;
 
     // THIS YOU HAVE TO DEFINE!
-    private static final int TE_INVENTORY_SLOT_COUNT = 7;  // must be the number of slots you have!
+    private static final int TE_INVENTORY_SLOT_COUNT = TE_SLOT_COUNT;  // must be the number of slots you have!
     @Override
     public ItemStack quickMoveStack(Player playerIn, int pIndex) {
         Slot sourceSlot = slots.get(pIndex);

@@ -41,6 +41,7 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.inventory.EnchantmentMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
@@ -50,6 +51,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.AnvilUpdateEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
@@ -1110,38 +1112,39 @@ public class ModEvents {
         }
     }
 
-    //@SubscribeEvent
-    //public static void onAnvilUpdate(AnvilUpdateEvent event) {
-    //    ItemStack leftStack = event.getLeft();
-    //    ItemStack rightStack = event.getRight();
-    //    if (rightStack.getItem() == Items.DIAMOND) {
-    //        ItemStack resultStack = leftStack.copy();
-    //        CompoundTag nbt = resultStack.getOrCreateTag();
-    //        int currentSockets = nbt.getInt("SocketCount");
-    //        boolean isSocketable = nbt.getBoolean("Socketable");
+    @SubscribeEvent
+    public static void onAnvilUpdate(AnvilUpdateEvent event) {
+        ItemStack leftStack = event.getLeft();
+        ItemStack rightStack = event.getRight();
+        if (rightStack.getItem() == Items.DIAMOND) {
+            ItemStack resultStack = leftStack.copy();
+            CompoundTag nbt = resultStack.getOrCreateTag();
+            int currentSockets = nbt.getInt("SocketCount");
+            boolean isSocketable = nbt.getBoolean("Socketable");
 //
-    //        if (!isSocketable || (isSocketable && currentSockets < 3)) {
-    //            if (!isSocketable) {
-    //                nbt.putBoolean("Socketable", true);
-    //                currentSockets = 0;
-    //            }
-    //            if (currentSockets < 3) {
-    //                nbt.putInt("SocketCount", currentSockets + 1);
-    //                ListTag socketsList = nbt.getList("Sockets", CompoundTag.TAG_COMPOUND);
-    //                CompoundTag newSocket = new CompoundTag();
-    //                newSocket.putInt("SlotIndex", currentSockets);
-    //                newSocket.putString("SocketType", "General");
-    //                socketsList.add(newSocket);
-    //                nbt.put("Sockets", socketsList);
-    //            }
+            if (!isSocketable || (isSocketable && currentSockets < 4)) {
+                if (!isSocketable) {
+                    nbt.putBoolean("Socketable", true);
+                    currentSockets = 0;
+                }
+
+                if (currentSockets < 4) {
+                    nbt.putInt("SocketCount", currentSockets + 1);
+                    ListTag socketsList = nbt.getList("Sockets", CompoundTag.TAG_COMPOUND);
+                    CompoundTag newSocket = new CompoundTag();
+                    newSocket.putInt("SlotIndex", currentSockets);
+                    newSocket.putString("SocketType", "General");
+                    socketsList.add(newSocket);
+                    nbt.put("Sockets", socketsList);
+                }
 //
-    //            resultStack.setTag(nbt);
-    //            event.setOutput(resultStack);
-    //            event.setCost(5);
-    //            event.setMaterialCost(1);
-    //        }
-    //    }
-    //}
+                resultStack.setTag(nbt);
+                event.setOutput(resultStack);
+                event.setCost(5);
+                event.setMaterialCost(1);
+            }
+        }
+    }
 
     @SubscribeEvent
     public static void onItemToss(ItemTossEvent event) {

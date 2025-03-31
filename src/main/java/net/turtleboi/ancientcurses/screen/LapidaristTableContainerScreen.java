@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.turtleboi.ancientcurses.AncientCurses;
+import net.turtleboi.ancientcurses.block.entity.LapidaristTableBlockEntity;
 
 public class LapidaristTableContainerScreen extends AbstractContainerScreen<LapidaristTableContainerMenu> {
     private static final ResourceLocation TEXTURE =
@@ -34,13 +35,9 @@ public class LapidaristTableContainerScreen extends AbstractContainerScreen<Lapi
 
         pGuiGraphics.blit(TEXTURE, x, y, 0, 0, 176, 166);
 
-        pGuiGraphics.blit(TEXTURE, x + 79, y + 8, 176, 0, 18, 18);
-        pGuiGraphics.blit(TEXTURE, x + 52, y + 28, 176, 0, 18, 18);
-        pGuiGraphics.blit(TEXTURE, x + 106, y + 28, 176, 0, 18, 18);
-        pGuiGraphics.blit(TEXTURE, x + 61, y + 58, 176, 0, 18, 18);
-        pGuiGraphics.blit(TEXTURE, x + 97, y + 58, 176, 0, 18, 18);
-
-        pGuiGraphics.blit(TEXTURE, x + 76, y + 30, 176, 18, 24, 24);
+        if (!mainSlotEmpty()) {
+            renderSlots(pGuiGraphics, x, y);
+        }
     }
 
     @Override
@@ -48,5 +45,38 @@ public class LapidaristTableContainerScreen extends AbstractContainerScreen<Lapi
         renderBackground(pGuiGraphics);
         super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
         renderTooltip(pGuiGraphics, pMouseX, pMouseY);
+    }
+
+    private boolean mainSlotEmpty(){
+        return menu.blockEntity.getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot).isEmpty();
+    }
+
+    private void renderSlots(GuiGraphics guiGraphics, int x, int y) {
+        int socketCount = LapidaristTableContainerMenu.getSocketSlotCount(
+                menu.blockEntity.getInventory().getStackInSlot(LapidaristTableBlockEntity.socketableItemSlot));
+        if (socketCount == 6) {
+            guiGraphics.blit(TEXTURE, x + 79, y + 8, 176, 0, 18, 18);
+            guiGraphics.blit(TEXTURE, x + 52, y + 28, 176, 0, 18, 18);
+            guiGraphics.blit(TEXTURE, x + 106, y + 28, 176, 0, 18, 18);
+            guiGraphics.blit(TEXTURE, x + 61, y + 58, 176, 0, 18, 18);
+            guiGraphics.blit(TEXTURE, x + 97, y + 58, 176, 0, 18, 18);
+
+            guiGraphics.blit(TEXTURE, x + 76, y + 30, 176, 18, 24, 24);
+        } else if (socketCount == 1) {
+            guiGraphics.blit(TEXTURE, x + 79, y + 8, 176, 0, 18, 18);
+        } else if (socketCount == 2) {
+            guiGraphics.blit(TEXTURE, x + 79, y + 8, 176, 0, 18, 18);
+            guiGraphics.blit(TEXTURE, x + 52, y + 28, 176, 0, 18, 18);
+        } else if (socketCount == 3) {
+            guiGraphics.blit(TEXTURE, x + 79, y + 8, 176, 0, 18, 18);
+            guiGraphics.blit(TEXTURE, x + 52, y + 28, 176, 0, 18, 18);
+            guiGraphics.blit(TEXTURE, x + 106, y + 28, 176, 0, 18, 18);
+        } else if (socketCount == 4) {
+            guiGraphics.blit(TEXTURE, x + 79, y + 8, 176, 0, 18, 18);
+            guiGraphics.blit(TEXTURE, x + 52, y + 28, 176, 0, 18, 18);
+            guiGraphics.blit(TEXTURE, x + 106, y + 28, 176, 0, 18, 18);
+            guiGraphics.blit(TEXTURE, x + 61, y + 58, 176, 0, 18, 18);
+        }
+
     }
 }
