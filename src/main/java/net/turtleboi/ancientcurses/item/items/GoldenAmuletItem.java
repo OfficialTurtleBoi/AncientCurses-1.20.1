@@ -1,18 +1,13 @@
 package net.turtleboi.ancientcurses.item.items;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.UUID;
 
 public class GoldenAmuletItem extends Item {
@@ -71,7 +66,7 @@ public class GoldenAmuletItem extends Item {
         return amuletTag != null && amuletTag.hasUUID("AmuletUUID") ? amuletTag.getUUID("AmuletUUID") : null;
     }
 
-    public void applyGemBonuses(Player player, ItemStack amulet) {
+    public void applyAmuletGemBonus(Player player, ItemStack amulet) {
         if (!amulet.hasTag()) {
             return;
         }
@@ -95,7 +90,7 @@ public class GoldenAmuletItem extends Item {
                 CompoundTag minorGemTag = minorGemsTag.getCompound(i);
                 ItemStack minorGem = ItemStack.of(minorGemTag);
                 if (minorGem.getItem() instanceof PreciousGemItem preciousGem) {
-                    preciousGem.applyMinorBonus(player, i + 1);
+                    preciousGem.applyAmuletMinorBonus(player, i + 1);
                 }
             }
         }

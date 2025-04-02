@@ -1,6 +1,7 @@
 package net.turtleboi.ancientcurses.screen;
 
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
@@ -8,6 +9,8 @@ import net.turtleboi.ancientcurses.block.entity.LapidaristTableBlockEntity;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.util.ModTags;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.reflect.Field;
 
 public class PreciousGemSlot extends SlotItemHandler {
     private final LapidaristTableBlockEntity blockEntity;

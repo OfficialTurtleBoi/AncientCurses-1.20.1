@@ -1,6 +1,7 @@
 package net.turtleboi.ancientcurses.network.packets;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
@@ -12,17 +13,21 @@ import java.util.function.Supplier;
 
 public class RefreshLapidaryScreenS2C {
     private final BlockPos blockPos;
+    private final int containerId;
 
-    public RefreshLapidaryScreenS2C(BlockPos blockPos) {
+    public RefreshLapidaryScreenS2C(BlockPos blockPos, int containerId) {
         this.blockPos = blockPos;
+        this.containerId = containerId;
     }
 
     public RefreshLapidaryScreenS2C(FriendlyByteBuf buf) {
         this.blockPos = buf.readBlockPos();
+        this.containerId = buf.readInt();
     }
 
     public void toBytes(FriendlyByteBuf buf){
         buf.writeBlockPos(blockPos);
+        buf.writeInt(containerId);
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {

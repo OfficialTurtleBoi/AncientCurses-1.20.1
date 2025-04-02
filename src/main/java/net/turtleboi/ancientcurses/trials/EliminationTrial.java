@@ -49,11 +49,11 @@ public class EliminationTrial implements Trial {
 
     private List<Entity> activeMobs = new ArrayList<>();
 
-    public static final int firstDegreeThreshold = 5;
+    public static final int firstDegreeThreshold = 1;
     public boolean completedFirstDegree;
-    public static final int secondDegreeThreshold = 10;
+    public static final int secondDegreeThreshold = 3;
     public boolean completedSecondDegree;
-    public static final int thirdDegreeThreshold = 20;
+    public static final int thirdDegreeThreshold = 5;
     public boolean completedThirdDegree;
 
     public static final String eliminationCount = "EliminationCount";
@@ -419,8 +419,8 @@ public class EliminationTrial implements Trial {
 
     private int calculateRequiredKillCount(int amplifier) {
         double variation = ThreadLocalRandom.current().nextDouble(0.75, 1.26);
-        int base = 4 * (1 << (amplifier - 1));
-        double waveMultiplier = 1.0 + ((double) currentWave / 10.0);
+        int base = 2 * (1 << (amplifier - 1));
+        double waveMultiplier = 1.0 + ((double) currentWave / 4.0);
         int baseKillCount = (int) Math.round(base * variation * waveMultiplier);
         if (eliminationTarget.equals(EntityType.GHAST) ||
                 eliminationTarget.equals(EntityType.SLIME) ||
