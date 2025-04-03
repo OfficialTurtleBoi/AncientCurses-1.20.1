@@ -81,6 +81,7 @@ public class FirstBeaconEffectRenderer {
             poseStack.pushPose();
             float ticksElapsed = beaconItem.getUseDuration(itemStack) - beaconItem.getRemainingUseDuration();
             float progress = Math.min(1.0f, ticksElapsed / beaconItem.getMaxChargeTicks());
+            double hitDistance = beaconItem.getHitDistance();
 
             if (ticksElapsed < 0) {
                 poseStack.popPose();
@@ -100,7 +101,7 @@ public class FirstBeaconEffectRenderer {
             float rotationAngle = ticksElapsed * rotationSpeed;
 
             if (ticksElapsed > initialTicks) {
-                scale = 0.175f + (0.175f * progress);
+                scale = 0.175f + (0.175f * Math.min(1, progress * 2));
             }
 
             float alpha = progress;
@@ -120,43 +121,57 @@ public class FirstBeaconEffectRenderer {
                 tiltOffset = -5;
             }
 
-            poseStack.translate(handOffset, 0, -2);
+            poseStack.translate(handOffset, -0.5, -2);
             poseStack.scale(0.5F, 0.5F, 0.5F);
             //poseStack.mulPose(Axis.YP.rotationDegrees(-livingEntity.getYRot()));
             poseStack.mulPose(Axis.YP.rotationDegrees(tiltOffset));
+            poseStack.mulPose(Axis.XP.rotationDegrees(2.5F));
             poseStack.mulPose(Axis.ZP.rotationDegrees(-rotationAngle));
             poseStack.scale(scale, scale, scale);
 
             ArcaneCircleRenderer.renderArcaneCircle(bufferSource, poseStack, vertexAlpha);
-            renderBeam(bufferSource, poseStack, vertexAlpha, progress);
+            renderBeam(bufferSource, poseStack, 164, progress, hitDistance);
 
             poseStack.popPose();
         }
     }
 
-    public static void renderBeam(MultiBufferSource bufferSource, PoseStack poseStack, int vertexAlpha, float progress) {
-        VertexConsumer originalConsumer = bufferSource.getBuffer(RenderType.entityTranslucentCull(
-                new ResourceLocation("minecraft", "textures/block/blue_ice.png")));
-        VertexConsumer repeatingConsumer = new RepeatingVertexConsumer(originalConsumer, 1, 1);
+    public static void renderBeam(MultiBufferSource bufferSource, PoseStack poseStack, int vertexAlpha, float progress, double hitDistance) {
+        VertexConsumer beamEndConsumer = bufferSource.getBuffer(RenderType.entityTranslucentEmissive(
+                new ResourceLocation(AncientCurses.MOD_ID, "textures/spell_effects/beacon_beam_end.png")));
+        VertexConsumer originalConsumer = bufferSource.getBuffer(RenderType.entityTranslucentEmissive(
+                new ResourceLocation(AncientCurses.MOD_ID, "textures/spell_effects/beacon_beam_side.png")));
+        VertexConsumer repeatingConsumer = new RepeatingVertexConsumer(originalConsumer, 4, 4);
         PoseStack.Pose pose = poseStack.last();
         Matrix4f matrix = pose.pose();
         Matrix3f normalMatrix = pose.normal();
 
         float nearFace = -1.0F;
-        float farFace = 4096 * (progress * progress * progress);
-        float faceScale = 2.0F;
 
-        // Front Face
-        VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix, -faceScale, -faceScale, nearFace, 0.0F, 0.0F, 255, 255, 255, vertexAlpha);
-        VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix,  faceScale, -faceScale, nearFace, 1.0F, 0.0F, 255, 255, 255, vertexAlpha);
-        VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix,  faceScale,  faceScale, nearFace, 1.0F, 1.0F, 255, 255, 255, vertexAlpha);
-        VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix, -faceScale,  faceScale, nearFace, 0.0F, 1.0F, 255, 255, 255, vertexAlpha);
+        float farFace = getFarFace(progress, hitDistance);
 
-        // Back Face
-        VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix, -faceScale,  faceScale, -farFace, 0.0F, 1.0F, 255, 255, 255, vertexAlpha);
-        VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix,  faceScale,  faceScale, -farFace, 1.0F, 1.0F, 255, 255, 255, vertexAlpha);
-        VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix,  faceScale, -faceScale, -farFace, 1.0F, 0.0F, 255, 255, 255, vertexAlpha);
-        VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix, -faceScale, -faceScale, -farFace, 0.0F, 0.0F, 255, 255, 255, vertexAlpha);
+        float faceScale;
+        if (progress < 0.25f) {
+            faceScale = 7f * (progress / 0.25f);
+        } else if (progress < 0.27f) {
+            faceScale = 7f;
+        } else if (progress < 0.35f) {
+            faceScale = 7f - ((progress - 0.27f) / 0.08f) * 5f;
+        } else {
+            faceScale = 2f;
+        }
+
+        // Near Face
+        VertexBuilder.vertex(beamEndConsumer, matrix, normalMatrix, -faceScale, -faceScale, nearFace, 0.0F, 0.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(beamEndConsumer, matrix, normalMatrix,  faceScale, -faceScale, nearFace, 4.0F, 0.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(beamEndConsumer, matrix, normalMatrix,  faceScale,  faceScale, nearFace, 4.0F, 4.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(beamEndConsumer, matrix, normalMatrix, -faceScale,  faceScale, nearFace, 0.0F, 4.0F, 255, 255, 255, vertexAlpha);
+
+        // Far Face
+        VertexBuilder.vertex(beamEndConsumer, matrix, normalMatrix, -faceScale,  faceScale, -farFace, 0.0F, 4.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(beamEndConsumer, matrix, normalMatrix,  faceScale,  faceScale, -farFace, 4.0F, 4.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(beamEndConsumer, matrix, normalMatrix,  faceScale, -faceScale, -farFace, 4.0F, 0.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(beamEndConsumer, matrix, normalMatrix, -faceScale, -faceScale, -farFace, 0.0F, 0.0F, 255, 255, 255, vertexAlpha);
 
         // Left Face
         VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix, -faceScale, -faceScale, nearFace, 0.0F, 0.0F, 255, 255, 255, vertexAlpha);
@@ -181,5 +196,32 @@ public class FirstBeaconEffectRenderer {
         VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix,  faceScale, -faceScale, -farFace, progress, progress, 255, 255, 255, vertexAlpha);
         VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix,  faceScale, -faceScale, nearFace, progress, 0.0F, 255, 255, 255, vertexAlpha);
         VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix, -faceScale, -faceScale, nearFace, 0.0F, 0.0F, 255, 255, 255, vertexAlpha);
+    }
+
+    private static float getFarFace(float progress, double hitDistance) {
+        float farFace;
+        float maxFarFace;
+
+        if (hitDistance <= 4.0f) {
+            maxFarFace = (float) (4.0f + (hitDistance / 4.0f) * (64.0f - 4.0f));
+        } else {
+            float clampedDistance = (float) Math.min(hitDistance, 64.0f);
+            maxFarFace = 64.0f + ((clampedDistance - 4.0f) / 60.0f) * (256.0f - 64.0f);
+        }
+
+        if (progress <= 0.25f) {
+            float scale = progress / 0.25f;
+            farFace = scale * 16.0f;
+        } else if (progress <= 0.3f) {
+            float scale = (progress - 0.25f) / 0.05f;
+            farFace = 16.0f - scale * (16.0f - 0.5f);
+        } else if (progress <= 0.35f) {
+            float scale = (progress - 0.3f) / 0.05f;
+            farFace = 0.5f + scale * (maxFarFace - 0.5f);
+        } else {
+            farFace = maxFarFace;
+        }
+
+        return farFace;
     }
 }

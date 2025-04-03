@@ -1,0 +1,30 @@
+{
+  "parent": "item/handheld",
+  "loader": "forge:separate_transforms",
+  "base": {
+    "parent": "ancientcurses:item/first_beacon_model"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "ancientcurses:item/first_beacon_item"
+    },
+    "ground": {
+      "parent": "ancientcurses:item/first_beacon_item"
+    },
+    "fixed": {
+      "parent": "ancientcurses:item/first_beacon_item"
+    },
+    "thirdperson_righthand": {
+      "parent": "ancientcurses:item/first_beacon_model"
+    },
+    "thirdperson_lefthand": {
+      "parent": "ancientcurses:item/first_beacon_model"
+    },
+    "firstperson_righthand": {
+      "parent": "ancientcurses:item/first_beacon_model"
+    },
+    "firstperson_lefthand": {
+      "parent": "ancientcurses:item/first_beacon_model"
+    }
+  }
+}

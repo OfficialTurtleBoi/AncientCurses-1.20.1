@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.turtleboi.ancientcurses.enchantment.ModEnchantments;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
@@ -24,6 +25,7 @@ public class FirstBeaconItem extends Item {
     private static int maxChargeTicks = 100;
     private int remainingUseDuration;
     private boolean beingUsed;
+    private double hitDistance;
 
     public FirstBeaconItem(Properties pProperties) {
         super(pProperties);
@@ -46,12 +48,15 @@ public class FirstBeaconItem extends Item {
             Vec3 lookVec = pPlayer.getLookAngle();
             Vec3 startVec = pPlayer.getEyePosition(1.0f);
             float chargeProgress = Math.min(1.0f, (float) (getUseDuration(pStack) - getRemainingUseDuration()) / maxChargeTicks);
-            Vec3 endVec = startVec.add(lookVec.scale(range * (chargeProgress * chargeProgress)));
+            Vec3 endVec = startVec.add(lookVec.scale(range));
             setRemainingUseDuration(pRemainingUseDuration);
 
+            HitResult result = TargetingUtils.rayTraceClosest(pPlayer, startVec, endVec);
+            double hitDistance = startVec.distanceTo(result.getLocation());
+            setHitDistance(hitDistance);
 
             List<EntityHitResult> hitResults = TargetingUtils.rayTraceEntities(pPlayer, startVec, endVec);
-            if (!hitResults.isEmpty()) {
+            if (!hitResults.isEmpty() && chargeProgress > 0.35f) {
                 float baseDamage = 10.0f * chargeProgress;
                 for (int i = 0; i < hitResults.size(); i++) {
                     EntityHitResult hit = hitResults.get(i);
@@ -93,5 +98,13 @@ public class FirstBeaconItem extends Item {
 
     public void setRemainingUseDuration(int remainingUseDuration) {
         this.remainingUseDuration = remainingUseDuration;
+    }
+
+    public double getHitDistance(){
+        return hitDistance;
+    }
+
+    public void setHitDistance(double hitDistance) {
+        this.hitDistance = hitDistance;
     }
 }
