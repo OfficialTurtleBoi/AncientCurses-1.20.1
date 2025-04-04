@@ -48,6 +48,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.AnvilUpdateEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.item.ItemEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.*;
@@ -61,13 +62,16 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
+import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.*;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
 import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.trials.*;
@@ -1202,10 +1206,10 @@ public class ModEvents {
                                     1.0f,
                                     0.5f
                             );
-                            trial.trackProgress(player);
+                            fetchTrial.trackProgress(player);
 
-                            if (fetchTrial.isTrialCompleted(player)) {
-                                fetchTrial.concludeTrial(player);
+                            if (fetchTrial.getCollectedCount() >= fetchTrial.getRequiredCount()) {
+                                fetchTrial.advanceDegree(player);
                             }
 
                             //System.out.println("Player " + player.getName().getString() + " has thrown " + tossedItem.getDescriptionId() + " at altar " + altarPos + ". Collected: " + fetchTrial.getCollectedCount() + "/" + fetchTrial.getRequiredCount());
@@ -1250,6 +1254,16 @@ public class ModEvents {
             if (isItemEnchantable(stack)) {
                 stack.getOrCreateTag().putBoolean(notYetEnchanted, true);
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onItemBreak(PlayerDestroyItemEvent event) {
+        Player player = event.getEntity();
+        ItemStack itemStack = event.getOriginal();
+
+        if (player instanceof ServerPlayer serverPlayer && itemStack.getItem() instanceof FirstBeaconItem) {
+
         }
     }
 

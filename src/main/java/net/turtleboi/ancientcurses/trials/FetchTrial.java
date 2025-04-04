@@ -41,17 +41,32 @@ public class FetchTrial implements Trial {
 
     private boolean completed;
 
+    private int currentDegree = 0;
+    public boolean completedFirstDegree;
+    public boolean completedSecondDegree;
+    public boolean completedThirdDegree;
+
+    private final List<Item> degreeItems = new ArrayList<>();
+    private final List<Integer> degreeCounts = new ArrayList<>();
+    private final List<Integer> degreeCollected = new ArrayList<>();
+    private final List<String> degreeItemNames = new ArrayList<>();
+
     public FetchTrial(Player player, MobEffect effect, int amplifier, CursedAltarBlockEntity altar) {
         this.playerUUID = player.getUUID();
         this.altar = altar;
         this.effect = effect;
         this.completed = false;
-        this.requiredItem = selectRandomItem();
-        ItemStack stack = new ItemStack(requiredItem);
-        Component itemNameComponent = stack.getDisplayName();
-        this.itemName = itemNameComponent.getString();
         this.collectedCount = 0;
-        this.requiredCount = calculateRequiredCount(amplifier + 1);
+
+        for (int i = 0; i < 3; i++) {
+            Item item = selectRandomItem();
+            degreeItems.add(item);
+            degreeCounts.add(calculateRequiredCount(amplifier + 1));
+            degreeCollected.add(0);
+            ItemStack stack = new ItemStack(item);
+            Component itemNameComponent = stack.getDisplayName();
+            degreeItemNames.add(itemNameComponent.getString());
+        }
 
         player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
             trialData.setCurseEffect(effect);
@@ -156,7 +171,7 @@ public class FetchTrial implements Trial {
 
     @Override
     public boolean isTrialCompleted(Player player) {
-        return completed || collectedCount >= requiredCount;
+        return completed || completedThirdDegree;
     }
 
     @Override
@@ -177,6 +192,10 @@ public class FetchTrial implements Trial {
     @Override
     public void trackProgress(Player player) {
         if (player != null) {
+            String currentItemName = getCurrentItemName();
+            int collected = getCollectedCount();
+            int required = getRequiredCount();
+
             float progressPercentage = Math.min((float) collectedCount / requiredCount, 1.0f);
             ModNetworking.sendToPlayer(
                     new SyncTrialDataS2C(
@@ -188,9 +207,9 @@ public class FetchTrial implements Trial {
                             0,
                             0,
                             0,
-                            itemName,
-                            collectedCount,
-                            requiredCount),
+                            currentItemName,
+                            collected,
+                            required),
                     (ServerPlayer) player
             );
             // player.displayClientMessage(
@@ -212,9 +231,9 @@ public class FetchTrial implements Trial {
                         0,
                         0,
                         0,
-                        itemName,
-                        requiredCount,
-                        requiredCount),
+                        "",
+                        0,
+                        0),
                 (ServerPlayer) player
         );
         player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(PlayerTrialDataCapability::clearCurseEffect);
@@ -251,23 +270,50 @@ public class FetchTrial implements Trial {
         altar.setPlayerTrialCompleted(player);
     }
 
-    public void incrementFetchCount(Player player, int itemCount) {
-        collectedCount += itemCount;
+    public void advanceDegree(Player player) {
+        if (currentDegree < 3) {
+            currentDegree++;
+        }
 
+        if (currentDegree == 1) {
+            completedFirstDegree = true;
+        } else if (currentDegree == 2) {
+            completedSecondDegree = true;
+        } else if (currentDegree == 3) {
+            completedThirdDegree = true;
+        }
+
+        if (completedThirdDegree) {
+            concludeTrial(player);
+        } else {
+            trackProgress(player);
+        }
+    }
+
+    public void incrementFetchCount(Player player, int itemCount) {
+        int collected = degreeCollected.get(currentDegree);
+        collected += itemCount;
+        degreeCollected.set(currentDegree, collected);
+
+        int finalCollected = collected;
         player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-            trialData.setFetchItems(itemCount);
+            trialData.setFetchItems(finalCollected);
         });
     }
 
     public Item getRequiredItem() {
-        return requiredItem;
+        return degreeItems.get(currentDegree);
     }
 
     public int getRequiredCount() {
-        return requiredCount;
+        return degreeCounts.get(currentDegree);
     }
 
     public int getCollectedCount() {
-        return collectedCount;
+        return degreeCollected.get(currentDegree);
+    }
+
+    public String getCurrentItemName() {
+        return degreeItemNames.get(currentDegree);
     }
 }

@@ -22,6 +22,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -42,6 +43,15 @@ import java.util.Random;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID, value = Dist.CLIENT)
 public class ModClientEvents {
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (!PlayerClientData.getItemUsed() && PlayerClientData.getItemRemainingUseTime() <= 100) {
+            if (PlayerClientData.getItemRemainingUseTime() > 0) {
+                PlayerClientData.setItemRemainingUseTime(PlayerClientData.getItemRemainingUseTime() - 1);
+            }
+        }
+    }
+
     @SubscribeEvent
     public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
         Player player = Minecraft.getInstance().player;

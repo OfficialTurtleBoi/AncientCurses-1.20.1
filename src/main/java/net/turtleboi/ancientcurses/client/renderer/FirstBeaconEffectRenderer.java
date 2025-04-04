@@ -10,6 +10,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.turtleboi.ancientcurses.AncientCurses;
+import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
 import net.turtleboi.turtlecore.client.renderer.ArcaneCircleRenderer;
 import net.turtleboi.turtlecore.client.util.RepeatingVertexConsumer;
@@ -77,36 +78,50 @@ public class FirstBeaconEffectRenderer {
     }
 
     public static void renderFirstPerson(MultiBufferSource bufferSource, PoseStack poseStack, InteractionHand interactionHand, ItemStack itemStack) {
-        if (itemStack.getItem() instanceof FirstBeaconItem beaconItem && beaconItem.isBeingUsed()) {
+        int remainingUseTime = PlayerClientData.getItemRemainingUseTime();
+        int animationFallOff = 40;
+        if (itemStack.getItem() instanceof FirstBeaconItem && remainingUseTime > 0) {
             poseStack.pushPose();
-            float ticksElapsed = beaconItem.getUseDuration(itemStack) - beaconItem.getRemainingUseDuration();
-            float progress = Math.min(1.0f, ticksElapsed / beaconItem.getMaxChargeTicks());
-            double hitDistance = beaconItem.getHitDistance();
+            float ticksElapsed = PlayerClientData.getItemMaxDurationTicks() - remainingUseTime;
+            float progress = Math.min(1.0f, ticksElapsed / FirstBeaconItem.chargeRate);
+            double hitDistance = PlayerClientData.getItemHitDistance();
 
             if (ticksElapsed < 0) {
                 poseStack.popPose();
                 return;
             }
 
-            float initialTicks = (float) beaconItem.getMaxChargeTicks() / 10;
+            float initialTicks = (float) 10;
             float scale = 0.25f * progress;
 
             float rotationSpeed;
-            if (ticksElapsed < initialTicks) {
-                rotationSpeed = 3.0f;
+            if (remainingUseTime > animationFallOff) {
+                if (ticksElapsed < initialTicks) {
+                    rotationSpeed = 3.0f;
+                } else {
+                    rotationSpeed = 25.0F * progress;
+                }
             } else {
-                rotationSpeed = 25.0F * progress;
+                rotationSpeed = 25.0f * ((float) remainingUseTime / animationFallOff);
             }
 
             float rotationAngle = ticksElapsed * rotationSpeed;
 
-            if (ticksElapsed > initialTicks) {
-                scale = 0.175f + (0.175f * Math.min(1, progress * 2));
+            if (remainingUseTime > animationFallOff) {
+                if (ticksElapsed > initialTicks) {
+                    scale = 0.175f + (0.175f * Math.min(1, progress * 2));
+                }
+            } else {
+                scale = 0.35f * ((float) remainingUseTime / animationFallOff);
             }
 
             float alpha = progress;
-            if (ticksElapsed > initialTicks) {
-                alpha = 1.0f;
+            if (remainingUseTime > animationFallOff) {
+                if (ticksElapsed > initialTicks) {
+                    alpha = 1.0f;
+                }
+            } else {
+                alpha = ((float) remainingUseTime / animationFallOff);
             }
 
             int vertexAlpha = (int) (alpha * 255.0f);
@@ -209,6 +224,7 @@ public class FirstBeaconEffectRenderer {
             maxFarFace = 64.0f + ((clampedDistance - 4.0f) / 60.0f) * (256.0f - 64.0f);
         }
 
+
         if (progress <= 0.25f) {
             float scale = progress / 0.25f;
             farFace = scale * 16.0f;
@@ -221,6 +237,7 @@ public class FirstBeaconEffectRenderer {
         } else {
             farFace = maxFarFace;
         }
+
 
         return farFace;
     }

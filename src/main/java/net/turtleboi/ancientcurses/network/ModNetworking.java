@@ -8,6 +8,8 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.network.packets.*;
+import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketC2S;
+import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.network.packets.trials.TrialOverlayPacketC2S;
 
@@ -73,6 +75,18 @@ public class ModNetworking {
                 .decoder(RefreshLapidaryScreenC2S::new)
                 .encoder(RefreshLapidaryScreenC2S::toBytes)
                 .consumerMainThread(RefreshLapidaryScreenC2S::handle)
+                .add();
+
+        net.messageBuilder(BeaconInfoPacketS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(BeaconInfoPacketS2C::new)
+                .encoder(BeaconInfoPacketS2C::toBytes)
+                .consumerMainThread(BeaconInfoPacketS2C::handle)
+                .add();
+
+        net.messageBuilder(BeaconInfoPacketC2S.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(BeaconInfoPacketC2S::new)
+                .encoder(BeaconInfoPacketC2S::toBytes)
+                .consumerMainThread(BeaconInfoPacketC2S::handle)
                 .add();
     }
 

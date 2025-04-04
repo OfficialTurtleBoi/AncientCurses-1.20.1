@@ -47,6 +47,7 @@ import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.ancientcurses.trials.EliminationTrial;
+import net.turtleboi.ancientcurses.trials.FetchTrial;
 import net.turtleboi.ancientcurses.trials.Trial;
 import net.turtleboi.ancientcurses.util.ModTags;
 import net.turtleboi.turtlecore.network.CoreNetworking;
@@ -214,6 +215,13 @@ public class CursedAltarBlock extends BaseEntityBlock {
                                     } else {
                                         return InteractionResult.FAIL;
                                     }
+                                } else if (playerTrial instanceof FetchTrial fetchTrial){
+                                    if (fetchTrial.completedFirstDegree || fetchTrial.completedSecondDegree) {
+                                        fetchTrial.concludeTrial(player);
+                                        return InteractionResult.SUCCESS;
+                                    } else {
+                                        return InteractionResult.FAIL;
+                                    }
                                 } else if (playerTrial == null){
                                     return InteractionResult.FAIL;
                                 }
@@ -359,7 +367,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 0.5F
         );
 
-        altarEntity.cursePlayer(player, ModEffects.CURSE_OF_WRATH.get(), randomAmplifier);
+        altarEntity.cursePlayer(player, randomCurse, randomAmplifier);
         //player.displayClientMessage(Component.literal(
         //        "You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE), true); //debug code
     }
@@ -460,7 +468,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
         Random random = new Random();
 
-        int minRolls = 0, maxRolls = 0;
+        int minRolls = 1, maxRolls = 2;
         if (trial instanceof EliminationTrial eliminationTrial) {
             if (eliminationTrial.completedThirdDegree) {
                 minRolls = 3;
@@ -468,9 +476,16 @@ public class CursedAltarBlock extends BaseEntityBlock {
             } else if (eliminationTrial.completedSecondDegree) {
                 minRolls = 2;
                 maxRolls = 3;
-            } else if (eliminationTrial.completedFirstDegree){
-                minRolls = 1;
-                maxRolls = 2;
+            }
+        }
+
+        if (trial instanceof FetchTrial fetchTrial) {
+            if (fetchTrial.completedThirdDegree) {
+                minRolls = 3;
+                maxRolls = 5;
+            } else if (fetchTrial.completedSecondDegree) {
+                minRolls = 2;
+                maxRolls = 3;
             }
         }
 

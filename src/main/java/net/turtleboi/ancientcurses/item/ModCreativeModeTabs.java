@@ -34,6 +34,7 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.CURSED_PEARL.get());
                         pOutput.accept(ModItems.ROT_CLUMP.get());
                         pOutput.accept(ModItems.GOLDEN_FEATHER.get());
+                        pOutput.accept(ModItems.FIRST_BEACON.get());
                         Enchantment enchantment = ModEnchantments.FURTHER_DASH.get();
                         EnchantmentInstance instance = new EnchantmentInstance(enchantment, enchantment.getMaxLevel());
                         pOutput.accept(EnchantedBookItem.createForEnchantment(instance));

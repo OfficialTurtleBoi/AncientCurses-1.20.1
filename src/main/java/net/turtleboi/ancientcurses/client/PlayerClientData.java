@@ -1,6 +1,5 @@
 package net.turtleboi.ancientcurses.client;
 
-import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import net.turtleboi.ancientcurses.trials.Trial;
 
 public class PlayerClientData {
@@ -21,6 +20,11 @@ public class PlayerClientData {
     public static int fetchItemsRequired = 0;
     private static float portalOverlayAlpha = 0;
 
+    //Item utils
+    private static int itemMaxDurationTicks = 0;
+    private static int itemRemainingUseTime = 0;
+    private static double itemHitDistance = 0;
+    private static boolean itemUsed = false;
 
     public static boolean isLusted() {
         return isLusted;
@@ -42,7 +46,7 @@ public class PlayerClientData {
         voidTimer = time;
     }
 
-    public static Integer getVoidTimer(){
+    public static int getVoidTimer(){
         return voidTimer;
     }
 
@@ -50,7 +54,7 @@ public class PlayerClientData {
         voidTotalTime = totalTime;
     }
 
-    public static Integer getTotalVoidTime() {
+    public static int getTotalVoidTime() {
         return voidTotalTime;
     }
 
@@ -77,7 +81,7 @@ public class PlayerClientData {
         eliminationTarget = targetString;
     }
 
-    public static Integer getWaveCount(){
+    public static int getWaveCount(){
         return waveCount;
     }
 
@@ -85,7 +89,7 @@ public class PlayerClientData {
         waveCount = kills;
     }
 
-    public static Integer getKillsRemaining(){
+    public static int getKillsRemaining(){
         return killsRemaining;
     }
 
@@ -93,7 +97,7 @@ public class PlayerClientData {
         PlayerClientData.killsRemaining = killsRemaining;
     }
 
-    public static Integer getWaveKillTotal(){
+    public static int getWaveKillTotal(){
         return waveKillTotal;
     }
 
@@ -101,7 +105,7 @@ public class PlayerClientData {
         PlayerClientData.waveKillTotal = waveKillTotal;
     }
 
-    public static Long getDurationElapsed(){
+    public static long getDurationElapsed(){
         return durationElapsed;
     }
 
@@ -109,7 +113,7 @@ public class PlayerClientData {
         PlayerClientData.durationElapsed = durationElapsed;
     }
 
-    public static Long getDurationTotal(){
+    public static long getDurationTotal(){
         return durationTotal;
     }
 
@@ -125,7 +129,7 @@ public class PlayerClientData {
         fetchItem = item;
     }
 
-    public static Integer getFetchItems(){
+    public static int getFetchItems(){
         return fetchItems;
     }
 
@@ -133,7 +137,7 @@ public class PlayerClientData {
         fetchItems = items;
     }
 
-    public static Integer getFetchItemsRequired(){
+    public static int getFetchItemsRequired(){
         return fetchItemsRequired;
     }
 
@@ -175,7 +179,7 @@ public class PlayerClientData {
         trialComplete = complete;
     }
 
-    public static Float getPortalOverlayAlpha(){
+    public static float getPortalOverlayAlpha(){
         return portalOverlayAlpha;
     }
 
@@ -183,6 +187,35 @@ public class PlayerClientData {
         portalOverlayAlpha = overlayAlpha;
     }
 
+    public static int getItemMaxDurationTicks(){
+        return itemMaxDurationTicks;
+    }
 
+    public static void setItemMaxDurationTicks(int maxChargeTicks) {
+        itemMaxDurationTicks = maxChargeTicks;
+    }
 
+    public static int getItemRemainingUseTime(){
+        return itemRemainingUseTime;
+    }
+
+    public static void setItemRemainingUseTime(int remainingUseTime) {
+        itemRemainingUseTime = remainingUseTime;
+    }
+
+    public static double getItemHitDistance(){
+        return itemHitDistance;
+    }
+
+    public static void setItemHitDistance(double hitDistance) {
+        itemHitDistance = hitDistance;
+    }
+
+    public static boolean getItemUsed(){
+        return itemUsed;
+    }
+
+    public static void setItemUsed(boolean beingUsed) {
+        itemUsed = beingUsed;
+    }
 }

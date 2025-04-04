@@ -2,7 +2,7 @@
 	"texture_size": [32, 16],
 	"textures": {
 		"1": "ancientcurses:item/first_beacon_model",
-		"particle": "minecraft:block/obsidian"
+		"particle": "ancientcurses:item/first_beacon_item"
 	},
 	"elements": [
 		{

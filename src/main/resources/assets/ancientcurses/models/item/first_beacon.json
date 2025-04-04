@@ -4,6 +4,9 @@
   "base": {
     "parent": "ancientcurses:item/first_beacon_model"
   },
+  "textures": {
+    "particle": "ancientcurses:item/first_beacon_item"
+  },
   "perspectives": {
     "gui": {
       "parent": "ancientcurses:item/first_beacon_item"

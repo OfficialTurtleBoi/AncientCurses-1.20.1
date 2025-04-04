@@ -109,7 +109,7 @@ public class GoldenFeatherItem extends Item {
                             0.0, 0.1, 0.0);
                 }
 
-                if (pPlayer.onGround()) {
+                if (pPlayer.onGround() || pPlayer.isSwimming()) {
                     if(seismicDashLevel > 0) {
                         AreaEffectCloud DamageCloud = new AreaEffectCloud(pLevel, pEntity.getX(), pEntity.getY(), pEntity.getZ());
                         DamageCloud.setDuration(1);

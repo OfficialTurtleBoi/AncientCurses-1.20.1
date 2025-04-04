@@ -118,7 +118,7 @@ public class ModItems {
             () -> new GoldenFeatherItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1).durability(32)));
 
     public static final RegistryObject<Item> FIRST_BEACON = ITEMS.register("first_beacon",
-            () -> new FirstBeaconItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+            () -> new FirstBeaconItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1).durability(600)));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
