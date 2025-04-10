@@ -2,6 +2,8 @@ package net.turtleboi.ancientcurses.config;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 
+import java.util.List;
+
 public class AncientCursesConfig {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static final ForgeConfigSpec SPEC;
@@ -17,12 +19,29 @@ public class AncientCursesConfig {
     public static final ForgeConfigSpec.ConfigValue<Integer> CURSE_TIME_MIN;
     public static final ForgeConfigSpec.ConfigValue<Integer> CURSE_TIME_MAX;
 
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> FETCH_TRIAL_ITEMS;
+
+
     static {
         BUILDER.push("Structures");
 
         CURSED_ALTAR_SPAWN_CHANCE = BUILDER
                 .comment("Spawn chance for the Cursed Altar structure")
                 .defineInRange("cursedAltarSpawnChance", 1.0, 0.0, 1.0);
+
+        BUILDER.pop();
+
+        BUILDER.push("Curse Modifiers");
+
+        CURSE_TIME_MIN = BUILDER
+                .comment("Minimum number of seconds that a Survival Trial can curse the player for")
+                .comment("If value is set to 0, all Survival Trials will result in an instant completion")
+                .defineInRange("curseTimeMinimum", 180, 0, 12000);
+
+        CURSE_TIME_MAX = BUILDER
+                .comment("Maximum number of seconds that a Survival Trial can curse the player for")
+                .comment("If value is set to 0, all Survival Trials will result in an instant completion")
+                .defineInRange("curseTimeMaximum", 240, 0, 18000);
 
         BUILDER.pop();
 
@@ -57,19 +76,36 @@ public class AncientCursesConfig {
 
         BUILDER.pop();
 
-        BUILDER.push("Curse Modifiers");
+        BUILDER.push("Trial Variables");
 
-        CURSE_TIME_MIN = BUILDER
-                .comment("Minimum number of seconds that a Survival Trial can curse the player for")
-                .comment("If value is set to 0, all Survival Trials will result in an instant completion")
-                .defineInRange("curseTimeMinimum", 180, 0, 12000);
-
-        CURSE_TIME_MAX = BUILDER
-                .comment("Maximum number of seconds that a Survival Trial can curse the player for")
-                .comment("If value is set to 0, all Survival Trials will result in an instant completion")
-                .defineInRange("curseTimeMaximum", 240, 0, 18000);
+        FETCH_TRIAL_ITEMS = BUILDER
+                .comment("List of valid items (by ID) that can be required in the Fetch Trial.")
+                .comment("Example: [\"minecraft:iron_ingot\", \"minecraft:string\"]")
+                .defineListAllowEmpty("fetchTrialItems",
+                        java.util.List.of(
+                                "minecraft:iron_ingot",
+                                "minecraft:gold_ingot",
+                                "minecraft:copper_ingot",
+                                "minecraft:raw_iron",
+                                "minecraft:raw_gold",
+                                "minecraft:raw_copper",
+                                "minecraft:lapis_lazuli",
+                                "minecraft:redstone",
+                                "minecraft:rotten_flesh",
+                                "minecraft:bone",
+                                "minecraft:ender_pearl",
+                                "minecraft:gunpowder",
+                                "minecraft:spider_eye",
+                                "minecraft:glowstone_dust",
+                                "minecraft:sugar",
+                                "minecraft:string"
+                        ),
+                        o -> o instanceof String
+                );
 
         BUILDER.pop();
+
+
         SPEC = BUILDER.build();
     }
 }

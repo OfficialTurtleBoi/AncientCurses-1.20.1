@@ -367,7 +367,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 0.5F
         );
 
-        altarEntity.cursePlayer(player, randomCurse, randomAmplifier);
+        altarEntity.cursePlayer(player, ModEffects.CURSE_OF_AVARICE.get(), randomAmplifier);
         //player.displayClientMessage(Component.literal(
         //        "You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE), true); //debug code
     }
