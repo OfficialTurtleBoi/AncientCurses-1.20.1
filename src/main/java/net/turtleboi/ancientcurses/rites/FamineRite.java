@@ -18,6 +18,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
+import net.turtleboi.ancientcurses.config.AncientCursesConfig;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
@@ -29,15 +30,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class FamineRite implements Rite {
     private UUID playerUUID;
-    private Item requiredItem;
-    private String itemName;
-    private int requiredCount;
     private int collectedCount;
     private CursedAltarBlockEntity altar;
     private MobEffect effect;
-    public static final String fetchCount = "FetchCount";
-    public static final String fetchRequirement = "FetchRequirement";
-    public static final String fetchItem = "FetchItem";
 
     private boolean completed;
 
@@ -81,41 +76,25 @@ public class FamineRite implements Rite {
     }
 
     private Item selectRandomItem() {
-        Item[] possibleItems = new Item[]{
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "iron_ingot")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "gold_ingot")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "copper_ingot")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "raw_iron")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "raw_gold")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "raw_copper")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "lapis_lazuli")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "redstone")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "rotten_flesh")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "bone")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "ender_pearl")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "gunpowder")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "spider_eye")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "glowstone_dust")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "sugar")),
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation("minecraft", "string"))
-        };
+        List<? extends String> configuredItems = AncientCursesConfig.FETCH_TRIAL_ITEMS.get();
 
-        Item[] filteredItems = Arrays.stream(possibleItems)
+        List<Item> validItems = configuredItems.stream()
+                .map(ResourceLocation::new)
+                .map(ForgeRegistries.ITEMS::getValue)
                 .filter(Objects::nonNull)
-                .toArray(Item[]::new);
+                .toList();
 
-        if (filteredItems.length == 0) {
-            System.err.println("Fetch Rite: No valid items found in possibleItems list.");
+        if (validItems.isEmpty()) {
+            System.err.println("Fetch Trial: No valid items found in config.");
             return Items.AIR;
         }
 
-        int randomIndex = ThreadLocalRandom.current().nextInt(filteredItems.length);
-        return filteredItems[randomIndex];
+        return validItems.get(ThreadLocalRandom.current().nextInt(validItems.size()));
     }
 
     private int calculateRequiredCount(int amplifier) {
         Random random = new Random();
-        int base = random.nextInt(9) + 8;
+        int base = random.nextInt(5) + random.nextInt(5);
         return base * ((amplifier * amplifier) * 2);
     }
 
@@ -126,21 +105,53 @@ public class FamineRite implements Rite {
     @Override
     public void saveToNBT(CompoundTag tag) {
         tag.putUUID("PlayerUUID", playerUUID);
-        tag.putString(fetchItem, Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(requiredItem)).toString());
-        tag.putInt(fetchCount, collectedCount);
-        tag.putInt(fetchRequirement, requiredCount);
+        tag.putInt("CurrentDegree", currentDegree);
         tag.putBoolean("Completed", completed);
+        tag.putBoolean("CompletedFirst", completedFirstDegree);
+        tag.putBoolean("CompletedSecond", completedSecondDegree);
+        tag.putBoolean("CompletedThird", completedThirdDegree);
+
+        for (int i = 0; i < degreeItems.size(); i++) {
+            tag.putString("DegreeItem_" + i, ForgeRegistries.ITEMS.getKey(degreeItems.get(i)).toString());
+            tag.putInt("DegreeCount_" + i, degreeCounts.get(i));
+            tag.putInt("DegreeCollected_" + i, degreeCollected.get(i));
+            tag.putString("DegreeItemName_" + i, degreeItemNames.get(i));
+        }
+
+        if (effect != null) {
+            tag.putString("CurseEffect", ForgeRegistries.MOB_EFFECTS.getKey(effect).toString());
+        }
     }
+
 
     @Override
     public void loadFromNBT(CompoundTag tag) {
         this.playerUUID = tag.getUUID("PlayerUUID");
-        String itemName = tag.getString(fetchItem);
-        this.requiredItem = ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemName));
-        this.collectedCount = tag.getInt(fetchCount);
-        this.requiredCount = tag.getInt(fetchRequirement);
+        this.currentDegree = tag.getInt("CurrentDegree");
         this.completed = tag.getBoolean("Completed");
+        this.completedFirstDegree = tag.getBoolean("CompletedFirst");
+        this.completedSecondDegree = tag.getBoolean("CompletedSecond");
+        this.completedThirdDegree = tag.getBoolean("CompletedThird");
+
+        degreeItems.clear();
+        degreeCounts.clear();
+        degreeCollected.clear();
+        degreeItemNames.clear();
+
+        for (int i = 0; i < 3; i++) {
+            ResourceLocation itemId = new ResourceLocation(tag.getString("DegreeItem_" + i));
+            degreeItems.add(ForgeRegistries.ITEMS.getValue(itemId));
+            degreeCounts.add(tag.getInt("DegreeCount_" + i));
+            degreeCollected.add(tag.getInt("DegreeCollected_" + i));
+            degreeItemNames.add(tag.getString("DegreeItemName_" + i));
+        }
+
+        if (tag.contains("CurseEffect")) {
+            ResourceLocation effectId = new ResourceLocation(tag.getString("CurseEffect"));
+            effect = ForgeRegistries.MOB_EFFECTS.getValue(effectId);
+        }
     }
+
 
     @Override
     public String getType() {
@@ -196,7 +207,7 @@ public class FamineRite implements Rite {
             int collected = getCollectedCount();
             int required = getRequiredCount();
 
-            float progressPercentage = Math.min((float) collectedCount / requiredCount, 1.0f);
+            float progressPercentage = Math.min((float) collectedCount / required, 1.0f);
             ModNetworking.sendToPlayer(
                     new SyncRiteDataS2C(
                             Rite.famineRite,
