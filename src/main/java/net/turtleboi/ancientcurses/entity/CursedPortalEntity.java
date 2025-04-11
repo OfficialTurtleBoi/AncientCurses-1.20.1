@@ -28,7 +28,6 @@ import net.minecraft.world.phys.AABB;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketS2C;
-import net.turtleboi.ancientcurses.trials.EliminationTrial;
 import org.joml.Vector3f;
 
 import java.util.*;

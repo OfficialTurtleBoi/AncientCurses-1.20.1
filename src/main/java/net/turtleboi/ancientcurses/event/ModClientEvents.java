@@ -29,12 +29,12 @@ import net.minecraftforge.fml.common.Mod;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
-import net.turtleboi.ancientcurses.client.TrialEventBar;
+import net.turtleboi.ancientcurses.client.RiteEventBar;
 import net.turtleboi.ancientcurses.client.renderer.FirstBeaconEffectRenderer;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
-import net.turtleboi.ancientcurses.network.packets.trials.TrialOverlayPacketC2S;
+import net.turtleboi.ancientcurses.network.packets.rites.RiteOverlayPacketC2S;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import net.turtleboi.turtlecore.client.data.ScreenEffectsData;
 import org.joml.Matrix4f;
@@ -69,14 +69,14 @@ public class ModClientEvents {
                 }
             }
 
-            if (PlayerClientData.hasTrial()) {
+            if (PlayerClientData.hasRite()) {
                 int screenWidth = minecraft.getWindow().getGuiScaledWidth();
-                TrialEventBar.render(event.getGuiGraphics(), (screenWidth - 192) / 2, 11, minecraft);
-                ModNetworking.sendToServer(new TrialOverlayPacketC2S());
+                RiteEventBar.render(event.getGuiGraphics(), (screenWidth - 192) / 2, 11, minecraft);
+                ModNetworking.sendToServer(new RiteOverlayPacketC2S());
             }
 
             if (event.getOverlay() == VanillaGuiOverlay.BOSS_EVENT_PROGRESS.type()) {
-                if (PlayerClientData.hasTrial()) {
+                if (PlayerClientData.hasRite()) {
                     event.setCanceled(true);
                 }
             }
@@ -102,7 +102,7 @@ public class ModClientEvents {
 
     @SubscribeEvent
     public static void onCustomizeBossEventProgress(CustomizeGuiOverlayEvent.BossEventProgress event) {
-        if (PlayerClientData.hasTrial()) {
+        if (PlayerClientData.hasRite()) {
             int originalY = event.getY();
             //event.setY(originalY + 9 + 5);
             event.setIncrement(event.getIncrement() + 9 + 5);
@@ -170,7 +170,7 @@ public class ModClientEvents {
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
 
-        if (PlayerClientData.isVoid()) {
+        if (PlayerClientData.isSingularity()) {
             renderLightBeams(player, poseStack, bufferSource, event.getPartialTick());
         }
         bufferSource.endBatch();
@@ -247,7 +247,7 @@ public class ModClientEvents {
 
     private static void renderPinkOverlay(GuiGraphics guiGraphics) {
         //System.out.println(Component.literal(String.valueOf(PlayerClientData.isLusted()))); //debug code
-        if (PlayerClientData.isLusted()) {
+        if (PlayerClientData.isObsessed()) {
             //System.out.println(Component.literal("Pink screen!")); //debug code
             RenderSystem.disableDepthTest();
             RenderSystem.depthMask(false);
@@ -266,7 +266,7 @@ public class ModClientEvents {
 
     private static void renderPurpleOverlay(GuiGraphics guiGraphics) {
         //System.out.println(Component.literal(String.valueOf(PlayerClientData.isVoid()))); //debug code
-        if (PlayerClientData.isVoid()) {
+        if (PlayerClientData.isSingularity()) {
             //System.out.println(Component.literal("Purple screen!")); //debug code
             RenderSystem.disableDepthTest();
             RenderSystem.depthMask(false);
@@ -284,8 +284,8 @@ public class ModClientEvents {
     }
 
     public static void renderLightBeams(Player player, PoseStack poseStack, MultiBufferSource bufferSource, float pPartialTicks) {
-        int totalLifetime = PlayerClientData.getTotalVoidTime();
-        int currentLifetime = PlayerClientData.getVoidTimer();
+        int totalLifetime = PlayerClientData.getTotalSingularityType();
+        int currentLifetime = PlayerClientData.getSingularityTimer();
 
         if (totalLifetime <= 0 || currentLifetime <= 0 || currentLifetime > totalLifetime) {
             //System.out.println("Invalid lifetime values, skipping rendering."); //debug code

@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.trials;
+package net.turtleboi.ancientcurses.rites;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -14,62 +14,62 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class SurvivalTrial implements Trial {
+public class EmbersRite implements Rite {
     private UUID playerUUID;
     private long elapsedTime;
-    private long trialDuration;
+    private long riteDuration;
     private CursedAltarBlockEntity altar;
     private MobEffect effect;
     private int pAmplifier;
     private boolean completed;
-    public static final String trialDurationTotal = "TrialDuration";
-    public static final String trialDurationElapsed = "TrialElapsedTime";
+    public static final String riteDurationTotal = "RiteDuration";
+    public static final String riteDurationElapsed = "RiteElapsedTime";
     private int portalCooldown = 0;
-    public SurvivalTrial(Player player, MobEffect effect, int pAmplifier, long trialDuration, CursedAltarBlockEntity altar) {
+    public EmbersRite(Player player, MobEffect effect, int pAmplifier, long riteDuration, CursedAltarBlockEntity altar) {
         this.playerUUID = player.getUUID();
         this.altar = altar;
         this.effect = effect;
-        this.trialDuration = trialDuration;
-        //System.out.println(Component.literal("Setting trial duration to: " + this.trialDuration));
+        this.riteDuration = riteDuration;
+        //System.out.println(Component.literal("Setting rite duration to: " + this.riteDuration));
         //System.out.println(Component.literal("Setting elapsed time to: " + this.elapsedTime));
         this.pAmplifier = pAmplifier + 1;
         this.completed = false;
         this.portalCooldown = 0;
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-            trialData.setCurseEffect(effect);
-            trialData.setActiveTrial(this);
-            this.elapsedTime = trialData.getSurvivalTicks();
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+            riteData.setCurseEffect(effect);
+            riteData.setActiveRite(this);
+            this.elapsedTime = riteData.getSurvivalTicks();
         });
     }
 
-    public SurvivalTrial(CursedAltarBlockEntity altar) {
+    public EmbersRite(CursedAltarBlockEntity altar) {
         this.altar = altar;
         this.completed = false;
     }
 
-    public boolean isTrialActive() {
-        return altar.getPlayerTrial(playerUUID) != null;
+    public boolean isRiteActive() {
+        return altar.getPlayerRite(playerUUID) != null;
     }
 
     @Override
     public void saveToNBT(CompoundTag tag) {
         tag.putUUID("PlayerUUID", playerUUID);
         tag.putString("Effect", Objects.requireNonNull(ForgeRegistries.MOB_EFFECTS.getKey(effect)).toString());
-        tag.putLong(trialDurationElapsed, elapsedTime);
-        tag.putLong(trialDurationTotal, trialDuration);
+        tag.putLong(riteDurationElapsed, elapsedTime);
+        tag.putLong(riteDurationTotal, riteDuration);
         tag.putBoolean("Completed", completed);
     }
 
@@ -78,14 +78,14 @@ public class SurvivalTrial implements Trial {
         this.playerUUID = tag.getUUID("PlayerUUID");
         String effectName = tag.getString("Effect");
         this.effect = ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(effectName));
-        this.elapsedTime = tag.getLong(trialDurationElapsed);
-        this.trialDuration = tag.getLong(trialDurationTotal);
+        this.elapsedTime = tag.getLong(riteDurationElapsed);
+        this.riteDuration = tag.getLong(riteDurationTotal);
         this.completed = tag.getBoolean("Completed");
     }
 
     @Override
     public String getType() {
-        return Trial.survivalTrial;
+        return Rite.embersRite;
     }
 
     @Override
@@ -106,14 +106,14 @@ public class SurvivalTrial implements Trial {
     }
 
     @Override
-    public boolean isTrialCompleted(Player player) {
-        //System.out.println(Component.literal("Completed trial!"));
-        return elapsedTime >= trialDuration;
+    public boolean isRiteCompleted(Player player) {
+        //System.out.println(Component.literal("Completed rite!"));
+        return elapsedTime >= riteDuration;
     }
 
     @Override
     public void onPlayerTick(Player player) {
-        if (!isTrialActive()) {
+        if (!isRiteActive()) {
             return;
         }
 
@@ -133,63 +133,63 @@ public class SurvivalTrial implements Trial {
             }
         }
 
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-            trialData.setSurvivalTicks((int) elapsedTime);
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+            riteData.setSurvivalTicks((int) elapsedTime);
         });
 
         trackProgress(player);
-        if (isTrialCompleted(player)) {
-            concludeTrial(player);
+        if (isRiteCompleted(player)) {
+            concludeRite(player);
         }
     }
 
     @Override
     public void trackProgress(Player player) {
-        if (!isTrialActive()) {
+        if (!isRiteActive()) {
             return;
         }
 
         if (player != null) {
             elapsedTime++;
             //System.out.println("Setting elapsed time to: " + elapsedTime);
-            float progressPercentage = Math.min((float) elapsedTime / trialDuration, 1.0f);
+            float progressPercentage = Math.min((float) elapsedTime / riteDuration, 1.0f);
             ModNetworking.sendToPlayer(
-                    new SyncTrialDataS2C(
-                            Trial.survivalTrial,
-                            isTrialCompleted(player),
+                    new SyncRiteDataS2C(
+                            Rite.embersRite,
+                            isRiteCompleted(player),
                             "",
                             0,
                             0,
                             0,
                             elapsedTime,
-                            trialDuration,
+                            riteDuration,
                             "",
                             0,
                             0),
                     (ServerPlayer) player);
-            //player.displayClientMessage(Component.literal(String.format("Trial progress: %.2f%% complete", progressPercentage * 100))
+            //player.displayClientMessage(Component.literal(String.format("Rite progress: %.2f%% complete", progressPercentage * 100))
             //        .withStyle(ChatFormatting.YELLOW), true);
         }
     }
 
     @Override
-    public void concludeTrial(Player player) {
-        //player.displayClientMessage(Component.literal("You have survived the trial! Collect your reward").withStyle(ChatFormatting.GREEN), true);
+    public void concludeRite(Player player) {
+        //player.displayClientMessage(Component.literal("You have survived the rite! Collect your reward").withStyle(ChatFormatting.GREEN), true);
         ModNetworking.sendToPlayer(
-                new SyncTrialDataS2C(
-                        Trial.survivalTrial,
-                        isTrialCompleted(player),
+                new SyncRiteDataS2C(
+                        Rite.embersRite,
+                        isRiteCompleted(player),
                         "",
                         0,
                         0,
                         0,
-                        trialDuration,
-                        trialDuration,
+                        riteDuration,
+                        riteDuration,
                         "",
                         0,
                         0),
                 (ServerPlayer) player);
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(PlayerTrialDataCapability::clearCurseEffect);
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearCurseEffect);
 
         List<MobEffect> cursesToRemove = new ArrayList<>();
         for (MobEffectInstance effectInstance : player.getActiveEffects()) {
@@ -219,7 +219,7 @@ public class SurvivalTrial implements Trial {
 
         CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel(), altar);
         //System.out.println(Component.literal("Spawning new portal to altar"));
-        altar.setPlayerTrialCompleted(player);
+        altar.setPlayerRiteCompleted(player);
         this.completed = true;
     }
 
@@ -250,11 +250,11 @@ public class SurvivalTrial implements Trial {
     }
 
     private EntityType<?> selectRandomTargetMob() {
-        List<EliminationTrial.WeightedMob> mobList = EliminationTrial.MobList.ELIMINATION_TRIAL_MOBS;
-        double totalWeight = mobList.stream().mapToDouble(EliminationTrial.WeightedMob::weight).sum();
+        List<CarnageRite.WeightedMob> mobList = CarnageRite.MobList.ELIMINATION_TRIAL_MOBS;
+        double totalWeight = mobList.stream().mapToDouble(CarnageRite.WeightedMob::weight).sum();
         double randomValue = ThreadLocalRandom.current().nextDouble(totalWeight);
         double cumulativeWeight = 0.0;
-        for (EliminationTrial.WeightedMob weightedMob : mobList) {
+        for (CarnageRite.WeightedMob weightedMob : mobList) {
             cumulativeWeight += weightedMob.weight();
             if (randomValue <= cumulativeWeight) {
                 return weightedMob.mobType();

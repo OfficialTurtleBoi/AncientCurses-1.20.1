@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.network.packets.trials;
+package net.turtleboi.ancientcurses.network.packets.rites;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
@@ -6,9 +6,9 @@ import net.turtleboi.ancientcurses.client.PlayerClientData;
 
 import java.util.function.Supplier;
 
-public class SyncTrialDataS2C {
-    private final String trialType;
-    private final boolean trialComplete;
+public class SyncRiteDataS2C {
+    private final String riteType;
+    private final boolean riteComplete;
     private final String eliminationTarget;
     private final int waveCount;
     private final int killsRemaining;
@@ -20,11 +20,11 @@ public class SyncTrialDataS2C {
     private final int fetchItemsRequired;
 
 
-    public SyncTrialDataS2C(String trialType, boolean trialComplete, String eliminationTarget, int waveCount, int killsRemaining,
-                            int waveKillTotal, long durationElapsed, long durationTotal,
-                            String fetchItem, int itemCount, int itemRequired) {
-        this.trialType = trialType;
-        this.trialComplete = trialComplete;
+    public SyncRiteDataS2C(String riteType, boolean riteComplete, String eliminationTarget, int waveCount, int killsRemaining,
+                           int waveKillTotal, long durationElapsed, long durationTotal,
+                           String fetchItem, int itemCount, int itemRequired) {
+        this.riteType = riteType;
+        this.riteComplete = riteComplete;
         this.eliminationTarget = eliminationTarget;
         this.waveCount = waveCount;
         this.killsRemaining = killsRemaining;
@@ -36,9 +36,9 @@ public class SyncTrialDataS2C {
         this.fetchItemsRequired = itemRequired;
     }
 
-    public SyncTrialDataS2C(FriendlyByteBuf buf) {
-        this.trialType = buf.readUtf();
-        this.trialComplete = buf.readBoolean();
+    public SyncRiteDataS2C(FriendlyByteBuf buf) {
+        this.riteType = buf.readUtf();
+        this.riteComplete = buf.readBoolean();
         this.eliminationTarget = buf.readUtf();
         this.waveCount = buf.readInt();
         this.killsRemaining = buf.readInt();
@@ -51,8 +51,8 @@ public class SyncTrialDataS2C {
     }
 
     public void toBytes(FriendlyByteBuf buf) {
-        buf.writeUtf(trialType);
-        buf.writeBoolean(trialComplete);
+        buf.writeUtf(riteType);
+        buf.writeBoolean(riteComplete);
         buf.writeUtf(eliminationTarget);
         buf.writeInt(waveCount);
         buf.writeInt(killsRemaining);
@@ -67,12 +67,12 @@ public class SyncTrialDataS2C {
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            //System.out.println(Component.literal("Sending trial information!"));
-            PlayerClientData.setTrialType(trialType);
-            if (trialType == null || trialType.equals("None")) {
-                PlayerClientData.trialType = "None";
+            //System.out.println(Component.literal("Sending rite information!"));
+            PlayerClientData.setRiteType(riteType);
+            if (riteType == null || riteType.equals("None")) {
+                PlayerClientData.riteType = "None";
             } else {
-                PlayerClientData.setTrialComplete(trialComplete);
+                PlayerClientData.setRiteComplete(riteComplete);
                 PlayerClientData.setEliminationTarget(eliminationTarget);
                 PlayerClientData.setWaveCount(waveCount);
                 PlayerClientData.setKillsRemaining(killsRemaining);

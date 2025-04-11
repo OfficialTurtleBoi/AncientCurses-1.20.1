@@ -1,7 +1,6 @@
 package net.turtleboi.ancientcurses.block.entity;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -23,20 +22,18 @@ import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.items.ItemStackHandler;
-import net.turtleboi.ancientcurses.block.ModBlocks;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.sound.ModSounds;
-import net.turtleboi.ancientcurses.trials.*;
+import net.turtleboi.ancientcurses.rites.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +52,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public float oRot;
     public float tRot;
     private static final RandomSource RANDOM = RandomSource.create();
-    private final Map<UUID, Trial> playerTrials = new HashMap<>();
+    private final Map<UUID, Rite> playerRites = new HashMap<>();
     private final Map<UUID, Long> playerCooldowns = new HashMap<>();
     private boolean isAnimating;
     private long animationStartTime;
@@ -204,8 +201,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public boolean canPlayerUse(Player player) {
         UUID playerUUID = player.getUUID();
 
-        if (player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
-                .map(PlayerTrialDataCapability::isPlayerCursed)
+        if (player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA)
+                .map(PlayerRiteDataCapability::isPlayerCursed)
                 .orElse(false)) {
             // player.sendSystemMessage(Component.literal("You're cursed!").withStyle(ChatFormatting.RED));
             return false;
@@ -242,52 +239,52 @@ public class CursedAltarBlockEntity extends BlockEntity {
         int calculatedDuration = randomMultiple * 20;
         int curseDuration = calculatedDuration * (curseAmplifier + 1);
 
-        Trial trial = createTrialForCurse(player, curse, curseDuration, curseAmplifier);
-        addPlayerTrial(playerUUID, trial);
+        Rite rite = createRiteForCurse(player, curse, curseDuration, curseAmplifier);
+        addPlayerRite(playerUUID, rite);
 
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-            trialData.setCurseEffect(curse);
-            trialData.setCurseAmplifier(curseAmplifier);
-            trialData.setCurrentAltarPos(altarPos);
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+            riteData.setCurseEffect(curse);
+            riteData.setCurseAmplifier(curseAmplifier);
+            riteData.setCurrentAltarPos(altarPos);
             //System.out.println("Setting altar dimension to: " + this.getLevel().dimension());
-            trialData.setAltarDimension(Objects.requireNonNull(this.getLevel()).dimension());
+            riteData.setAltarDimension(Objects.requireNonNull(this.getLevel()).dimension());
 
-            String trialType = trial.getType();
-            TrialRecord trialRecord = new TrialRecord(altarPos, trialType, false, false);
-            trialData.addOrUpdateTrialRecord(trialRecord);
+            String riteType = rite.getType();
+            RiteRecord riteRecord = new RiteRecord(altarPos, riteType, false, false);
+            riteData.addOrUpdateRiteRecord(riteRecord);
         });
 
-        player.addEffect(new MobEffectInstance(curse, trial instanceof SurvivalTrial ? curseDuration : MobEffectInstance.INFINITE_DURATION, curseAmplifier, false, false, true));
+        player.addEffect(new MobEffectInstance(curse, rite instanceof EmbersRite ? curseDuration : MobEffectInstance.INFINITE_DURATION, curseAmplifier, false, false, true));
 
-        trial.trackProgress(player);
+        rite.trackProgress(player);
     }
 
-    public boolean hasPlayerCompletedTrial(Player player) {
+    public boolean hasPlayerCompletedRite(Player player) {
         BlockPos altarPos = this.getBlockPos();
-        return player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
-                .map(trialData -> trialData.hasCompletedTrial(altarPos))
+        return player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA)
+                .map(riteData -> riteData.hasCompletedRite(altarPos))
                 .orElse(false);
     }
 
-    private boolean anyActiveTrialsRemaining() {
-        for (Trial trial : playerTrials.values()) {
-            if (!trial.isCompleted()) {
+    private boolean anyActiveRitesRemaining() {
+        for (Rite rite : playerRites.values()) {
+            if (!rite.isCompleted()) {
                 return true;
             }
         }
         return false;
     }
 
-    public void setPlayerTrialCompleted(Player player) {
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+    public void setPlayerRiteCompleted(Player player) {
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
             UUID playerUUID = player.getUUID();
-            Trial trial = playerTrials.get(playerUUID);
-            if (trial != null) {
+            Rite rite = playerRites.get(playerUUID);
+            if (rite != null) {
                 BlockPos altarPos = this.getBlockPos();
-                trialData.setTrialCompleted(altarPos);
-                trial.setCompleted(true);
+                riteData.setRiteCompleted(altarPos);
+                rite.setCompleted(true);
 
-                if (!anyActiveTrialsRemaining()) {
+                if (!anyActiveRitesRemaining()) {
                     releaseDimensionActive();
                 }
                 setChanged();
@@ -297,42 +294,42 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public boolean hasCollectedReward(Player player) {
         BlockPos altarPos = this.getBlockPos();
-        return player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
-                .map(trialData -> trialData.hasCollectedReward(altarPos))
+        return player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA)
+                .map(riteData -> riteData.hasCollectedReward(altarPos))
                 .orElse(false);
     }
 
     public void markRewardCollected(Player player) {
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
             BlockPos altarPos = this.getBlockPos();
-            trialData.setRewardCollected(altarPos);
-            trialData.clearCurrentAltarPos();
+            riteData.setRewardCollected(altarPos);
+            riteData.clearCurrentAltarPos();
             setChanged();
         });
     }
 
-    public Trial getPlayerTrial(UUID playerUUID) {
-        return playerTrials.get(playerUUID);
+    public Rite getPlayerRite(UUID playerUUID) {
+        return playerRites.get(playerUUID);
     }
 
-    public void addPlayerTrial(UUID playerUUID, Trial trial) {
-        playerTrials.put(playerUUID, trial);
+    public void addPlayerRite(UUID playerUUID, Rite rite) {
+        playerRites.put(playerUUID, rite);
     }
 
-    public void removePlayerTrial(UUID playerUUID) {
-        playerTrials.remove(playerUUID);
+    public void removePlayerRite(UUID playerUUID) {
+        playerRites.remove(playerUUID);
     }
 
-    public void removePlayerFromTrial(Player player) {
+    public void removePlayerFromRite(Player player) {
         UUID playerUUID = player.getUUID();
-        Trial trial = playerTrials.get(playerUUID);
-        if (trial != null) {
-            if (!trial.isTrialCompleted(player)) {
-                removePlayerTrial(playerUUID);
+        Rite rite = playerRites.get(playerUUID);
+        if (rite != null) {
+            if (!rite.isRiteCompleted(player)) {
+                removePlayerRite(playerUUID);
                 setChanged();
-                //System.out.println("Removed trial for player: " + player.getName().getString()); //debug code
+                //System.out.println("Removed rite for player: " + player.getName().getString()); //debug code
             } else {
-                //System.out.println("Attempted to remove a completed trial for player: " + player.getName().getString()); //debug code
+                //System.out.println("Attempted to remove a completed rite for player: " + player.getName().getString()); //debug code
             }
         }
     }
@@ -356,11 +353,11 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     public static int getRandomAmplifier(Player player) {
-        int trialsCompleted = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
-                .map(PlayerTrialDataCapability::getPlayerTrialsCompleted)
+        int ritesCompleted = player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA)
+                .map(PlayerRiteDataCapability::getPlayerRitesCompleted)
                 .orElse(0);
 
-        List<Integer> weightedAmplifiers = getWeightedAmplifier(trialsCompleted);
+        List<Integer> weightedAmplifiers = getWeightedAmplifier(ritesCompleted);
 
         if (weightedAmplifiers.isEmpty()) {
             System.out.println(
@@ -387,8 +384,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
         double chance1 = count1 * 100.0 / total;
         double chance2 = count2 * 100.0 / total;
 
-        Component message = Component.literal("Trials Completed: ")
-                .append(Component.literal(String.valueOf(trialsCompleted)).withStyle(ChatFormatting.GREEN))
+        Component message = Component.literal("Rites Completed: ")
+                .append(Component.literal(String.valueOf(ritesCompleted)).withStyle(ChatFormatting.GREEN))
                 .append(Component.literal("\nAmplifier Chances:\n"))
                 .append(Component.literal("• Amplifier 0: ").withStyle(ChatFormatting.YELLOW))
                 .append(Component.literal(String.format("%.2f%%", chance0)).withStyle(ChatFormatting.GOLD))
@@ -401,24 +398,24 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return weightedAmplifiers.get(ThreadLocalRandom.current().nextInt(weightedAmplifiers.size()));
     }
 
-    private static @NotNull List<Integer> getWeightedAmplifier(int trialsCompleted) {
+    private static @NotNull List<Integer> getWeightedAmplifier(int ritesCompleted) {
         int thresholdTier2 = AncientCursesConfig.CURSED_TRIAL_TIER2_THRESHOLD.get();
         int thresholdTier3 = AncientCursesConfig.CURSED_TRIAL_TIER3_THRESHOLD.get();
-        int maxTrials = AncientCursesConfig.CURSED_TRIAL_MAX.get();
+        int maxRites = AncientCursesConfig.CURSED_TRIAL_MAX.get();
 
         double weight0, weight1, weight2;
 
-        if (trialsCompleted < thresholdTier2) {
+        if (ritesCompleted < thresholdTier2) {
             weight0 = AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get();
             weight1 = 0;
             weight2 = 0;
-        } else if (trialsCompleted < thresholdTier3) {
-            double factor = (trialsCompleted - thresholdTier2) / (double)(thresholdTier3 - thresholdTier2);
+        } else if (ritesCompleted < thresholdTier3) {
+            double factor = (ritesCompleted - thresholdTier2) / (double)(thresholdTier3 - thresholdTier2);
             weight0 = AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get() * (1.0 - factor);
             weight1 = AncientCursesConfig.CURSED_TRIAL_TIER2_CHANCE.get() * factor;
             weight2 = 0;
-        } else if (trialsCompleted < maxTrials) {
-            double factor = (trialsCompleted - thresholdTier3) / (double)(maxTrials - thresholdTier3);
+        } else if (ritesCompleted < maxRites) {
+            double factor = (ritesCompleted - thresholdTier3) / (double)(maxRites - thresholdTier3);
             weight0 = AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get() * (1.0 - factor);
             weight1 = AncientCursesConfig.CURSED_TRIAL_TIER2_CHANCE.get() * (1.0 - factor);
             weight2 = AncientCursesConfig.CURSED_TRIAL_TIER3_CHANCE.get() * factor;
@@ -445,31 +442,31 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return weightedAmplifiers;
     }
 
-    public Trial createTrialForCurse(Player player, MobEffect curseType, int curseDuration, int curseAmplifier) {
+    public Rite createRiteForCurse(Player player, MobEffect curseType, int curseDuration, int curseAmplifier) {
         if (curseType == ModEffects.CURSE_OF_AVARICE.get()) {
-            return new FetchTrial(player, curseType, curseAmplifier, this);
+            return new FamineRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_ENDING.get()) {
-            return new SurvivalTrial(player, curseType, curseAmplifier, curseDuration, this);
+            return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
         } else if (curseType == ModEffects.CURSE_OF_ENVY.get()) {
-            return new EliminationTrial(player, curseType, curseAmplifier, this);
+            return new CarnageRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_FRAILTY.get()) {
-            return new EliminationTrial(player, curseType, curseAmplifier, this);
+            return new CarnageRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_GLUTTONY.get()) {
-            return new SurvivalTrial(player, curseType, curseAmplifier, curseDuration, this);
+            return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
         } else if (curseType == ModEffects.CURSE_OF_NATURE.get()) {
-            return new FetchTrial(player, curseType, curseAmplifier, this);
+            return new FamineRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_OBESSSION.get()) {
-            return new SurvivalTrial(player, curseType, curseAmplifier, curseDuration, this);
+            return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
         } else if (curseType == ModEffects.CURSE_OF_PESTILENCE.get()) {
-            return new SurvivalTrial(player, curseType, curseAmplifier, curseDuration, this);
+            return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
         } else if (curseType == ModEffects.CURSE_OF_PRIDE.get()) {
-            return new EliminationTrial(player, curseType, curseAmplifier, this);
+            return new CarnageRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_SHADOWS.get()) {
-            return new FetchTrial(player, curseType, curseAmplifier, this);
+            return new FamineRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_SLOTH.get()) {
-            return new FetchTrial(player, curseType, curseAmplifier, this);
+            return new FamineRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_WRATH.get()) {
-          return new EliminationTrial(player, curseType, curseAmplifier, this);
+          return new CarnageRite(player, curseType, curseAmplifier, this);
         }
         return null;
     }
@@ -525,7 +522,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
             }
         }
 
-        if (!anyActiveTrialsRemaining()) {
+        if (!anyActiveRitesRemaining()) {
             if (this.level instanceof ServerLevel serverLevel) {
                 if (hasOccupantEntity(serverLevel)){
                     Entity occupant = serverLevel.getEntity(occupantUuid);
@@ -609,15 +606,15 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return false;
     }
 
-    private Trial reconstructTrialFromNBT(String trialType, CompoundTag trialData) {
-        if (trialType.equals(Trial.survivalTrial)) {
-            SurvivalTrial trial = new SurvivalTrial(this);
-            trial.loadFromNBT(trialData);
-            return trial;
-        } else if (trialType.equals(Trial.eliminationTrial)) {
-            EliminationTrial trial = new EliminationTrial(this);
-            trial.loadFromNBT(trialData);
-            return trial;
+    private Rite reconstructRiteFromNBT(String riteType, CompoundTag riteData) {
+        if (riteType.equals(Rite.embersRite)) {
+            EmbersRite rite = new EmbersRite(this);
+            rite.loadFromNBT(riteData);
+            return rite;
+        } else if (riteType.equals(Rite.carnageRite)) {
+            CarnageRite rite = new CarnageRite(this);
+            rite.loadFromNBT(riteData);
+            return rite;
         }
         return null;
     }
@@ -634,22 +631,22 @@ public class CursedAltarBlockEntity extends BlockEntity {
             tag.putUUID("OccupantUUID", this.occupantUuid);
         }
 
-        ListTag activeTrialsList = new ListTag();
-        for (Map.Entry<UUID, Trial> entry : playerTrials.entrySet()) {
+        ListTag activeRitesList = new ListTag();
+        for (Map.Entry<UUID, Rite> entry : playerRites.entrySet()) {
             UUID playerUUID = entry.getKey();
-            Trial trial = entry.getValue();
+            Rite rite = entry.getValue();
 
             CompoundTag playerTag = new CompoundTag();
             playerTag.putUUID("PlayerUUID", playerUUID);
-            playerTag.putString("TrialType", trial.getType());
+            playerTag.putString("RiteType", rite.getType());
 
-            CompoundTag trialData = new CompoundTag();
-            trial.saveToNBT(trialData);
-            playerTag.put("TrialData", trialData);
+            CompoundTag riteData = new CompoundTag();
+            rite.saveToNBT(riteData);
+            playerTag.put("RiteData", riteData);
 
-            activeTrialsList.add(playerTag);
+            activeRitesList.add(playerTag);
         }
-        tag.put("ActiveTrials", activeTrialsList);
+        tag.put("ActiveRites", activeRitesList);
     }
 
     @Override
@@ -668,18 +665,18 @@ public class CursedAltarBlockEntity extends BlockEntity {
             this.occupantUuid = null;
         }
 
-        ListTag activeTrialsList = tag.getList("ActiveTrials", Tag.TAG_COMPOUND);
-        playerTrials.clear();
-        for (int i = 0; i < activeTrialsList.size(); i++) {
-            CompoundTag playerTag = activeTrialsList.getCompound(i);
+        ListTag activeRitesList = tag.getList("ActiveRites", Tag.TAG_COMPOUND);
+        playerRites.clear();
+        for (int i = 0; i < activeRitesList.size(); i++) {
+            CompoundTag playerTag = activeRitesList.getCompound(i);
             UUID playerUUID = playerTag.getUUID("PlayerUUID");
-            String trialType = playerTag.getString("TrialType");
-            CompoundTag trialData = playerTag.getCompound("TrialData");
+            String riteType = playerTag.getString("RiteType");
+            CompoundTag riteData = playerTag.getCompound("RiteData");
 
-            Trial trial = reconstructTrialFromNBT(trialType, trialData);
-            if (trial != null) {
-                trial.setAltar(this);
-                playerTrials.put(playerUUID, trial);
+            Rite rite = reconstructRiteFromNBT(riteType, riteData);
+            if (rite != null) {
+                rite.setAltar(this);
+                playerRites.put(playerUUID, rite);
             }
         }
     }

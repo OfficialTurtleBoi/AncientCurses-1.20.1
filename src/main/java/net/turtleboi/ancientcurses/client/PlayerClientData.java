@@ -1,14 +1,14 @@
 package net.turtleboi.ancientcurses.client;
 
-import net.turtleboi.ancientcurses.trials.Trial;
+import net.turtleboi.ancientcurses.rites.Rite;
 
 public class PlayerClientData {
-    public static boolean isLusted = false;
-    public static boolean isVoid = false;
-    public static int voidTimer = 0;
-    public static int voidTotalTime = 0;
-    public static String trialType = "None";
-    public static boolean trialComplete;
+    public static boolean isObsessed = false;
+    public static boolean isSingularity = false;
+    public static int singularityTimer = 0;
+    public static int totalSingularityType = 0;
+    public static String riteType = "None";
+    public static boolean riteComplete;
     public static String eliminationTarget = "None";
     public static int waveCount = 0;
     public static int killsRemaining = 0;
@@ -26,51 +26,51 @@ public class PlayerClientData {
     private static double itemHitDistance = 0;
     private static boolean itemUsed = false;
 
-    public static boolean isLusted() {
-        return isLusted;
+    public static boolean isObsessed() {
+        return isObsessed;
     }
 
-    public static void setLusted(boolean lusted) {
-        isLusted = lusted;
+    public static void setObsessed(boolean obsessed) {
+        isObsessed = obsessed;
     }
 
-    public static boolean isVoid() {
-        return isVoid;
+    public static boolean isSingularity() {
+        return isSingularity;
     }
 
-    public static void setVoid(boolean voided) {
-        isVoid = voided;
+    public static void setSingularity(boolean singularity) {
+        isSingularity = singularity;
     }
 
-    public static void setVoidTimer(int time) {
-        voidTimer = time;
+    public static void setSingularityTimer(int time) {
+        singularityTimer = time;
     }
 
-    public static int getVoidTimer(){
-        return voidTimer;
+    public static int getSingularityTimer(){
+        return singularityTimer;
     }
 
-    public static void setTotalVoidTime(int totalTime) {
-        voidTotalTime = totalTime;
+    public static void setTotalSingularityTime(int totalTime) {
+        totalSingularityType = totalTime;
     }
 
-    public static int getTotalVoidTime() {
-        return voidTotalTime;
+    public static int getTotalSingularityType() {
+        return totalSingularityType;
     }
 
-    public static boolean hasTrial() {
-        if (trialType == null) {
+    public static boolean hasRite() {
+        if (riteType == null) {
             return false;
         }
-        return !trialType.equals("None");
+        return !riteType.equals("None");
     }
 
-    public static String getTrialType(){
-        return trialType;
+    public static String getRiteType(){
+        return riteType;
     }
 
-    public static void setTrialType(String trialString){
-        trialType = trialString;
+    public static void setRiteType(String riteString){
+        riteType = riteString;
     }
 
     public static String getEliminationTarget(){
@@ -145,14 +145,14 @@ public class PlayerClientData {
         fetchItemsRequired = itemsRequired;
     }
 
-    public static float getTrialProgress() {
-        String trialType = getTrialType();
-        if (trialType.equalsIgnoreCase(Trial.survivalTrial)) {
+    public static float getRiteProgress() {
+        String riteType = getRiteType();
+        if (riteType.equalsIgnoreCase(Rite.embersRite)) {
             long elapsedTime = getDurationElapsed();
             long totalDuration = getDurationTotal();
             if (totalDuration == 0) return 0.0F;
             return Math.min(1.0F, (float) elapsedTime / (float) totalDuration);
-        } else if (trialType.equalsIgnoreCase(Trial.eliminationTrial)) {
+        } else if (riteType.equalsIgnoreCase(Rite.carnageRite)) {
             long remainingDelay = getDurationElapsed();
             long totalDelay = getDurationTotal();
             if (remainingDelay < totalDelay && remainingDelay != 0) {
@@ -162,7 +162,7 @@ public class PlayerClientData {
                 int waveKillTotal = getWaveKillTotal();
                 return Math.min(1.0F, (float) killsRemaining / (float) waveKillTotal);
             }
-        } else if (trialType.equalsIgnoreCase(Trial.fetchTrial)) {
+        } else if (riteType.equalsIgnoreCase(Rite.famineRite)) {
             int items = getFetchItems();
             int requiredItems = getFetchItemsRequired();
             if (requiredItems == 0) return 0.0F;
@@ -171,12 +171,12 @@ public class PlayerClientData {
         return 0.0F;
     }
 
-    public static boolean isTrialComplete(){
-        return trialComplete;
+    public static boolean isRiteComplete(){
+        return riteComplete;
     }
 
-    public static void setTrialComplete(boolean complete) {
-        trialComplete = complete;
+    public static void setRiteComplete(boolean complete) {
+        riteComplete = complete;
     }
 
     public static float getPortalOverlayAlpha(){

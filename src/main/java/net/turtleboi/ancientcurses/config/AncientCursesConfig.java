@@ -26,7 +26,7 @@ public class AncientCursesConfig {
 
         BUILDER.pop();
 
-        BUILDER.push("Trial Modifiers");
+        BUILDER.push("Rite Modifiers");
 
         CURSED_TRIAL_TIER1_CHANCE = BUILDER
                 .comment("Base chance for player to be cursed with a Tier 1 trial")
@@ -60,12 +60,12 @@ public class AncientCursesConfig {
         BUILDER.push("Curse Modifiers");
 
         CURSE_TIME_MIN = BUILDER
-                .comment("Minimum number of seconds that a Survival Trial can curse the player for")
+                .comment("Minimum number of seconds that a Survival Rite can curse the player for")
                 .comment("If value is set to 0, all Survival Trials will result in an instant completion")
                 .defineInRange("curseTimeMinimum", 180, 0, 12000);
 
         CURSE_TIME_MAX = BUILDER
-                .comment("Maximum number of seconds that a Survival Trial can curse the player for")
+                .comment("Maximum number of seconds that a Survival Rite can curse the player for")
                 .comment("If value is set to 0, all Survival Trials will result in an instant completion")
                 .defineInRange("curseTimeMaximum", 240, 0, 18000);
 

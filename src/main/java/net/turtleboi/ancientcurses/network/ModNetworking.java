@@ -10,8 +10,8 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.network.packets.*;
 import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketC2S;
 import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
-import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
-import net.turtleboi.ancientcurses.network.packets.trials.TrialOverlayPacketC2S;
+import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
+import net.turtleboi.ancientcurses.network.packets.rites.RiteOverlayPacketC2S;
 
 public class ModNetworking {
     private static SimpleChannel INSTANCE;
@@ -41,16 +41,16 @@ public class ModNetworking {
                 .consumerMainThread(VoidPacketS2C::handle)
                 .add();
 
-        net.messageBuilder(SyncTrialDataS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-                .decoder(SyncTrialDataS2C::new)
-                .encoder(SyncTrialDataS2C::toBytes)
-                .consumerMainThread(SyncTrialDataS2C::handle)
+        net.messageBuilder(SyncRiteDataS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(SyncRiteDataS2C::new)
+                .encoder(SyncRiteDataS2C::toBytes)
+                .consumerMainThread(SyncRiteDataS2C::handle)
                 .add();
 
-        net.messageBuilder(TrialOverlayPacketC2S.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .decoder(TrialOverlayPacketC2S::new)
-                .encoder(TrialOverlayPacketC2S::toBytes)
-                .consumerMainThread(TrialOverlayPacketC2S::handle)
+        net.messageBuilder(RiteOverlayPacketC2S.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(RiteOverlayPacketC2S::new)
+                .encoder(RiteOverlayPacketC2S::toBytes)
+                .consumerMainThread(RiteOverlayPacketC2S::handle)
                 .add();
 
         net.messageBuilder(PortalOverlayPacketS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
