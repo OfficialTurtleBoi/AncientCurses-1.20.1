@@ -41,6 +41,7 @@ import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
+import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
@@ -366,7 +367,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 0.5F
         );
 
-        altarEntity.cursePlayer(player, ModEffects.CURSE_OF_AVARICE.get(), randomAmplifier);
+        altarEntity.cursePlayer(player, ModEffects.CURSE_OF_GLUTTONY.get(), randomAmplifier);
         //player.displayClientMessage(Component.literal(
         //        "You have been cursed with " + randomCurse.getDisplayName().getString() + "!").withStyle(ChatFormatting.DARK_PURPLE), true); //debug code
     }

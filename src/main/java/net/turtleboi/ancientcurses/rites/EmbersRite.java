@@ -1,6 +1,12 @@
 package net.turtleboi.ancientcurses.rites;
 
+import net.minecraft.Util;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -11,6 +17,7 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
@@ -21,37 +28,77 @@ import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
+import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class EmbersRite implements Rite {
     private UUID playerUUID;
-    private long elapsedTime;
-    private long riteDuration;
-    private CursedAltarBlockEntity altar;
     private MobEffect effect;
-    private int pAmplifier;
+    private int amplifier;
+    private CursedAltarBlockEntity altar;
     private boolean completed;
+
+    private long elapsedTime;
+    private long riteDuration = 3600;
+    private int portalCooldown = 0;
+    private int nodeRadius;
+    private static final int spawnInterval = 200;
+    private static final int feedTicks = 400;
+    private final List<BlockPos> nodePositions  = new ArrayList<>();
+    private final Map<BlockPos,Integer> nodeProgress = new HashMap<>();
+    private int currentDegree = 0;
+    public boolean completedFirstDegree;
+    public boolean completedSecondDegree;
+    public boolean completedThirdDegree;
+
     public static final String riteDurationTotal = "RiteDuration";
     public static final String riteDurationElapsed = "RiteElapsedTime";
-    private int portalCooldown = 0;
-    public EmbersRite(Player player, MobEffect effect, int pAmplifier, long riteDuration, CursedAltarBlockEntity altar) {
+
+    public EmbersRite(Player player, MobEffect effect, int amplifier, long riteDuration, CursedAltarBlockEntity altar) {
         this.playerUUID = player.getUUID();
         this.altar = altar;
         this.effect = effect;
         this.riteDuration = riteDuration;
         //System.out.println(Component.literal("Setting rite duration to: " + this.riteDuration));
         //System.out.println(Component.literal("Setting elapsed time to: " + this.elapsedTime));
-        this.pAmplifier = pAmplifier + 1;
+        this.amplifier = amplifier + 1;
         this.completed = false;
         this.portalCooldown = 0;
+
+        this.nodeRadius = Math.max(1, 4 - amplifier);
+        Random random = new Random();
+        BlockPos center = altar.getBlockPos();
+        //int sectors = 3 + amplifier;
+        int sectors = 32;//+ amplifier;
+        double minDistance = 8.0 * (1 + amplifier);
+        double maxDistance = 64.0 * (1 + amplifier);
+        for (int i = 0; i < sectors; i++) {
+            double sectorStart = i * (360.0 / sectors);
+            double randomOffset = random.nextDouble() * (360.0 / sectors);
+            double degreeOffset = sectorStart + randomOffset;
+            double radians = Math.toRadians(degreeOffset);
+
+            double distance = minDistance + random.nextDouble() * (maxDistance - minDistance);
+
+            int dx = (int) Math.round(Math.cos(radians) * distance);
+            int dz = (int) Math.round(Math.sin(radians) * distance);
+
+            BlockPos node = new BlockPos(
+                    center.getX() + dx,
+                    center.getY(),
+                    center.getZ() + dz);
+            nodePositions.add(node);
+            nodeProgress.put(node, 0);
+        }
+
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
             riteData.setCurseEffect(effect);
             riteData.setActiveRite(this);
-            this.elapsedTime = riteData.getSurvivalTicks();
         });
     }
 
@@ -71,6 +118,15 @@ public class EmbersRite implements Rite {
         tag.putLong(riteDurationElapsed, elapsedTime);
         tag.putLong(riteDurationTotal, riteDuration);
         tag.putBoolean("Completed", completed);
+
+        ListTag nodesTag = new ListTag();
+        for (BlockPos pos : nodePositions) {
+            CompoundTag nodeTag = new CompoundTag();
+            nodeTag.putLong("Pos", pos.asLong());
+            nodeTag.putInt("Progress", nodeProgress.getOrDefault(pos, 0));
+            nodesTag.add(nodeTag);
+        }
+        tag.put("Nodes", nodesTag);
     }
 
     @Override
@@ -81,6 +137,29 @@ public class EmbersRite implements Rite {
         this.elapsedTime = tag.getLong(riteDurationElapsed);
         this.riteDuration = tag.getLong(riteDurationTotal);
         this.completed = tag.getBoolean("Completed");
+
+        this.nodePositions.clear();
+        this.nodeProgress.clear();
+        ListTag nodesTag = tag.getList("Nodes", Tag.TAG_COMPOUND);
+        for (int i = 0; i < nodesTag.size(); i++) {
+            CompoundTag nodeTag = nodesTag.getCompound(i);
+            BlockPos pos = BlockPos.of(nodeTag.getLong("Pos"));
+            int    prog = nodeTag.getInt("Progress");
+            nodePositions.add(pos);
+            nodeProgress.put(pos, prog);
+        }
+
+        if (nodePositions.isEmpty() && amplifier > 0) {
+            Random rnd = new Random();
+            BlockPos center = altar.getBlockPos();
+            for (int i = 0; i < amplifier; i++) {
+                int dx = rnd.nextInt(61) - 30;
+                int dz = rnd.nextInt(61) - 30;
+                BlockPos pos = new BlockPos(center.getX() + dx, center.getY(), center.getZ() + dz);
+                nodePositions.add(pos);
+                nodeProgress.put(pos, 0);
+            }
+        }
     }
 
     @Override
@@ -98,9 +177,9 @@ public class EmbersRite implements Rite {
         return this.effect;
     }
 
-    public Player getPlayer() {
+    public ServerPlayer getServerPlayer() {
         if (altar.getLevel() instanceof ServerLevel serverLevel) {
-            return serverLevel.getPlayerByUUID(playerUUID);
+            return (ServerPlayer) serverLevel.getPlayerByUUID(playerUUID);
         }
         return null;
     }
@@ -108,7 +187,7 @@ public class EmbersRite implements Rite {
     @Override
     public boolean isRiteCompleted(Player player) {
         //System.out.println(Component.literal("Completed rite!"));
-        return elapsedTime >= riteDuration;
+        return currentDegree >= 3;
     }
 
     @Override
@@ -117,30 +196,98 @@ public class EmbersRite implements Rite {
             return;
         }
 
-        if (effect != ModEffects.CURSE_OF_PESTILENCE.get()) {
-            portalCooldown++;
-            if (pAmplifier > 0) {
-                if (portalCooldown >= 600 / pAmplifier) {
-                    portalCooldown = 0;
-                    //System.out.println(Component.literal("Spawning new summoning portal"));
-                    MinecraftServer server = player.getServer();
-                    if (server != null) {
-                        ServerLevel level = (ServerLevel) player.level();
-                        List<Entity> mobsToSpawn = buildPortalSpawnList(level, 3 * this.pAmplifier);
-                        CursedPortalEntity.spawnSummoningPortalAtPos(level, altar, player.getOnPos(), mobsToSpawn);
-                    }
+        if(nodePositions.isEmpty()){
+            return;
+        }
+
+        ServerLevel level = (ServerLevel) getServerPlayer().level();
+        elapsedTime++;
+        portalCooldown++;
+
+        if (portalCooldown >= spawnInterval) {
+            portalCooldown = 0;
+            for (BlockPos node : nodePositions) {
+                Mob placeholder = EntityType.VEX.create(level);
+                if (placeholder != null) {
+                    placeholder.moveTo(node.getX()+0.5, node.getY()+1, node.getZ()+0.5, 0, 0);
+                    level.addFreshEntity(placeholder);
                 }
             }
+        }
+
+        for (BlockPos node : nodePositions) {
+            int progress = nodeProgress.getOrDefault(node, 0);
+            if (progress >= feedTicks) continue;
+
+            double cx = node.getX() + 0.5;
+            double cy = node.getY() + 1.0;
+            double cz = node.getZ() + 0.5;
+            for (int i = 0; i < 20; i++) {
+                double angle = 2 * Math.PI * i / 20;
+                double px = cx + Math.cos(angle) * nodeRadius;
+                double pz = cz + Math.sin(angle) * nodeRadius;
+                CoreNetworking.sendToNear(new SendParticlesS2C(
+                        ModParticleTypes.CURSED_FLAME_PARTICLE.get(), px, cy, pz, 0, 0.1, 0
+                ), player);
+            }
+        }
+
+
+        double feedRadiusSq = nodeRadius * nodeRadius;
+        for (BlockPos node : nodePositions) {
+            int progress = nodeProgress.getOrDefault(node, 0);
+            if (progress >= feedTicks) continue;
+
+            double dx = player.getX() - (node.getX() + 0.5);
+            double dz = player.getZ() - (node.getZ() + 0.5);
+            if (dx*dx + dz*dz <= feedRadiusSq) {
+                progress = nodeProgress.merge(node, 1, Integer::sum);
+                if (progress >= feedTicks) {
+                    currentDegree++;
+                    CoreNetworking.sendToNear(new CameraShakeS2C(0.125F, 1000), player);
+                }
+            }
+        }
+
+        if (elapsedTime % 100 == 0) {
+            for (int i = 0; i < nodePositions.size(); i++) {
+                BlockPos blockPos = nodePositions.get(i);
+                int progress = nodeProgress.getOrDefault(blockPos, 0);
+                float percentage = 100f * progress / (float) feedTicks;
+
+                if (progress <= 0 || progress >= feedTicks) {
+                    continue;
+                }
+
+                String line = String.format(
+                        "Node %d @ [x=%d, y=%d, z=%d]: %d / %d (%.0f%%)",
+                        i + 1,
+                        blockPos.getX(), blockPos.getY(), blockPos.getZ(),
+                        progress, feedTicks,
+                        percentage
+                );
+
+                getServerPlayer().sendSystemMessage(Component.literal(line));
+            }
+        }
+
+        boolean allMature = nodeProgress.values().stream()
+                .allMatch(p -> p >= feedTicks);
+
+        if (allMature) {
+            concludeRite(player);
+            return;
         }
 
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
             riteData.setSurvivalTicks((int) elapsedTime);
         });
 
-        trackProgress(player);
         if (isRiteCompleted(player)) {
             concludeRite(player);
         }
+
+        trackProgress(player);
     }
 
     @Override
@@ -148,6 +295,9 @@ public class EmbersRite implements Rite {
         if (!isRiteActive()) {
             return;
         }
+
+        ServerPlayer serverPlayer = getServerPlayer();
+        if (serverPlayer == null) return;
 
         if (player != null) {
             elapsedTime++;
@@ -166,7 +316,7 @@ public class EmbersRite implements Rite {
                             "",
                             0,
                             0),
-                    (ServerPlayer) player);
+                    serverPlayer);
             //player.displayClientMessage(Component.literal(String.format("Rite progress: %.2f%% complete", progressPercentage * 100))
             //        .withStyle(ChatFormatting.YELLOW), true);
         }
@@ -174,6 +324,9 @@ public class EmbersRite implements Rite {
 
     @Override
     public void concludeRite(Player player) {
+        ServerPlayer serverPlayer = getServerPlayer();
+        if (serverPlayer == null) return;
+
         //player.displayClientMessage(Component.literal("You have survived the rite! Collect your reward").withStyle(ChatFormatting.GREEN), true);
         ModNetworking.sendToPlayer(
                 new SyncRiteDataS2C(
@@ -188,7 +341,7 @@ public class EmbersRite implements Rite {
                         "",
                         0,
                         0),
-                (ServerPlayer) player);
+                serverPlayer);
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearCurseEffect);
 
         List<MobEffect> cursesToRemove = new ArrayList<>();
