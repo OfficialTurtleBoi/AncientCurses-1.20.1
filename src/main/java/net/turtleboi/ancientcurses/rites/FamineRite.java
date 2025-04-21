@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.trials;
+package net.turtleboi.ancientcurses.rites;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -16,19 +16,19 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class FetchTrial implements Trial {
+public class FamineRite implements Rite {
     private UUID playerUUID;
     private int collectedCount;
     private CursedAltarBlockEntity altar;
@@ -46,7 +46,7 @@ public class FetchTrial implements Trial {
     private final List<Integer> degreeCollected = new ArrayList<>();
     private final List<String> degreeItemNames = new ArrayList<>();
 
-    public FetchTrial(Player player, MobEffect effect, int amplifier, CursedAltarBlockEntity altar) {
+    public FamineRite(Player player, MobEffect effect, int amplifier, CursedAltarBlockEntity altar) {
         this.playerUUID = player.getUUID();
         this.altar = altar;
         this.effect = effect;
@@ -63,14 +63,14 @@ public class FetchTrial implements Trial {
             degreeItemNames.add(itemNameComponent.getString());
         }
 
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-            trialData.setCurseEffect(effect);
-            trialData.setActiveTrial(this);
-            this.collectedCount = trialData.getFetchItems();
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+            riteData.setCurseEffect(effect);
+            riteData.setActiveRite(this);
+            this.collectedCount = riteData.getFetchItems();
         });
     }
 
-    public FetchTrial(CursedAltarBlockEntity altar) {
+    public FamineRite(CursedAltarBlockEntity altar) {
         this.altar = altar;
         this.completed = false;
     }
@@ -92,15 +92,14 @@ public class FetchTrial implements Trial {
         return validItems.get(ThreadLocalRandom.current().nextInt(validItems.size()));
     }
 
-
     private int calculateRequiredCount(int amplifier) {
         Random random = new Random();
         int base = random.nextInt(5) + random.nextInt(5);
         return base * ((amplifier * amplifier) * 2);
     }
 
-    public boolean isTrialActive() {
-        return altar.getPlayerTrial(playerUUID) != null && !completed;
+    public boolean isRiteActive() {
+        return altar.getPlayerRite(playerUUID) != null && !completed;
     }
 
     @Override
@@ -156,7 +155,7 @@ public class FetchTrial implements Trial {
 
     @Override
     public String getType() {
-        return Trial.fetchTrial;
+        return Rite.famineRite;
     }
 
     @Override
@@ -182,7 +181,7 @@ public class FetchTrial implements Trial {
     }
 
     @Override
-    public boolean isTrialCompleted(Player player) {
+    public boolean isRiteCompleted(Player player) {
         return completed || completedThirdDegree;
     }
 
@@ -210,9 +209,9 @@ public class FetchTrial implements Trial {
 
             float progressPercentage = Math.min((float) collectedCount / required, 1.0f);
             ModNetworking.sendToPlayer(
-                    new SyncTrialDataS2C(
-                            Trial.fetchTrial,
-                            isTrialCompleted(player),
+                    new SyncRiteDataS2C(
+                            Rite.famineRite,
+                            isRiteCompleted(player),
                             "",
                             0,
                             0,
@@ -225,18 +224,18 @@ public class FetchTrial implements Trial {
                     (ServerPlayer) player
             );
             // player.displayClientMessage(
-            //         Component.literal("Fetch Trial Progress: " + collectedCount + "/" + requiredCount)
+            //         Component.literal("Fetch Rite Progress: " + collectedCount + "/" + requiredCount)
             //                 .withStyle(ChatFormatting.YELLOW), true);
         }
     }
 
     @Override
-    public void concludeTrial(Player player) {
-        // player.displayClientMessage(Component.literal("You have completed the Fetch Trial! Collect your reward.").withStyle(ChatFormatting.GREEN), true);
+    public void concludeRite(Player player) {
+        // player.displayClientMessage(Component.literal("You have completed the Fetch Rite! Collect your reward.").withStyle(ChatFormatting.GREEN), true);
         ModNetworking.sendToPlayer(
-                new SyncTrialDataS2C(
-                        Trial.fetchTrial,
-                        isTrialCompleted(player),
+                new SyncRiteDataS2C(
+                        Rite.famineRite,
+                        isRiteCompleted(player),
                         "",
                         0,
                         0,
@@ -248,7 +247,7 @@ public class FetchTrial implements Trial {
                         0),
                 (ServerPlayer) player
         );
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(PlayerTrialDataCapability::clearCurseEffect);
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearCurseEffect);
 
         List<MobEffect> cursesToRemove = new ArrayList<>();
         for (MobEffectInstance effectInstance : player.getActiveEffects()) {
@@ -276,10 +275,10 @@ public class FetchTrial implements Trial {
             );
         }
 
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData ->
-                trialData.setTrialCompleted(altar.getBlockPos()));
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData ->
+                riteData.setRiteCompleted(altar.getBlockPos()));
         this.completed = true;
-        altar.setPlayerTrialCompleted(player);
+        altar.setPlayerRiteCompleted(player);
     }
 
     public void advanceDegree(Player player) {
@@ -296,7 +295,7 @@ public class FetchTrial implements Trial {
         }
 
         if (completedThirdDegree) {
-            concludeTrial(player);
+            concludeRite(player);
         } else {
             trackProgress(player);
         }
@@ -308,8 +307,8 @@ public class FetchTrial implements Trial {
         degreeCollected.set(currentDegree, collected);
 
         int finalCollected = collected;
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-            trialData.setFetchItems(finalCollected);
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+            riteData.setFetchItems(finalCollected);
         });
     }
 

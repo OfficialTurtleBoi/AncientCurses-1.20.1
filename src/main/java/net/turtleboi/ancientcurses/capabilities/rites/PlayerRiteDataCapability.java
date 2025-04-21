@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.capabilities.trials;
+package net.turtleboi.ancientcurses.capabilities.rites;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -10,21 +10,21 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.AutoRegisterCapability;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.turtleboi.ancientcurses.trials.Trial;
-import net.turtleboi.ancientcurses.trials.TrialRecord;
+import net.turtleboi.ancientcurses.rites.Rite;
+import net.turtleboi.ancientcurses.rites.RiteRecord;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @AutoRegisterCapability
-public class PlayerTrialDataCapability {
+public class PlayerRiteDataCapability {
     private String curseEffect = "";
     private int curseAmplifier = 0;
     private BlockPos currentAltarPos = null;
-    private List<TrialRecord> trialRecords = new ArrayList<>();
+    private List<RiteRecord> riteRecords = new ArrayList<>();
     private ResourceKey<Level> altarDimension = null;
-    private Trial activeTrial;
-    private int pendingTrialUpdateTicks = 0;
+    private Rite activeRite;
+    private int pendingRiteUpdateTicks = 0;
     private int currentWave = 0;
     private int survivalTicks = 0;
     private int fetchItems = 0;
@@ -37,7 +37,7 @@ public class PlayerTrialDataCapability {
         curseEffect = "";
         curseAmplifier = 0;
         clearCurrentAltarPos();
-        resetTrialProgress();
+        resetRiteProgress();
     }
 
     public void clearCurseEffect() {
@@ -85,26 +85,25 @@ public class PlayerTrialDataCapability {
         this.currentAltarPos = null;
     }
 
-    public void addOrUpdateTrialRecord(TrialRecord trialRecord) {
+    public void addOrUpdateRiteRecord(RiteRecord riteRecord) {
         boolean found = false;
-        for (int i = 0; i < trialRecords.size(); i++) {
-            TrialRecord existingRecord = trialRecords.get(i);
-            if (existingRecord.getAltarPos().equals(trialRecord.getAltarPos())) {
-                // Update record
-                existingRecord.setTrialType(trialRecord.getTrialType());
-                existingRecord.setCompleted(trialRecord.isCompleted());
-                existingRecord.setRewardCollected(trialRecord.isRewardCollected());
+        for (int i = 0; i < riteRecords.size(); i++) {
+            RiteRecord existingRecord = riteRecords.get(i);
+            if (existingRecord.getAltarPos().equals(riteRecord.getAltarPos())) {
+                existingRecord.setRiteType(riteRecord.getRiteType());
+                existingRecord.setCompleted(riteRecord.isCompleted());
+                existingRecord.setRewardCollected(riteRecord.isRewardCollected());
                 found = true;
                 break;
             }
         }
         if (!found) {
-            trialRecords.add(trialRecord);
+            riteRecords.add(riteRecord);
         }
     }
 
-    public void setTrialCompleted(BlockPos altarPos) {
-        for (TrialRecord record : trialRecords) {
+    public void setRiteCompleted(BlockPos altarPos) {
+        for (RiteRecord record : riteRecords) {
             if (record.getAltarPos().equals(altarPos)) {
                 record.setCompleted(true);
                 break;
@@ -112,8 +111,8 @@ public class PlayerTrialDataCapability {
         }
     }
 
-    public boolean hasCompletedTrial(BlockPos altarPos) {
-        for (TrialRecord record : trialRecords) {
+    public boolean hasCompletedRite(BlockPos altarPos) {
+        for (RiteRecord record : riteRecords) {
             if (record.getAltarPos().equals(altarPos)) {
                 return record.isCompleted();
             }
@@ -122,7 +121,7 @@ public class PlayerTrialDataCapability {
     }
 
     public void setRewardCollected(BlockPos altarPos) {
-        for (TrialRecord record : trialRecords) {
+        for (RiteRecord record : riteRecords) {
             if (record.getAltarPos().equals(altarPos)) {
                 record.setRewardCollected(true);
                 break;
@@ -131,7 +130,7 @@ public class PlayerTrialDataCapability {
     }
 
     public boolean hasCollectedReward(BlockPos altarPos) {
-        for (TrialRecord record : trialRecords) {
+        for (RiteRecord record : riteRecords) {
             if (record.getAltarPos().equals(altarPos)) {
                 return record.isRewardCollected();
             }
@@ -139,9 +138,9 @@ public class PlayerTrialDataCapability {
         return false;
     }
 
-    public int getPlayerTrialsCompleted() {
+    public int getPlayerRitesCompleted() {
         int count = 0;
-        for (TrialRecord record : trialRecords) {
+        for (RiteRecord record : riteRecords) {
             if (record.isCompleted()) {
                 count++;
             }
@@ -150,7 +149,7 @@ public class PlayerTrialDataCapability {
     }
 
     public void resetAltarAtPos(BlockPos altarPos) {
-        for (TrialRecord record : trialRecords) {
+        for (RiteRecord record : riteRecords) {
             if (record.getAltarPos().equals(altarPos)) {
                 record.setCompleted(false);
                 record.setRewardCollected(false);
@@ -166,8 +165,8 @@ public class PlayerTrialDataCapability {
         this.altarDimension = dimension;
     }
 
-    public TrialRecord getTrialRecord(BlockPos altarPos) {
-        for (TrialRecord record : trialRecords) {
+    public RiteRecord getRiteRecord(BlockPos altarPos) {
+        for (RiteRecord record : riteRecords) {
             if (record.getAltarPos().equals(altarPos)) {
                 return record;
             }
@@ -175,30 +174,30 @@ public class PlayerTrialDataCapability {
         return null;
     }
 
-    public Trial getActiveTrial() {
-        return activeTrial;
+    public Rite getActiveRite() {
+        return activeRite;
     }
 
-    public void setActiveTrial(Trial trial) {
-        this.activeTrial = trial;
+    public void setActiveRite(Rite rite) {
+        this.activeRite = rite;
     }
 
-    public List<TrialRecord> getActiveTrialsByType(String trialType) {
-        List<TrialRecord> activeTrials = new ArrayList<>();
-        for (TrialRecord record : trialRecords) {
-            if (record.getTrialType().equals(trialType) && !record.isCompleted()) {
+    public List<RiteRecord> getActiveRitesByType(String trialType) {
+        List<RiteRecord> activeTrials = new ArrayList<>();
+        for (RiteRecord record : riteRecords) {
+            if (record.getRiteType().equals(trialType) && !record.isCompleted()) {
                 activeTrials.add(record);
             }
         }
         return activeTrials;
     }
 
-    public void setPendingTrialUpdate(int ticks) {
-        this.pendingTrialUpdateTicks = ticks;
+    public void setPendingRiteUpdate(int ticks) {
+        this.pendingRiteUpdateTicks = ticks;
     }
 
-    public int getPendingTrialUpdate() {
-        return pendingTrialUpdateTicks;
+    public int getPendingRiteUpdate() {
+        return pendingRiteUpdateTicks;
     }
 
     public int getCurrentWave() {
@@ -225,17 +224,17 @@ public class PlayerTrialDataCapability {
         this.fetchItems = itemCount;
     }
 
-    public void resetTrialProgress(){
+    public void resetRiteProgress(){
         this.currentWave = 0;
         this.survivalTicks = 0;
         this.fetchItems = 0;
     }
 
-    public void copyFrom(PlayerTrialDataCapability source) {
+    public void copyFrom(PlayerRiteDataCapability source) {
         this.curseEffect = source.curseEffect;
         this.curseAmplifier = source.curseAmplifier;
         this.currentAltarPos = source.currentAltarPos;
-        this.trialRecords = source.trialRecords;
+        this.riteRecords = source.riteRecords;
     }
 
     public void saveNBTData(CompoundTag nbt) {
@@ -249,13 +248,13 @@ public class PlayerTrialDataCapability {
             nbt.putString("AltarDimension", altarDimension.location().toString());
         }
 
-        nbt.putInt("PendingTrialUpdateTicks", pendingTrialUpdateTicks);
+        nbt.putInt("PendingTrialUpdateTicks", pendingRiteUpdateTicks);
         nbt.putInt("EliminationKills", currentWave);
         nbt.putInt("SurvivalTicks", survivalTicks);
         nbt.putInt("FetchItems", fetchItems);
 
         ListTag trialRecordsTag = new ListTag();
-        for (TrialRecord record : trialRecords) {
+        for (RiteRecord record : riteRecords) {
             trialRecordsTag.add(record.serializeNBT());
         }
         nbt.put("TrialRecords", trialRecordsTag);
@@ -277,19 +276,19 @@ public class PlayerTrialDataCapability {
         } else {
             altarDimension = null;
         }
-        pendingTrialUpdateTicks = nbt.getInt("PendingTrialUpdateTicks");
+        pendingRiteUpdateTicks = nbt.getInt("PendingRiteUpdateTicks");
         currentWave = nbt.getInt("EliminationKills");
         survivalTicks = nbt.getInt("SurvivalTicks");
         fetchItems = nbt.getInt("FetchItems");
 
-        trialRecords.clear();
-        if (nbt.contains("TrialRecords")) {
-            ListTag trialRecordsTag = nbt.getList("TrialRecords", 10);
-            for (int i = 0; i < trialRecordsTag.size(); i++) {
-                CompoundTag recordTag = trialRecordsTag.getCompound(i);
-                TrialRecord record = new TrialRecord();
+        riteRecords.clear();
+        if (nbt.contains("RiteRecords")) {
+            ListTag riteRecordsTag = nbt.getList("RiteRecords", 10);
+            for (int i = 0; i < riteRecordsTag.size(); i++) {
+                CompoundTag recordTag = riteRecordsTag.getCompound(i);
+                RiteRecord record = new RiteRecord();
                 record.deserializeNBT(recordTag);
-                trialRecords.add(record);
+                riteRecords.add(record);
             }
         }
     }

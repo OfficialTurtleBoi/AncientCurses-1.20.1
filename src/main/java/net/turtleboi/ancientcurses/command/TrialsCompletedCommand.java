@@ -7,8 +7,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 
 public class TrialsCompletedCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -28,8 +28,8 @@ public class TrialsCompletedCommand {
             return 0;
         }
 
-        int trialsCompleted = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
-                .map(PlayerTrialDataCapability::getPlayerTrialsCompleted)
+        int trialsCompleted = player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA)
+                .map(PlayerRiteDataCapability::getPlayerRitesCompleted)
                 .orElse(0);
 
         source.sendSuccess(() -> Component.literal("Player has completed: " + trialsCompleted + " trials"), true);

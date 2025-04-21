@@ -9,11 +9,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 
 public class ClearCurseCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -33,9 +33,9 @@ public class ClearCurseCommand {
             return 0;
         }
 
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(PlayerTrialDataCapability::clearPlayerCurse);
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearPlayerCurse);
         ModNetworking.sendToPlayer(
-                new SyncTrialDataS2C(
+                new SyncRiteDataS2C(
                         "None",
                         false,
                         "",

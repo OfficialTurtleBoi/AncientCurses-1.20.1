@@ -48,7 +48,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.AnvilUpdateEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.item.ItemEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.*;
@@ -61,8 +60,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
-import net.turtleboi.ancientcurses.client.PlayerClientData;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.*;
@@ -71,10 +69,9 @@ import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
 import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
-import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
-import net.turtleboi.ancientcurses.trials.*;
+import net.turtleboi.ancientcurses.rites.*;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import net.turtleboi.turtlecore.effect.CoreEffects;
 import net.turtleboi.turtlecore.init.CoreAttributes;
@@ -94,14 +91,14 @@ public class ModEvents {
     @SubscribeEvent
     public static void onPlayerJoinWorld(PlayerEvent.PlayerLoggedInEvent event) {
         Player player = event.getEntity();
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-            if (trialData.isPlayerCursed()) {
-                Trial activeTrial = trialData.getActiveTrial();
-                if (activeTrial != null) {
-                    activeTrial.trackProgress(player);
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+            if (riteData.isPlayerCursed()) {
+                Rite activeRite = riteData.getActiveRite();
+                if (activeRite != null) {
+                    activeRite.trackProgress(player);
                 } else {
-                    //System.out.println("Player " + player.getName().getString() + " is cursed, but no active trial instance is found.");
-                    trialData.setPendingTrialUpdate(20);
+                    //System.out.println("Player " + player.getName().getString() + " is cursed, but no active rite instance is found.");
+                    riteData.setPendingRiteUpdate(20);
                 }
             }
         });
@@ -111,8 +108,8 @@ public class ModEvents {
     @SubscribeEvent
     public static void onAttachPlayerCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof Player player) {
-            if (!event.getObject().getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).isPresent()) {
-                event.addCapability(new ResourceLocation(AncientCurses.MOD_ID, "player_trial_data"), new PlayerTrialProvider(player));
+            if (!event.getObject().getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).isPresent()) {
+                event.addCapability(new ResourceLocation(AncientCurses.MOD_ID, "player_rite_data"), new PlayerRiteProvider(player));
             }
         }
     }
@@ -121,8 +118,8 @@ public class ModEvents {
     public static void onPlayerClone(PlayerEvent.Clone event) {
         if (event.isWasDeath()) {
             event.getOriginal().reviveCaps();
-            event.getOriginal().getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(oldStore ->
-                    event.getEntity().getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(newStore ->
+            event.getOriginal().getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(oldStore ->
+                    event.getEntity().getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(newStore ->
                             newStore.copyFrom(oldStore)));
             event.getOriginal().invalidateCaps();
         }
@@ -131,14 +128,14 @@ public class ModEvents {
     @SubscribeEvent
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         Player player = event.getEntity();
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-            Trial playerTrial = trialData.getActiveTrial();
-            if (playerTrial instanceof EliminationTrial) {
-                trialData.clearPlayerCurse();
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+            Rite playerRite = riteData.getActiveRite();
+            if (playerRite instanceof CarnageRite) {
+                riteData.clearPlayerCurse();
 
                 if (player instanceof ServerPlayer serverPlayer) {
                     ModNetworking.sendToPlayer(
-                            new SyncTrialDataS2C(
+                            new SyncRiteDataS2C(
                                     "None",
                                     false,
                                     "",
@@ -162,13 +159,13 @@ public class ModEvents {
             }
 
             CompoundTag compound = new CompoundTag();
-            trialData.saveNBTData(compound);
-            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(updatedTrialData -> {
-                updatedTrialData.loadNBTData(compound);
+            riteData.saveNBTData(compound);
+            player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(updatedRiteData -> {
+                updatedRiteData.loadNBTData(compound);
             });
 
-            BlockPos altarPos = trialData.getCurrentAltarPos();
-            ResourceKey<Level> altarDimension = trialData.getAltarDimension();
+            BlockPos altarPos = riteData.getCurrentAltarPos();
+            ResourceKey<Level> altarDimension = riteData.getAltarDimension();
             if (altarPos != null && altarDimension != null) {
                 MinecraftServer server = player.getServer();
                 if (server != null) {
@@ -180,7 +177,7 @@ public class ModEvents {
                             altarEntity.saveAdditional(altarNBT);
                             altarEntity.load(altarNBT);
                             //System.out.println("Altar at " + altarPos + " in dimension "
-                            //        + altarDimension.location() + " reloaded trial data for player "
+                            //        + altarDimension.location() + " reloaded rite data for player "
                             //        + player.getName().getString());
                         } else {
                             //System.out.println("No altar found at " + altarPos + " in dimension "
@@ -200,14 +197,14 @@ public class ModEvents {
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         Player player = event.getEntity();
         player.reviveCaps();
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-            Trial playerTrial = trialData.getActiveTrial();
-            if (playerTrial instanceof EliminationTrial) {
-                trialData.clearPlayerCurse();
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+            Rite playerRite = riteData.getActiveRite();
+            if (playerRite instanceof CarnageRite) {
+                riteData.clearPlayerCurse();
 
                 if (player instanceof ServerPlayer serverPlayer) {
                     ModNetworking.sendToPlayer(
-                            new SyncTrialDataS2C(
+                            new SyncRiteDataS2C(
                                     "None",
                                     false,
                                     "",
@@ -231,9 +228,9 @@ public class ModEvents {
             }
 
             CompoundTag compound = new CompoundTag();
-            trialData.saveNBTData(compound);
-            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(updatedTrialData -> {
-                updatedTrialData.loadNBTData(compound);
+            riteData.saveNBTData(compound);
+            player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(updatedRiteData -> {
+                updatedRiteData.loadNBTData(compound);
             });
         });
         player.invalidateCaps();
@@ -905,10 +902,10 @@ public class ModEvents {
         }
 
         if (source instanceof ServerPlayer player) {
-            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-                if (trialData.isPlayerCursed()) {
-                    ResourceKey<Level> altarDimension = trialData.getAltarDimension();
-                    BlockPos altarPos = trialData.getCurrentAltarPos();
+            player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+                if (riteData.isPlayerCursed()) {
+                    ResourceKey<Level> altarDimension = riteData.getAltarDimension();
+                    BlockPos altarPos = riteData.getCurrentAltarPos();
                     //System.out.println("[Tick] Altar Dimension: " + (altarDimension != null ? altarDimension.location() : "null") +
                     //        ", Altar Pos: " + (altarPos != null ? altarPos.toShortString() : "null"));
                     if (altarPos != null) {
@@ -920,21 +917,21 @@ public class ModEvents {
                             if (altarLevel != null) {
                                 BlockEntity blockEntity = altarLevel.getBlockEntity(altarPos);
                                 if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
-                                    Trial activeTrial = altarEntity.getPlayerTrial(player.getUUID());
-                                    if (activeTrial != null) {
-                                        activeTrial.onEntityKilled(player , entity);
-                                        //System.out.println("[Tick] Tracked trial progress for player " + player.getName().getString());
+                                    Rite activeRite = altarEntity.getPlayerRite(player.getUUID());
+                                    if (activeRite != null) {
+                                        activeRite.onEntityKilled(player , entity);
+                                        //System.out.println("[Tick] Tracked rite progress for player " + player.getName().getString());
                                     } else {
-                                        //System.out.println("[Tick] No active trial instance found for player " + player.getName().getString());
+                                        //System.out.println("[Tick] No active rite instance found for player " + player.getName().getString());
                                     }
                                 }
                             } else {
                                 //System.out.println("[Tick] Altar level not loaded. Retrying...");
-                                trialData.setPendingTrialUpdate(20);
+                                riteData.setPendingRiteUpdate(20);
                             }
                         } else if (altarDimension == null) {
                             //System.out.println("[Tick] Altar dimension is null. Retrying...");
-                            trialData.setPendingTrialUpdate(20);
+                            riteData.setPendingRiteUpdate(20);
                         }
                     }
                 }
@@ -949,14 +946,14 @@ public class ModEvents {
                 }
             }
 
-            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
+            player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
                 MinecraftServer server = player.getServer();
                 if (server == null) return;
 
                 ServerLevel overworld = server.getLevel(Level.OVERWORLD);
                 if (overworld == null) return;
 
-                BlockPos altarPos = trialData.getCurrentAltarPos();
+                BlockPos altarPos = riteData.getCurrentAltarPos();
                 if (altarPos == null) {
                     return;
                 }
@@ -966,14 +963,14 @@ public class ModEvents {
                     return;
                 }
 
-                if (!altar.hasPlayerCompletedTrial(player)) {
-                    altar.removePlayerFromTrial(player);
+                if (!altar.hasPlayerCompletedRite(player)) {
+                    altar.removePlayerFromRite(player);
                 }
 
-                trialData.clearPlayerCurse();
+                riteData.clearPlayerCurse();
                 if (player instanceof ServerPlayer serverPlayer) {
                     ModNetworking.sendToPlayer(
-                            new SyncTrialDataS2C(
+                            new SyncRiteDataS2C(
                                     "None",
                                     false,
                                     "",
@@ -1095,8 +1092,8 @@ public class ModEvents {
             if (curseEffect != null) {
                 MobEffect effect = curseEffect.getEffect();
                 if (CurseRegistry.getCurses().contains(effect)) {
-                    player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-                        if (trialData.isPlayerCursed()) {
+                    player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+                        if (riteData.isPlayerCursed()) {
                             event.setCanceled(true);
                             //System.out.println("Prevented removal of curse from player");
                         } else {
@@ -1158,15 +1155,15 @@ public class ModEvents {
             return;
         }
 
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-            if (!trialData.isPlayerCursed()) {
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+            if (!riteData.isPlayerCursed()) {
                 return;
             }
 
             ServerLevel serverLevel = (ServerLevel) player.level();
 
-            for (TrialRecord trialRecord : trialData.getActiveTrialsByType(Trial.fetchTrial)) {
-                BlockPos altarPos = trialRecord.getAltarPos();
+            for (RiteRecord riteRecord : riteData.getActiveRitesByType(Rite.famineRite)) {
+                BlockPos altarPos = riteRecord.getAltarPos();
                 BlockPos lowerBound = altarPos.above(1);
                 BlockPos upperBound = altarPos.above(3);
                 boolean isWithinHeight = itemPos.getY() >= lowerBound.getY() && itemPos.getY() <= upperBound.getY();
@@ -1178,12 +1175,12 @@ public class ModEvents {
                         continue;
                     }
 
-                    Trial trial = altar.getPlayerTrial(player.getUUID());
-                    if (trial instanceof FetchTrial fetchTrial) {
-                        Item requiredItem = fetchTrial.getRequiredItem();
+                    Rite rite = altar.getPlayerRite(player.getUUID());
+                    if (rite instanceof FamineRite famineRite) {
+                        Item requiredItem = famineRite.getRequiredItem();
 
                         if (tossedItem.equals(requiredItem)) {
-                            fetchTrial.incrementFetchCount(player, itemCount);
+                            famineRite.incrementFetchCount(player, itemCount);
                             itemEntity.discard();
                             serverLevel.sendParticles(
                                     ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
@@ -1206,13 +1203,13 @@ public class ModEvents {
                                     1.0f,
                                     0.5f
                             );
-                            fetchTrial.trackProgress(player);
+                            famineRite.trackProgress(player);
 
-                            if (fetchTrial.getCollectedCount() >= fetchTrial.getRequiredCount()) {
-                                fetchTrial.advanceDegree(player);
+                            if (famineRite.getCollectedCount() >= famineRite.getRequiredCount()) {
+                                famineRite.advanceDegree(player);
                             }
 
-                            //System.out.println("Player " + player.getName().getString() + " has thrown " + tossedItem.getDescriptionId() + " at altar " + altarPos + ". Collected: " + fetchTrial.getCollectedCount() + "/" + fetchTrial.getRequiredCount());
+                            //System.out.println("Player " + player.getName().getString() + " has thrown " + tossedItem.getDescriptionId() + " at altar " + altarPos + ". Collected: " + famineRite.getCollectedCount() + "/" + famineRite.getRequiredCount());
                             break;
                         }
                     }
@@ -1461,17 +1458,17 @@ public class ModEvents {
         }
 
         if (event.phase == TickEvent.Phase.END && !player.level().isClientSide()) {
-            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-                if (trialData.isPlayerCursed()) {
+            player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+                if (riteData.isPlayerCursed()) {
                     //System.out.println("[Tick] Player " + player.getName().getString() + " is cursed.");
-                    int pending = trialData.getPendingTrialUpdate();
-                    //System.out.println("[Tick] Pending trial update ticks: " + pending);
+                    int pending = riteData.getPendingRiteUpdate();
+                    //System.out.println("[Tick] Pending rite update ticks: " + pending);
                     if (pending > 0) {
-                        trialData.setPendingTrialUpdate(pending - 1);
-                        //System.out.println("[Tick] Decremented pending trial update ticks to: " + trialData.getPendingTrialUpdate());
-                        if (trialData.getPendingTrialUpdate() <= 0) {
-                            ResourceKey<Level> altarDimension = trialData.getAltarDimension();
-                            BlockPos altarPos = trialData.getCurrentAltarPos();
+                        riteData.setPendingRiteUpdate(pending - 1);
+                        //System.out.println("[Tick] Decremented pending rite update ticks to: " + riteData.getPendingRiteUpdate());
+                        if (riteData.getPendingRiteUpdate() <= 0) {
+                            ResourceKey<Level> altarDimension = riteData.getAltarDimension();
+                            BlockPos altarPos = riteData.getCurrentAltarPos();
                             //System.out.println("[Tick] Altar Dimension: " + (altarDimension != null ? altarDimension.location() : "null") +
                             //        ", Altar Pos: " + (altarPos != null ? altarPos.toShortString() : "null"));
                             if (altarPos != null) {
@@ -1483,33 +1480,33 @@ public class ModEvents {
                                     if (altarLevel != null) {
                                         BlockEntity blockEntity = altarLevel.getBlockEntity(altarPos);
                                         if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
-                                            Trial activeTrial = altarEntity.getPlayerTrial(player.getUUID());
-                                            if (activeTrial != null) {
-                                                activeTrial.trackProgress(player);
-                                                //System.out.println("[Tick] Tracked trial progress for player " + player.getName().getString());
+                                            Rite activeRite = altarEntity.getPlayerRite(player.getUUID());
+                                            if (activeRite != null) {
+                                                activeRite.trackProgress(player);
+                                                //System.out.println("[Tick] Tracked rite progress for player " + player.getName().getString());
                                             } else {
-                                                //System.out.println("[Tick] No active trial instance found for player " + player.getName().getString());
+                                                //System.out.println("[Tick] No active rite instance found for player " + player.getName().getString());
                                             }
                                         }
                                     } else {
                                         //System.out.println("[Tick] Altar level not loaded. Retrying...");
-                                        trialData.setPendingTrialUpdate(20);
+                                        riteData.setPendingRiteUpdate(20);
                                     }
                                 } else if (altarDimension == null) {
                                     //System.out.println("[Tick] Altar dimension is null. Retrying...");
-                                    trialData.setPendingTrialUpdate(20);
+                                    riteData.setPendingRiteUpdate(20);
                                 }
                             }
                         }
                     }
 
-                    BlockPos currentAltarPos = trialData.getCurrentAltarPos();
+                    BlockPos currentAltarPos = riteData.getCurrentAltarPos();
                     if (currentAltarPos == null) return;
                     BlockEntity blockEntity = player.level().getBlockEntity(currentAltarPos);
                     if (blockEntity instanceof CursedAltarBlockEntity altar) {
-                        Trial trial = altar.getPlayerTrial(player.getUUID());
-                        if (trial != null) {
-                            trial.onPlayerTick(player);
+                        Rite rite = altar.getPlayerRite(player.getUUID());
+                        if (rite != null) {
+                            rite.onPlayerTick(player);
                         }
                     }
                 }

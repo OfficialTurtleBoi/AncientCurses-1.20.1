@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.trials;
+package net.turtleboi.ancientcurses.rites;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -8,20 +8,20 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Objects;
 
-public class TrialRecord {
+public class RiteRecord {
     private BlockPos altarPos;
-    private String trialType;
+    private String riteType;
     private boolean completed;
     private boolean rewardCollected;
 
-    public TrialRecord(BlockPos altarPos, String trialType, boolean completed, boolean rewardCollected) {
+    public RiteRecord(BlockPos altarPos, String riteType, boolean completed, boolean rewardCollected) {
         this.altarPos = altarPos;
-        this.trialType = trialType;
+        this.riteType = riteType;
         this.completed = completed;
         this.rewardCollected = rewardCollected;
     }
 
-    public TrialRecord() {
+    public RiteRecord() {
 
     }
 
@@ -33,12 +33,12 @@ public class TrialRecord {
         this.altarPos = altarPos;
     }
 
-    public String getTrialType() {
-        return trialType;
+    public String getRiteType() {
+        return riteType;
     }
 
-    public void setTrialType(String trialType) {
-        this.trialType = trialType;
+    public void setRiteType(String riteType) {
+        this.riteType = riteType;
     }
 
     public boolean isCompleted() {
@@ -60,7 +60,7 @@ public class TrialRecord {
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putLong("AltarPos", altarPos.asLong());
-        tag.putString("TrialType", trialType);
+        tag.putString("RiteType", riteType);
         tag.putBoolean("Completed", completed);
         tag.putBoolean("RewardCollected", rewardCollected);
         return tag;
@@ -68,16 +68,16 @@ public class TrialRecord {
 
     public void deserializeNBT(CompoundTag tag) {
         this.altarPos = BlockPos.of(tag.getLong("AltarPos"));
-        this.trialType = tag.getString("TrialType");
+        this.riteType = tag.getString("RiteType");
         this.completed = tag.getBoolean("Completed");
         this.rewardCollected = tag.getBoolean("RewardCollected");
     }
 
     public boolean isTrialType(String type) {
-        return Objects.equals(this.trialType, type);
+        return Objects.equals(this.riteType, type);
     }
 
-    public MobEffect getTrialEffect() {
-        return ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(this.trialType));
+    public MobEffect getRiteEffect() {
+        return ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(this.riteType));
     }
 }

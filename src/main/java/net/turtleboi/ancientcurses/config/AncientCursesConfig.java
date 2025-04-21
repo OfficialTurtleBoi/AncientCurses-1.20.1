@@ -45,7 +45,7 @@ public class AncientCursesConfig {
 
         BUILDER.pop();
 
-        BUILDER.push("Trial Modifiers");
+        BUILDER.push("Rite Modifiers");
 
         CURSED_TRIAL_TIER1_CHANCE = BUILDER
                 .comment("Base chance for player to be cursed with a Tier 1 trial")
@@ -76,7 +76,7 @@ public class AncientCursesConfig {
 
         BUILDER.pop();
 
-        BUILDER.push("Trial Variables");
+        BUILDER.push("Curse Modifiers");
 
         FETCH_TRIAL_ITEMS = BUILDER
                 .comment("List of valid items (by ID) that can be required in the Fetch Trial.")
@@ -104,8 +104,6 @@ public class AncientCursesConfig {
                 );
 
         BUILDER.pop();
-
-
         SPEC = BUILDER.build();
     }
 }

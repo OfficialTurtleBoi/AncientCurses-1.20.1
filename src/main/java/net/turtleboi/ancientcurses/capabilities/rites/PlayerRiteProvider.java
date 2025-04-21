@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.capabilities.trials;
+package net.turtleboi.ancientcurses.capabilities.rites;
 
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -12,29 +12,29 @@ import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PlayerTrialProvider implements ICapabilityProvider, INBTSerializable<CompoundTag> {
-    public static final Capability<PlayerTrialDataCapability> PLAYER_TRIAL_DATA = CapabilityManager.get(new CapabilityToken<>() {});
+public class PlayerRiteProvider implements ICapabilityProvider, INBTSerializable<CompoundTag> {
+    public static final Capability<PlayerRiteDataCapability> PLAYER_RITE_DATA = CapabilityManager.get(new CapabilityToken<>() {});
 
-    private PlayerTrialDataCapability trialData = null;
-    private final LazyOptional<PlayerTrialDataCapability> optional = LazyOptional.of(this::createPlayerTrialData);
+    private PlayerRiteDataCapability riteData = null;
+    private final LazyOptional<PlayerRiteDataCapability> optional = LazyOptional.of(this::createPlayerRiteData);
 
     private final Player player;
 
-    public PlayerTrialProvider(Player player) {
+    public PlayerRiteProvider(Player player) {
         this.player = player;
     }
 
-    private PlayerTrialDataCapability createPlayerTrialData() {
-        if (this.trialData == null) {
-            this.trialData = new PlayerTrialDataCapability();
+    private PlayerRiteDataCapability createPlayerRiteData() {
+        if (this.riteData == null) {
+            this.riteData = new PlayerRiteDataCapability();
         }
-        return this.trialData;
+        return this.riteData;
     }
 
     @NotNull
     @Override
     public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        if (cap == PLAYER_TRIAL_DATA) {
+        if (cap == PLAYER_RITE_DATA) {
             return optional.cast();
         }
         return LazyOptional.empty();
@@ -43,12 +43,12 @@ public class PlayerTrialProvider implements ICapabilityProvider, INBTSerializabl
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
-        createPlayerTrialData().saveNBTData(nbt);
+        createPlayerRiteData().saveNBTData(nbt);
         return nbt;
     }
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
-        createPlayerTrialData().loadNBTData(nbt);
+        createPlayerRiteData().loadNBTData(nbt);
     }
 }

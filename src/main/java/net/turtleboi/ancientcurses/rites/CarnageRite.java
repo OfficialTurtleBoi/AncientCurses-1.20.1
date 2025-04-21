@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.trials;
+package net.turtleboi.ancientcurses.rites;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -21,19 +21,19 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class EliminationTrial implements Trial {
+public class CarnageRite implements Rite {
     private UUID playerUUID;
     private MobEffect effect;
     private int amplifier;
@@ -59,7 +59,7 @@ public class EliminationTrial implements Trial {
     public static final String eliminationCount = "EliminationCount";
     public static final String eliminationRequirement = "EliminationRequirement";
 
-    public EliminationTrial(Player player, MobEffect effect, int amplifier, CursedAltarBlockEntity altar) {
+    public CarnageRite(Player player, MobEffect effect, int amplifier, CursedAltarBlockEntity altar) {
         this.playerUUID = player.getUUID();
         this.effect = effect;
         this.amplifier = amplifier + 1;
@@ -75,23 +75,23 @@ public class EliminationTrial implements Trial {
         }
 
         this.completed = false;
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-            trialData.setCurseEffect(effect);
-            trialData.setActiveTrial(this);
-            if (trialData.getCurrentWave() == 0) {
-                trialData.setCurrentWave(0);
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+            riteData.setCurseEffect(effect);
+            riteData.setActiveRite(this);
+            if (riteData.getCurrentWave() == 0) {
+                riteData.setCurrentWave(0);
             }
-            this.currentWave = trialData.getCurrentWave();
+            this.currentWave = riteData.getCurrentWave();
         });
     }
 
-    public EliminationTrial(CursedAltarBlockEntity altar) {
+    public CarnageRite(CursedAltarBlockEntity altar) {
         this.altar = altar;
         this.completed = false;
     }
 
-    public boolean isTrialActive() {
-        return altar.getPlayerTrial(playerUUID) != null;
+    public boolean isRiteActive() {
+        return altar.getPlayerRite(playerUUID) != null;
     }
 
     @Override
@@ -122,7 +122,7 @@ public class EliminationTrial implements Trial {
 
     @Override
     public String getType() {
-        return Trial.eliminationTrial;
+        return Rite.carnageRite;
     }
 
     @Override
@@ -143,24 +143,24 @@ public class EliminationTrial implements Trial {
     }
 
     @Override
-    public boolean isTrialCompleted(Player player) {
+    public boolean isRiteCompleted(Player player) {
         return (completedThirdDegree && activeMobs.isEmpty());
     }
 
     @Override
     public void onEntityKilled(Player player, Entity entity) {
-        if (!isTrialActive()) {
+        if (!isRiteActive()) {
             return;
         }
         if (entity.getType() == eliminationTarget) {
-            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-                int newKills = trialData.getCurrentWave() + 1;
-                trialData.setCurrentWave(newKills);
+            player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+                int newKills = riteData.getCurrentWave() + 1;
+                riteData.setCurrentWave(newKills);
                 activeMobs.removeIf(mob -> mob == entity);
             });
 
-            if (isTrialCompleted(player)) {
-                concludeTrial(player);
+            if (isRiteCompleted(player)) {
+                concludeRite(player);
             } else {
                 trackProgress(player);
             }
@@ -178,8 +178,8 @@ public class EliminationTrial implements Trial {
                 if (!livingMob.isAlive()) {
                     mobIterator.remove();
                 } else {
-                    if (livingMob instanceof Mob trialMob){
-                        trialMob.setTarget(player);
+                    if (livingMob instanceof Mob riteMob){
+                        riteMob.setTarget(player);
                     }
 
                     if ((currentWave == firstDegreeThreshold || currentWave == secondDegreeThreshold || currentWave == thirdDegreeThreshold) && waveDelay <= 0) {
@@ -194,13 +194,13 @@ public class EliminationTrial implements Trial {
 
         if (!completedFirstDegree) {
             if (waveDelay > 0 ) {
-                //System.out.println("[Elimination Trial] Subtracting wave delay");
+                //System.out.println("[Elimination Rite] Subtracting wave delay");
                 waveDelay--;
             }
 
             if (currentWave < firstDegreeThreshold) {
                 if (waveDelay <= 0 || (activeMobs.isEmpty() && currentWave != 0)) {
-                    //System.out.println("[Elimination Trial] Wave " + currentWave + ": Timed out! Spawning wave: " + (currentWave + 1));
+                    //System.out.println("[Elimination Rite] Wave " + currentWave + ": Timed out! Spawning wave: " + (currentWave + 1));
                     if (waveDelay <= 0) {
                         spawnWave(player);
                         currentWave++;
@@ -218,7 +218,7 @@ public class EliminationTrial implements Trial {
                         waveDelay = 200;
                     }
                     completedFirstDegree = true;
-                    //System.out.println("[Elimination Trial] Wave " + currentWave + ": Done! First degree complete!");
+                    //System.out.println("[Elimination Rite] Wave " + currentWave + ": Done! First degree complete!");
                 }
             }
         } else if (!completedSecondDegree) {
@@ -245,7 +245,7 @@ public class EliminationTrial implements Trial {
                         waveDelay = 200;
                     }
                     completedSecondDegree = true;
-                    //System.out.println("[Elimination Trial] Wave " + currentWave + ": Done! First degree complete!");
+                    //System.out.println("[Elimination Rite] Wave " + currentWave + ": Done! First degree complete!");
                 }
             }
         } else if (!completedThirdDegree) {
@@ -272,22 +272,22 @@ public class EliminationTrial implements Trial {
                         waveDelay = 200;
                     }
                     completedThirdDegree = true;
-                    //System.out.println("[Elimination Trial] Wave " + currentWave + ": Done! First degree complete!");
+                    //System.out.println("[Elimination Rite] Wave " + currentWave + ": Done! First degree complete!");
                 }
             }
         }
 
-        if (isTrialCompleted(player)) {
-            concludeTrial(player);
+        if (isRiteCompleted(player)) {
+            concludeRite(player);
         }
     }
 
     @Override
     public void trackProgress(Player player) {
         if (player != null) {
-            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-                BlockPos altarPos = trialData.getCurrentAltarPos();
-                ResourceKey<Level> altarDimension = trialData.getAltarDimension();
+            player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+                BlockPos altarPos = riteData.getCurrentAltarPos();
+                ResourceKey<Level> altarDimension = riteData.getAltarDimension();
                 if (altarPos != null && altarDimension != null) {
                     MinecraftServer server = player.getServer();
                     if (server != null) {
@@ -298,7 +298,7 @@ public class EliminationTrial implements Trial {
                                 CompoundTag altarNBT = new CompoundTag();
                                 altarEntity.saveAdditional(altarNBT);
                                 //System.out.println("Altar at " + altarPos + " in dimension "
-                                //        + altarDimension.location() + " reloaded trial data for player "
+                                //        + altarDimension.location() + " reloaded rite data for player "
                                 //        + player.getName().getString());
                             } else {
                                 //System.out.println("No altar found at " + altarPos + " in dimension "
@@ -313,8 +313,8 @@ public class EliminationTrial implements Trial {
                 }
             });
 
-            //System.out.println("Trial Type: " + Trial.eliminationTrial);
-            //System.out.println("Trial Completed: " + isTrialCompleted(player));
+            //System.out.println("Rite Type: " + Rite.eliminationRite);
+            //System.out.println("Rite Completed: " + isRiteCompleted(player));
             //System.out.println("Elimination Target: " + eliminationTarget);
             //System.out.println("Elimination Target String: " + eliminationTargetString);
             //System.out.println("Current Wave: " + currentWave);
@@ -324,9 +324,9 @@ public class EliminationTrial implements Trial {
             //System.out.println("Total wave delay: " + getDefaultWaveDelay());
 
             ModNetworking.sendToPlayer(
-                    new SyncTrialDataS2C(
-                            Trial.eliminationTrial,
-                            isTrialCompleted(player),
+                    new SyncRiteDataS2C(
+                            Rite.carnageRite,
+                            isRiteCompleted(player),
                             eliminationTargetString,
                             currentWave,
                             activeMobs.size(),
@@ -342,12 +342,12 @@ public class EliminationTrial implements Trial {
     }
 
     @Override
-    public void concludeTrial(Player player) {
-        //player.displayClientMessage(Component.literal("You have completed the elimination trial! Collect your reward").withStyle(ChatFormatting.GREEN), true);
+    public void concludeRite(Player player) {
+        //player.displayClientMessage(Component.literal("You have completed the elimination rite! Collect your reward").withStyle(ChatFormatting.GREEN), true);
         ModNetworking.sendToPlayer(
-                new SyncTrialDataS2C(
-                        Trial.eliminationTrial,
-                        isTrialCompleted(player),
+                new SyncRiteDataS2C(
+                        Rite.carnageRite,
+                        isRiteCompleted(player),
                         eliminationTargetString,
                         0,
                         0,
@@ -359,7 +359,7 @@ public class EliminationTrial implements Trial {
                         0),
                 (ServerPlayer) player);
 
-        player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(PlayerTrialDataCapability::clearCurseEffect);
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearCurseEffect);
 
         List<MobEffect> cursesToRemove = new ArrayList<>();
         for (MobEffectInstance effectInstance : player.getActiveEffects()) {
@@ -388,7 +388,7 @@ public class EliminationTrial implements Trial {
         }
 
         CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel(), altar);
-        altar.setPlayerTrialCompleted(player);
+        altar.setPlayerRiteCompleted(player);
         setCompleted(true);
     }
 
@@ -456,9 +456,9 @@ public class EliminationTrial implements Trial {
             activeMobs.addAll(mobsToSpawn);
             waveKillTotal = activeMobs.size();
             CursedPortalEntity.spawnSummoningPortalAtPos(level, altar, portalPos, mobsToSpawn);
-            //System.out.println("[EliminationTrial] Spawned wave with " + mobCount + " enemies via portal at " + portalPos);
+            //System.out.println("[CarnageRite] Spawned wave with " + mobCount + " enemies via portal at " + portalPos);
             addWaveDelay((mobsToSpawn.size() + 1) * CursedPortalEntity.spawnDelay);
-            //System.out.println("[EliminationTrial] Time until next wave: " + (mobsToSpawn.size() + 1) * CursedPortalEntity.spawnDelay);
+            //System.out.println("[CarnageRite] Time until next wave: " + (mobsToSpawn.size() + 1) * CursedPortalEntity.spawnDelay);
         }
     }
 

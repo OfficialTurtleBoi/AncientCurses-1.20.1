@@ -39,16 +39,16 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialDataCapability;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.trials.SyncTrialDataS2C;
+import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
+import net.turtleboi.ancientcurses.rites.CarnageRite;
+import net.turtleboi.ancientcurses.rites.Rite;
 import net.turtleboi.ancientcurses.sound.ModSounds;
-import net.turtleboi.ancientcurses.trials.EliminationTrial;
-import net.turtleboi.ancientcurses.trials.FetchTrial;
-import net.turtleboi.ancientcurses.trials.Trial;
+import net.turtleboi.ancientcurses.rites.FamineRite;
 import net.turtleboi.ancientcurses.util.ModTags;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
@@ -182,10 +182,10 @@ public class CursedAltarBlock extends BaseEntityBlock {
                 altarEntity.releaseDimensionActive();
 
                 for (Player player : level.players()) {
-                    player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-                        BlockPos playerAltarPos = trialData.getCurrentAltarPos();
+                    player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+                        BlockPos playerAltarPos = riteData.getCurrentAltarPos();
                         if (playerAltarPos != null && playerAltarPos.equals(pos)) {
-                            trialData.resetAltarAtPos(playerAltarPos);
+                            riteData.resetAltarAtPos(playerAltarPos);
                         }
                     });
                 }
@@ -204,46 +204,46 @@ public class CursedAltarBlock extends BaseEntityBlock {
                     return InteractionResult.FAIL;
                 }
 
-                InteractionResult playerTrialDataResult = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
-                        .map(trialData -> {
-                            if (trialData.isPlayerCursed()) {
-                                Trial playerTrial = trialData.getActiveTrial();
-                                if (playerTrial instanceof EliminationTrial eliminationTrial){
-                                    if (eliminationTrial.completedFirstDegree || eliminationTrial.completedSecondDegree) {
-                                        eliminationTrial.concludeTrial(player);
+                InteractionResult playerRiteDataResult = player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA)
+                        .map(riteData -> {
+                            if (riteData.isPlayerCursed()) {
+                                Rite playerRite = riteData.getActiveRite();
+                                if (playerRite instanceof CarnageRite carnageRite){
+                                    if (carnageRite.completedFirstDegree || carnageRite.completedSecondDegree) {
+                                        carnageRite.concludeRite(player);
                                         return InteractionResult.SUCCESS;
                                     } else {
                                         return InteractionResult.FAIL;
                                     }
-                                } else if (playerTrial instanceof FetchTrial fetchTrial){
-                                    if (fetchTrial.completedFirstDegree || fetchTrial.completedSecondDegree) {
-                                        fetchTrial.concludeTrial(player);
+                                } else if (playerRite instanceof FamineRite famineRite){
+                                    if (famineRite.completedFirstDegree || famineRite.completedSecondDegree) {
+                                        famineRite.concludeRite(player);
                                         return InteractionResult.SUCCESS;
                                     } else {
                                         return InteractionResult.FAIL;
                                     }
-                                } else if (playerTrial == null){
+                                } else if (playerRite == null){
                                     return InteractionResult.FAIL;
                                 }
-                                //player.sendSystemMessage(Component.literal("You are already cursed! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
+                                //player.sendSystemMessage(Component.literal("You are already cursed! Complete your rite before interacting again.").withStyle(ChatFormatting.RED));
                             }
 
-                            if (trialData.getCurrentAltarPos() != null &&
-                                    !Objects.equals(trialData.getCurrentAltarPos(), altarEntity.getBlockPos())) {
-                                // player.sendSystemMessage(Component.literal("You have an altar! Complete your trial before interacting again.").withStyle(ChatFormatting.RED));
+                            if (riteData.getCurrentAltarPos() != null &&
+                                    !Objects.equals(riteData.getCurrentAltarPos(), altarEntity.getBlockPos())) {
+                                // player.sendSystemMessage(Component.literal("You have an altar! Complete your rite before interacting again.").withStyle(ChatFormatting.RED));
                                 return InteractionResult.FAIL;
                             }
 
                             return InteractionResult.PASS;
                         }).orElse(InteractionResult.PASS);
 
-                if (playerTrialDataResult == InteractionResult.FAIL) {
+                if (playerRiteDataResult == InteractionResult.FAIL) {
                     return InteractionResult.FAIL;
                 }
 
-                if (altarEntity.hasPlayerCompletedTrial(player)){
+                if (altarEntity.hasPlayerCompletedRite(player)){
                     rewardPlayer(player, altarEntity, level, pos);
-                    //player.sendSystemMessage(Component.literal("You've completed this trial!").withStyle(ChatFormatting.GREEN));
+                    //player.sendSystemMessage(Component.literal("You've completed this rite!").withStyle(ChatFormatting.GREEN));
                     if (player.isShiftKeyDown() && altarEntity.canPlayerUse(player)) {
                         //player.sendSystemMessage(Component.literal("Getting gem!"));
                         for (int i = 2; i >= 0; i--) {
@@ -306,12 +306,12 @@ public class CursedAltarBlock extends BaseEntityBlock {
                         //.sendSystemMessage(Component.literal("Too bad so sad!"));
                     }
                 } else {
-                    if (!altarEntity.hasPlayerCompletedTrial(player) && altarEntity.canPlayerUse(player)) {
+                    if (!altarEntity.hasPlayerCompletedRite(player) && altarEntity.canPlayerUse(player)) {
                         convertSoulTorches(altarEntity, level);
                         CoreNetworking.sendToNear(new CameraShakeS2C(0.125F, 1000), player);
-                        startTrial(player, altarEntity);
+                        startRite(player, altarEntity);
                         return InteractionResult.SUCCESS;
-                    } else if (!altarEntity.hasPlayerCompletedTrial(player) && !altarEntity.canPlayerUse(player)){
+                    } else if (!altarEntity.hasPlayerCompletedRite(player) && !altarEntity.canPlayerUse(player)){
                         //player.sendSystemMessage(Component.literal("The altar is recharging.").withStyle(ChatFormatting.RED));
                         return InteractionResult.FAIL;
                     }
@@ -337,9 +337,9 @@ public class CursedAltarBlock extends BaseEntityBlock {
         return soultorchamount;
     }
 
-    public void startTrial(Player player, CursedAltarBlockEntity altarEntity) {
-        if (altarEntity.hasPlayerCompletedTrial(player)) {
-            //player.sendSystemMessage(Component.literal("You have already completed the trial for this altar.").withStyle(ChatFormatting.GREEN));
+    public void startRite(Player player, CursedAltarBlockEntity altarEntity) {
+        if (altarEntity.hasPlayerCompletedRite(player)) {
+            //player.sendSystemMessage(Component.literal("You have already completed the rite for this altar.").withStyle(ChatFormatting.GREEN));
             return;
         }
 
@@ -377,21 +377,21 @@ public class CursedAltarBlock extends BaseEntityBlock {
     }
 
     private void rewardPlayer(Player player, CursedAltarBlockEntity altarEntity, Level level, BlockPos pos) {
-        int amplifier = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
-                .map(PlayerTrialDataCapability::getCurseAmplifier)
+        int amplifier = player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA)
+                .map(PlayerRiteDataCapability::getCurseAmplifier)
                 .orElse(0);
 
-        Trial trial = player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA)
+        Rite rite = player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA)
                 .resolve()
-                .map(PlayerTrialDataCapability::getActiveTrial)
+                .map(PlayerRiteDataCapability::getActiveRite)
                 .orElse(null);
 
-        if (trial == null) {
+        if (rite == null) {
             return;
         }
 
         if (altarEntity.hasCollectedReward(player)) {
-            //player.sendSystemMessage(Component.literal("You have already received your reward for this trial.").withStyle(ChatFormatting.RED));
+            //player.sendSystemMessage(Component.literal("You have already received your reward for this rite.").withStyle(ChatFormatting.RED));
             return;
         }
 
@@ -399,9 +399,9 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
         if (player instanceof ServerPlayer) {
             CoreNetworking.sendToNear((new CameraShakeS2C(0.125F, 1000)), player);
-            rewardPlayerWithLootTable(level,player, amplifier, trial, pos);
+            rewardPlayerWithLootTable(level,player, amplifier, rite, pos);
             ModNetworking.sendToPlayer(
-                    new SyncTrialDataS2C(
+                    new SyncRiteDataS2C(
                             "None",
                             false,
                             "",
@@ -414,10 +414,10 @@ public class CursedAltarBlock extends BaseEntityBlock {
                             0,
                             0),
                     (ServerPlayer) player);
-            player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent( trialData -> {
-                trialData.clearCurseAmplifier();
-                trialData.resetTrialProgress();
-                trialData.setActiveTrial(null);
+            player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+                riteData.clearCurseAmplifier();
+                riteData.resetRiteProgress();
+                riteData.setActiveRite(null);
             });
             altarEntity.markRewardCollected(player);
         }
@@ -447,7 +447,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
         }
     }
 
-    private void rewardPlayerWithLootTable(Level level, Player player, int pAmplifier, Trial trial, BlockPos pos) {
+    private void rewardPlayerWithLootTable(Level level, Player player, int pAmplifier, Rite rite, BlockPos pos) {
         int adjustedAmplifier = pAmplifier - 1;
         //System.out.println("pAmplifier: " + adjustedAmplifier);
         ResourceLocation[] lootTableLocations = {
@@ -462,28 +462,28 @@ public class CursedAltarBlock extends BaseEntityBlock {
         LootTable lootTable = serverLevel.getServer().getLootData().getElement(LootDataType.TABLE, lootTableLocations[lootIndex]);
 
         if (lootTable == null) {
-            //player.sendSystemMessage(Component.literal("No loot table found for this trial reward.").withStyle(ChatFormatting.RED));
+            //player.sendSystemMessage(Component.literal("No loot table found for this rite reward.").withStyle(ChatFormatting.RED));
             return;
         }
 
         Random random = new Random();
 
         int minRolls = 1, maxRolls = 2;
-        if (trial instanceof EliminationTrial eliminationTrial) {
-            if (eliminationTrial.completedThirdDegree) {
+        if (rite instanceof CarnageRite carnageRite) {
+            if (carnageRite.completedThirdDegree) {
                 minRolls = 3;
                 maxRolls = 5;
-            } else if (eliminationTrial.completedSecondDegree) {
+            } else if (carnageRite.completedSecondDegree) {
                 minRolls = 2;
                 maxRolls = 3;
             }
         }
 
-        if (trial instanceof FetchTrial fetchTrial) {
-            if (fetchTrial.completedThirdDegree) {
+        if (rite instanceof FamineRite famineRite) {
+            if (famineRite.completedThirdDegree) {
                 minRolls = 3;
                 maxRolls = 5;
-            } else if (fetchTrial.completedSecondDegree) {
+            } else if (famineRite.completedSecondDegree) {
                 minRolls = 2;
                 maxRolls = 3;
             }

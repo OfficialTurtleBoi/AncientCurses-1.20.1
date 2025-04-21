@@ -1,18 +1,18 @@
-package net.turtleboi.ancientcurses.network.packets.trials;
+package net.turtleboi.ancientcurses.network.packets.rites;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
-import net.turtleboi.ancientcurses.capabilities.trials.PlayerTrialProvider;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 
 import java.util.function.Supplier;
 
-public class TrialOverlayPacketC2S {
-    public TrialOverlayPacketC2S() {
+public class RiteOverlayPacketC2S {
+    public RiteOverlayPacketC2S() {
     }
 
-    public TrialOverlayPacketC2S(FriendlyByteBuf buf) {
+    public RiteOverlayPacketC2S(FriendlyByteBuf buf) {
     }
 
     public void toBytes(FriendlyByteBuf buf) {
@@ -23,10 +23,10 @@ public class TrialOverlayPacketC2S {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
-                player.getCapability(PlayerTrialProvider.PLAYER_TRIAL_DATA).ifPresent(trialData -> {
-                    if (trialData.getCurrentAltarPos() == null) {
+                player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+                    if (riteData.getCurrentAltarPos() == null) {
                         ModNetworking.sendToPlayer(
-                                new SyncTrialDataS2C(
+                                new SyncRiteDataS2C(
                                         "None",
                                         false,
                                         "",

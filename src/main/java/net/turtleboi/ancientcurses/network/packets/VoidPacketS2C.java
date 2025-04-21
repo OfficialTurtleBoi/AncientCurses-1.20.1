@@ -1,8 +1,6 @@
 package net.turtleboi.ancientcurses.network.packets;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkEvent;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
 
@@ -34,9 +32,9 @@ public class VoidPacketS2C {
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            PlayerClientData.setVoid(isVoid);
-            PlayerClientData.setVoidTimer(voidTimer);
-            PlayerClientData.setTotalVoidTime(voidTotalTime);
+            PlayerClientData.setSingularity(isVoid);
+            PlayerClientData.setSingularityTimer(voidTimer);
+            PlayerClientData.setTotalSingularityTime(voidTotalTime);
         });
         context.setPacketHandled(true);
         return true;
