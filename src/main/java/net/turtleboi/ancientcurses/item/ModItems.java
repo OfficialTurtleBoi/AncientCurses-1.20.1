@@ -1,6 +1,7 @@
 package net.turtleboi.ancientcurses.item;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.RecordItem;
@@ -111,8 +112,14 @@ public class ModItems {
     public static final RegistryObject<Item> SCONCED_UNLIT_SOUL_TORCH_ITEM = ITEMS.register("sconced_unlit_soul_torch",
             () -> new SconcedUnlitSoulTorchItem(ModBlocks.SCONCED_UNLIT_SOUL_TORCH.get(), new Item.Properties()));
 
+    public static final RegistryObject<Item> CURSED_LANTERN = ITEMS.register("cursed_lantern",
+            () -> new BlockItem(ModBlocks.CURSED_LANTERN.get(), new Item.Properties()));
+
     public static final RegistryObject<Item> CURSED_PEARL = ITEMS.register("cursed_pearl",
             () -> new CursedPearlItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
+
+    public static final RegistryObject<Item> DOWSING_ROD = ITEMS.register("dowsing_rod",
+            () -> new DowsingRod(new Item.Properties()));
 
     public static final RegistryObject<Item> GOLDEN_FEATHER = ITEMS.register("golden_feather",
             () -> new GoldenFeatherItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1).durability(32)));

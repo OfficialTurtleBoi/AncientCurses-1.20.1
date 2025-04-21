@@ -73,8 +73,7 @@ public class EmbersRite implements Rite {
         this.nodeRadius = Math.max(1, 4 - amplifier);
         Random random = new Random();
         BlockPos center = altar.getBlockPos();
-        //int sectors = 3 + amplifier;
-        int sectors = 32;//+ amplifier;
+        int sectors = 3 + amplifier;
         double minDistance = 8.0 * (1 + amplifier);
         double maxDistance = 64.0 * (1 + amplifier);
         for (int i = 0; i < sectors; i++) {

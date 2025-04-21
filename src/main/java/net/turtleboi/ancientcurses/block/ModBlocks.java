@@ -1,10 +1,12 @@
 package net.turtleboi.ancientcurses.block;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -64,6 +66,10 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> SCONCED_WALL_UNLIT_SOUL_TORCH = BLOCKS.register("sconced_wall_unlit_soul_torch",
             () -> new SconcedWallUnlitSoulTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH).lightLevel(state -> 0), ParticleTypes.SOUL_FIRE_FLAME));
+
+    public static final RegistryObject<Block> CURSED_LANTERN = BLOCKS.register("cursed_lantern",
+            () -> new LanternBlock(BlockBehaviour.Properties.copy(Blocks.SOUL_LANTERN)));
+
     private static <T extends Block> RegistryObject<T> registerBlock(String name, Supplier<T> block) {
         RegistryObject<T> toReturn = BLOCKS.register(name, block);
         registerBlockItem(name, toReturn);

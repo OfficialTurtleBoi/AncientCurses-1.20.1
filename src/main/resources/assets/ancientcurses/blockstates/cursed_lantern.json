@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "hanging=false": { "model": "ancientcurses:block/cursed_lantern" },
+    "hanging=true":  { "model": "ancientcurses:block/cursed_lantern_hanging" }
+  }
+}

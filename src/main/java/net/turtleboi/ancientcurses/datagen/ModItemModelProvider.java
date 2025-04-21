@@ -46,6 +46,7 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.ANCIENT_BISMUTH);
         simpleItem(ModItems.ANCIENT_CHRYSOBERYL);
         simpleItem(ModItems.CURSED_PEARL);
+        simpleItem(ModItems.DOWSING_ROD);
         simpleItem(ModItems.ROT_CLUMP);
     }
 
