@@ -18,6 +18,9 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
+import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
+import net.turtleboi.ancientcurses.network.packets.items.DowsingRodInfoPacketS2C;
 
 public class DowsingRod extends Item {
     public DowsingRod(Properties properties) {
@@ -82,6 +85,13 @@ public class DowsingRod extends Item {
         if (altarFoundPos == null) {
             serverPlayer.sendSystemMessage(Component.literal("No unfinished altar found nearby."));
         } else {
+            ModNetworking.sendToPlayer(new DowsingRodInfoPacketS2C(
+                    altarFoundPos.getX(),
+                    altarFoundPos.getY(),
+                    altarFoundPos.getZ()
+            ), serverPlayer);
+
+
             double distance = Math.sqrt(altarDistSqr);
             serverPlayer.sendSystemMessage(Component.literal(
                     String.format("Nearest unfinished altar is at [%d, %d, %d] (%.1f blocks)",

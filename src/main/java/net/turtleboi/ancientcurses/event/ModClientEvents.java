@@ -30,8 +30,10 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.client.RiteEventBar;
+import net.turtleboi.ancientcurses.client.renderer.DowsingRodRenderer;
 import net.turtleboi.ancientcurses.client.renderer.FirstBeaconEffectRenderer;
 import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
 import net.turtleboi.ancientcurses.network.packets.rites.RiteOverlayPacketC2S;
@@ -98,6 +100,7 @@ public class ModClientEvents {
         InteractionHand interactionHand = event.getHand();
         ItemStack itemStack = event.getItemStack();
         FirstBeaconEffectRenderer.renderFirstPerson(bufferSource, poseStack, interactionHand, itemStack);
+        DowsingRodRenderer.renderFirstPerson(bufferSource, poseStack, interactionHand, itemStack);
     }
 
     @SubscribeEvent

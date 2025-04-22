@@ -21,6 +21,9 @@ public class PlayerClientData {
     private static float portalOverlayAlpha = 0;
 
     //Item utils
+    private static double altarX = 0;
+    private static double altarY = 0;
+    private static double altarZ = 0;
     private static int itemMaxDurationTicks = 0;
     private static int itemRemainingUseTime = 0;
     private static double itemHitDistance = 0;
@@ -217,5 +220,29 @@ public class PlayerClientData {
 
     public static void setItemUsed(boolean beingUsed) {
         itemUsed = beingUsed;
+    }
+
+    public static double getAltarX() {
+        return altarX;
+    }
+
+    public static void setAltarX(double xCoord) {
+        altarX = xCoord;
+    }
+
+    public static double getAltarY() {
+        return altarY;
+    }
+
+    public static void setAltarY(double yCoord) {
+        altarY = yCoord;
+    }
+
+    public static double getAltarZ() {
+        return altarZ;
+    }
+
+    public static void setAltarZ(double zCoord) {
+        altarZ = zCoord;
     }
 }
