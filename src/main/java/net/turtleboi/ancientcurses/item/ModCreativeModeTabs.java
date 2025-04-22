@@ -29,10 +29,12 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModBlocks.SCONCED_SOUL_TORCH.get());
                         pOutput.accept(ModBlocks.SCONCED_REDSTONE_TORCH.get());
                         pOutput.accept(ModBlocks.SCONCED_CURSED_TORCH.get());
+                        pOutput.accept(ModItems.CURSED_LANTERN.get());
                         pOutput.accept(ModItems.GOLDEN_AMULET.get());
                         pOutput.accept(ModItems.DEPRECOPHOBIA_MUSIC_DISC.get());
-                        pOutput.accept(ModItems.CURSED_PEARL.get());
                         pOutput.accept(ModItems.ROT_CLUMP.get());
+                        pOutput.accept(ModItems.CURSED_PEARL.get());
+                        pOutput.accept(ModItems.DOWSING_ROD.get());
                         pOutput.accept(ModItems.GOLDEN_FEATHER.get());
                         pOutput.accept(ModItems.FIRST_BEACON.get());
                         Enchantment enchantment = ModEnchantments.FURTHER_DASH.get();

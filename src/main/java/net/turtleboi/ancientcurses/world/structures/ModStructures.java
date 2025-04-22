@@ -1,6 +1,9 @@
 package net.turtleboi.ancientcurses.world.structures;
 
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.structure.StructureCheck;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -12,10 +15,9 @@ public class ModStructures {
             DeferredRegister.create(Registries.STRUCTURE_TYPE, AncientCurses.MOD_ID);
 
     public static final RegistryObject<StructureType<CurseAltarStructure>> CURSED_ALTAR =
-            STRUCTURE_TYPES.register("cursedaltar", () -> () -> CurseAltarStructure.CODEC);
+            STRUCTURE_TYPES.register("cursed_altar", () -> () -> CurseAltarStructure.CODEC);
 
     public static void register(IEventBus eventBus) {
         STRUCTURE_TYPES.register(eventBus);
     }
 }
-

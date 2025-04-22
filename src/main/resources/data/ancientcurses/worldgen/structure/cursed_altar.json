@@ -1,10 +1,10 @@
 {
-  "type": "ancientcurses:cursedaltar",
-  "biomes": "#ancientcurses:has_structure/cursedaltar",
+  "type": "ancientcurses:cursed_altar",
+  "biomes": "#ancientcurses:has_structure/cursed_altar",
   "step": "underground_structures",
   "spawn_overrides": {},
   "terrain_adaptation": "beard_box",
-  "start_pool": "ancientcurses:cursedaltar/start_pool",
+  "start_pool": "ancientcurses:cursed_altar/start_pool",
   "size": 1,
   "start_height": {
     "type": "minecraft:uniform",

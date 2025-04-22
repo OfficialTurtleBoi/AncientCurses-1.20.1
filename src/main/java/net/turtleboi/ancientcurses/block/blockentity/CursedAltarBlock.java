@@ -19,10 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.WallTorchBlock;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -41,7 +38,6 @@ import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
-import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
@@ -58,7 +54,7 @@ import java.util.*;
 
 public class CursedAltarBlock extends BaseEntityBlock {
     public static final VoxelShape SHAPE = BaseEntityBlock.box(0, 0, 0, 16, 12, 16);
-    public static final List<BlockPos> SOUL_TORCH_OFFSETS = BlockPos.betweenClosedStream(-2, 0, -2, 2, 1, 2)
+    public static final List<BlockPos> SOUL_TORCH_OFFSETS = BlockPos.betweenClosedStream(-2, -2, -2, 2, 2, 2)
             .filter((p_207914_) -> Math.abs(p_207914_.getX()) == 2 || Math.abs(p_207914_.getZ()) == 2)
             .map(BlockPos::immutable)
             .toList();
@@ -77,7 +73,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
         for (BlockPos offset : SOUL_TORCH_OFFSETS) {
             BlockPos torchPos = pos.offset(offset);
             BlockState torchState = level.getBlockState(torchPos);
-            if (random.nextInt(16) == 0 && isSoulTorch(level, torchPos)) {
+            if (random.nextInt(16) == 0 && isSoulLight(level, torchPos)) {
                 double particleX, particleY, particleZ;
 
                 if (torchState.is(Blocks.SOUL_WALL_TORCH)) {
@@ -105,35 +101,40 @@ public class CursedAltarBlock extends BaseEntityBlock {
         }
     }
 
-    private boolean isSoulTorch(Level level, BlockPos pos) {
-        return level.getBlockState(pos).is(ModBlocks.SCONCED_SOUL_TORCH.get()) || level.getBlockState(pos).is(ModBlocks.SCONCED_WALL_SOUL_TORCH.get());
+    private boolean isSoulLight(Level level, BlockPos pos) {
+        return level.getBlockState(pos).is(ModBlocks.SCONCED_SOUL_TORCH.get()) ||
+                level.getBlockState(pos).is(ModBlocks.SCONCED_WALL_SOUL_TORCH.get()) ||
+                level.getBlockState(pos).is(Blocks.SOUL_LANTERN);
     }
 
-    private void convertSoulTorches(CursedAltarBlockEntity altarEntity, Level level) {
+    private void convertSoulLights(CursedAltarBlockEntity altarEntity, Level level) {
         BlockPos altarPos = altarEntity.getBlockPos();
 
         for (BlockPos offset : SOUL_TORCH_OFFSETS) {
-            BlockPos torchPos = altarPos.offset(offset);
-            if (isSoulTorch(level, torchPos)) {
-                BlockState torchState = level.getBlockState(torchPos);
-                BlockState cursedTorchState;
+            BlockPos lightPos = altarPos.offset(offset);
+            if (isSoulLight(level, lightPos)) {
+                BlockState lightState = level.getBlockState(lightPos);
+                BlockState finalLightState;
 
-                if (torchState.getBlock() instanceof WallTorchBlock) {
-                    Direction direction = torchState.getValue(WallTorchBlock.FACING);
-                    cursedTorchState = ModBlocks.SCONCED_WALL_CURSED_TORCH.get().defaultBlockState()
+                if (lightState.getBlock() instanceof WallTorchBlock) {
+                    Direction direction = lightState.getValue(WallTorchBlock.FACING);
+                    finalLightState = ModBlocks.SCONCED_WALL_CURSED_TORCH.get().defaultBlockState()
                             .setValue(WallTorchBlock.FACING, direction);
-                } else {
-                    cursedTorchState = ModBlocks.SCONCED_CURSED_TORCH.get().defaultBlockState();
+                    level.setBlock(lightPos, finalLightState, 3);
+                } else if (lightState.getBlock() instanceof TorchBlock) {
+                    finalLightState = ModBlocks.SCONCED_CURSED_TORCH.get().defaultBlockState();
+                    level.setBlock(lightPos, finalLightState, 3);
+                } else if (lightState.getBlock() instanceof LanternBlock) {
+                    finalLightState = ModBlocks.CURSED_LANTERN.get().defaultBlockState();
+                    level.setBlock(lightPos, finalLightState, 3);
                 }
-
-                level.setBlock(torchPos, cursedTorchState, 3);
 
                 if (level instanceof ServerLevel serverLevel) {
                     serverLevel.sendParticles(
                             ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
-                            torchPos.getX() + 0.5,
-                            torchPos.getY() + 0.7,
-                            torchPos.getZ() + 0.5,
+                            lightPos.getX() + 0.5,
+                            lightPos.getY() + 0.7,
+                            lightPos.getZ() + 0.5,
                             20,
                             0.05,
                             0.05,
@@ -143,9 +144,9 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
                     serverLevel.playSound(
                             null,
-                            torchPos.getX() + 0.5,
-                            torchPos.getY() + 0.7,
-                            torchPos.getZ() + 0.5,
+                            lightPos.getX() + 0.5,
+                            lightPos.getY() + 0.7,
+                            lightPos.getZ() + 0.5,
                             SoundEvents.GHAST_SHOOT,
                             SoundSource.HOSTILE,
                             0.25f,
@@ -307,7 +308,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
                     }
                 } else {
                     if (!altarEntity.hasPlayerCompletedRite(player) && altarEntity.canPlayerUse(player)) {
-                        convertSoulTorches(altarEntity, level);
+                        convertSoulLights(altarEntity, level);
                         CoreNetworking.sendToNear(new CameraShakeS2C(0.125F, 1000), player);
                         startRite(player, altarEntity);
                         return InteractionResult.SUCCESS;

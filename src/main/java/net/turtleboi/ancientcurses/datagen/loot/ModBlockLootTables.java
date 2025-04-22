@@ -50,6 +50,8 @@ public class ModBlockLootTables extends BlockLootSubProvider {
                 block -> createSingleItemTable(ModItems.SCONCED_UNLIT_SOUL_TORCH_ITEM.get()));
         this.add(ModBlocks.SCONCED_WALL_UNLIT_SOUL_TORCH.get(),
                 block -> createSingleItemTable(ModItems.SCONCED_UNLIT_SOUL_TORCH_ITEM.get()));
+        this.add(ModBlocks.CURSED_LANTERN.get(),
+                block -> createSingleItemTable(ModItems.CURSED_LANTERN.get()));
     }
 
     //protected LootTable.Builder createCopperLikeOreDrops(Block pBlock, Item item) {

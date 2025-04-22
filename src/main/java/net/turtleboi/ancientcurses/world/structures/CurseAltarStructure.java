@@ -94,7 +94,6 @@ public class CurseAltarStructure extends Structure {
         return structurePiecesGenerator;
     }
 
-
     @Override
     public StructureType<?> type() {
         return ModStructures.CURSED_ALTAR.get();
