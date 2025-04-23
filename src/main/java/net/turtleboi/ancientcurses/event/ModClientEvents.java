@@ -6,7 +6,11 @@ import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.ItemInHandRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
@@ -15,10 +19,12 @@ import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
@@ -100,7 +106,43 @@ public class ModClientEvents {
         InteractionHand interactionHand = event.getHand();
         ItemStack itemStack = event.getItemStack();
         FirstBeaconEffectRenderer.renderFirstPerson(bufferSource, poseStack, interactionHand, itemStack);
-        DowsingRodRenderer.renderFirstPerson(bufferSource, poseStack, interactionHand, itemStack);
+
+        if (itemStack.getItem() instanceof DowsingRod && PlayerClientData.getItemUsed()) {
+            Minecraft minecraft = Minecraft.getInstance();
+            LocalPlayer player = minecraft.player;
+            if (player == null) return;
+
+            DowsingRodRenderer.renderFirstPerson(bufferSource, poseStack, interactionHand, itemStack);
+            event.setCanceled(true);
+
+            int packedLight = LightTexture.pack(
+                    minecraft.level.getBrightness(LightLayer.BLOCK, player.blockPosition()),
+                    minecraft.level.getBrightness(LightLayer.SKY, player.blockPosition()));
+
+            if (!(event.getMultiBufferSource() instanceof MultiBufferSource.BufferSource buffer)) return;
+
+            PlayerRenderer playerRenderer = (PlayerRenderer)
+                    minecraft.getEntityRenderDispatcher().getRenderer(player);
+
+            float slideProgress = 1f;
+            if (PlayerClientData.getItemUsedTime() > 0) {
+                long elapsed = System.currentTimeMillis() - PlayerClientData.getItemUsedTime();
+                slideProgress = Mth.clamp((float)elapsed / 300, 0f, 1f);
+                if (slideProgress >= 1f) {
+                    PlayerClientData.setItemUsedTime(-1);
+                }
+            }
+
+            float yOffset = (1f - slideProgress) * 0.5f;
+
+            poseStack.pushPose();
+            poseStack.scale(1.25f, 1.25f, 1.25f);
+            poseStack.translate(0, -yOffset - 0.5f, 0f);
+            poseStack.mulPose(Axis.XP.rotationDegrees(-75f));
+            playerRenderer.renderRightHand(poseStack, buffer, packedLight, player);
+            playerRenderer.renderLeftHand(poseStack, buffer, packedLight, player);
+            poseStack.popPose();
+        }
     }
 
     @SubscribeEvent

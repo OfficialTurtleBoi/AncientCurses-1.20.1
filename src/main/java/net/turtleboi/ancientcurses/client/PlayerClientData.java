@@ -28,6 +28,7 @@ public class PlayerClientData {
     private static int itemRemainingUseTime = 0;
     private static double itemHitDistance = 0;
     private static boolean itemUsed = false;
+    public static long itemUsedTime = 0;
 
     public static boolean isObsessed() {
         return isObsessed;
@@ -220,6 +221,14 @@ public class PlayerClientData {
 
     public static void setItemUsed(boolean beingUsed) {
         itemUsed = beingUsed;
+    }
+
+    public static long getItemUsedTime() {
+        return itemUsedTime;
+    }
+
+    public static void setItemUsedTime(long usedAt) {
+        itemUsedTime = usedAt;
     }
 
     public static double getAltarX() {
