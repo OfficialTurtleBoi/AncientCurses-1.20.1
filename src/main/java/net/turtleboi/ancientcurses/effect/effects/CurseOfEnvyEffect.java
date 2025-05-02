@@ -53,6 +53,7 @@ public class CurseOfEnvyEffect extends MobEffect {
         int index = Math.min(pAmplifier, dropChanceValues.length - 1);
         return dropChanceValues[index];
     }
+
     public static float getHealPercentage(int pAmplifier) {
         float[] healPercentValues = {0.0F, 1.0F, 1.5F};
         int index = Math.min(pAmplifier, healPercentValues.length - 1);

@@ -182,14 +182,14 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
                 altarEntity.releaseDimensionActive();
 
-                for (Player player : level.players()) {
-                    player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
-                        BlockPos playerAltarPos = riteData.getCurrentAltarPos();
-                        if (playerAltarPos != null && playerAltarPos.equals(pos)) {
-                            riteData.resetAltarAtPos(playerAltarPos);
-                        }
-                    });
-                }
+                //for (Player player : level.players()) {
+                //    player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+                //        BlockPos playerAltarPos = riteData.getCurrentAltarPos();
+                //        if (playerAltarPos != null && playerAltarPos.equals(pos)) {
+                //            riteData.resetAltarAtPos(playerAltarPos);
+                //        }
+                //    });
+                //}
             }
         }
         super.onRemove(state, level, pos, newState, isMoving);

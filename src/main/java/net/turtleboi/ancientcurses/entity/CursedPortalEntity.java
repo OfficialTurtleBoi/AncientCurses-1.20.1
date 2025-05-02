@@ -230,7 +230,7 @@ public class CursedPortalEntity extends Entity {
                 }
                 if (this.linkedPortal != null && this.linkedPortal.isTeleportEnabled()) {
                     this.getLinkedPortal().playerCooldowns.put(playerUUID, teleportCooldown);
-                    teleportPlayerToPortal(serverPlayer, this.getLinkedPortal().blockPosition(), this.level());
+                    teleportPlayerToPortal(serverPlayer, this.getLinkedPortal().blockPosition());
                 } else if (this.altarPos != null) {
                     teleportPlayerToAltar(serverPlayer, altarPos, this.level());
                 }
@@ -291,7 +291,7 @@ public class CursedPortalEntity extends Entity {
                 livingMob.setPos(this.getX(), this.getY(), this.getZ());
                 if (livingMob instanceof Mob mob) {
                     mob.skipDropExperience();
-                    mob.getPersistentData().putBoolean("noDrops", true);
+                    mob.getPersistentData().putBoolean(CursedAltarBlockEntity.CURSED_SPAWN, true);
                 }
 
                 this.level().addFreshEntity(livingMob);
@@ -300,7 +300,7 @@ public class CursedPortalEntity extends Entity {
         }
     }
 
-    private void teleportPlayerToPortal(ServerPlayer player, BlockPos portalPos, Level level) {
+    private void teleportPlayerToPortal(ServerPlayer player, BlockPos portalPos) {
         player.teleportTo(portalPos.getX(), portalPos.getY(), portalPos.getZ());
         playPortalTravelSound(player);
     }

@@ -3,8 +3,10 @@ package net.turtleboi.ancientcurses.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
@@ -19,21 +21,15 @@ public class ClearCurseCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("curses")
                 .then(Commands.literal("clearcurses")
-                        .then(Commands.argument("playerName", StringArgumentType.string())
+                        .then(Commands.argument("target", EntityArgument.player())
                                 .executes(ClearCurseCommand::clearCurses))));
     }
 
-    private static int clearCurses(CommandContext<CommandSourceStack> context) {
+    private static int clearCurses(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
-        String playerName = StringArgumentType.getString(context, "playerName");
-        ServerPlayer player = source.getServer().getPlayerList().getPlayerByName(playerName);
+        ServerPlayer target = EntityArgument.getPlayer(context, "target");
 
-        if (player == null) {
-            source.sendFailure(Component.literal("Target not found: " + playerName));
-            return 0;
-        }
-
-        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearPlayerCurse);
+        target.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearPlayerCurse);
         ModNetworking.sendToPlayer(
                 new SyncRiteDataS2C(
                         "None",
@@ -47,17 +43,18 @@ public class ClearCurseCommand {
                         "",
                         0,
                         0),
-                player
+                target
         );
 
-        for (MobEffectInstance effectInstance : player.getActiveEffects()) {
+        for (MobEffectInstance effectInstance : target.getActiveEffects()) {
             MobEffect effect = effectInstance.getEffect();
             if (CurseRegistry.getCurses().contains(effect)) {
-                player.removeEffect(effect);
+                target.removeEffect(effect);
             }
         }
 
-        source.sendSuccess(() -> Component.literal("Curses cleared for player: " + playerName), true);
+        String name = target.getGameProfile().getName();
+        source.sendSuccess(() -> Component.literal("Curses cleared for player: " + name), true);
         return 1;
     }
 }

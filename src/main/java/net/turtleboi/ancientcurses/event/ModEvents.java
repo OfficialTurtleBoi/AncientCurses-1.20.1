@@ -109,7 +109,8 @@ public class ModEvents {
     public static void onAttachPlayerCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof Player player) {
             if (!event.getObject().getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).isPresent()) {
-                event.addCapability(new ResourceLocation(AncientCurses.MOD_ID, "player_rite_data"), new PlayerRiteProvider(player));
+                event.addCapability(new ResourceLocation(AncientCurses.MOD_ID, "player_rite_data"),
+                        new PlayerRiteProvider(player));
             }
         }
     }
@@ -434,7 +435,6 @@ public class ModEvents {
         Level level = player.level();
         BlockPos blockPos = event.getPos();
 
-
         MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
         if (envyCurse!=null) {
             double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envyCurse.getAmplifier());
@@ -508,7 +508,7 @@ public class ModEvents {
     @SubscribeEvent
     public static void onLivingDrops(LivingDropsEvent event) {
         if (event.getEntity() instanceof Mob mob) {
-            if (mob.getPersistentData().getBoolean("noDrops")) {
+            if (mob.getPersistentData().getBoolean(CursedAltarBlockEntity.CURSED_SPAWN)) {
                 event.setCanceled(true);
             }
         }
@@ -717,18 +717,17 @@ public class ModEvents {
                             float healing = event.getAmount() * healingPercentage;
                             mob.heal(healing);
 
-                                for (int i = 0; i < 10; i++) {
-                                    CoreNetworking.sendToNear(new SendParticlesS2C(
-                                            CoreParticles.HEAL_PARTICLE.get(),
-                                            mob.getX(),
-                                            mob.getEyeY() + 0.5,
-                                            mob.getZ(),
-                                            0.1,
-                                            0.25,
-                                            0.1
-                                    ), mob);
-                                }
-
+                            for (int i = 0; i < 10; i++) {
+                                CoreNetworking.sendToNear(new SendParticlesS2C(
+                                        CoreParticles.HEAL_PARTICLE.get(),
+                                        mob.getX(),
+                                        mob.getEyeY() + 0.5,
+                                        mob.getZ(),
+                                        0.1,
+                                        0.25,
+                                        0.1
+                                ), mob);
+                            }
                         }
 
                         if (amplifier >= 2) {

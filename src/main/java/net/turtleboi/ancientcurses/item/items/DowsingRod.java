@@ -22,6 +22,7 @@ import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.items.DowsingRodInfoPacketS2C;
+import net.turtleboi.ancientcurses.util.AltarSavedData;
 
 public class DowsingRod extends Item {
     public DowsingRod(Properties properties) {
@@ -36,50 +37,22 @@ public class DowsingRod extends Item {
 
         ServerLevel serverLevel = (ServerLevel) serverPlayer.level();
         BlockPos playerPos = serverPlayer.blockPosition();
-
-        int maxRadiusChunks = 16;
-
-        int playerX = playerPos.getX() >> 4;
-        int playerZ = playerPos.getZ() >> 4;
+        AltarSavedData data = AltarSavedData.get(serverLevel);
 
         BlockPos altarFoundPos = null;
         double altarDistSqr = Double.MAX_VALUE;
 
-        for (int searchArea = 0; searchArea <= maxRadiusChunks; searchArea++) {
-            for (int dx = -searchArea; dx <= searchArea; dx++) {
-                for (int dz = -searchArea; dz <= searchArea; dz++) {
-                    if (Math.abs(dx) != searchArea && Math.abs(dz) != searchArea) continue;
-                    int cx = playerX + dx, cz = playerZ + dz;
-                    LevelChunk chunk = serverLevel.getChunk(cx, cz);
-                    for (BlockEntity blockEntity : chunk.getBlockEntities().values()) {
-                        if (!(blockEntity instanceof CursedAltarBlockEntity altarBlockEntity)) continue;
-                        if (altarBlockEntity.hasPlayerCompletedRite(serverPlayer)) continue;
-
-                        BlockPos altarPos = blockEntity.getBlockPos();
-                        double distSqr = altarPos.distSqr(playerPos);
-                        if (distSqr < altarDistSqr) {
-                            altarDistSqr = distSqr;
-                            altarFoundPos = altarPos;
-                        }
-                    }
+        for (BlockPos altarPos : data.getAltars()) {
+            if (serverLevel.getBlockEntity(altarPos) instanceof CursedAltarBlockEntity cursedAltar) {
+                if (cursedAltar.hasPlayerCompletedRite(serverPlayer)) {
+                    continue;
                 }
-            }
-            if (altarFoundPos != null) break;
-        }
 
-        if (altarFoundPos == null) {
-            BlockPos nearestUnloadedAltar = serverLevel.findNearestMapStructure(
-                    TagKey.create(
-                            Registries.STRUCTURE,
-                            new ResourceLocation(AncientCurses.MOD_ID, "cursed_altar")),
-                    playerPos,
-                    maxRadiusChunks,
-                    true);
-
-            if (nearestUnloadedAltar != null) {
-                int y = serverLevel.getHeight(Heightmap.Types.WORLD_SURFACE, nearestUnloadedAltar.getX(), nearestUnloadedAltar.getZ());
-                altarFoundPos = new BlockPos(nearestUnloadedAltar.getX(), y, nearestUnloadedAltar.getZ());
-                altarDistSqr = altarFoundPos.distSqr(playerPos);
+                double d2 = altarPos.distSqr(playerPos);
+                if (d2 < altarDistSqr) {
+                    altarDistSqr = d2;
+                    altarFoundPos    = altarPos;
+                }
             }
         }
 

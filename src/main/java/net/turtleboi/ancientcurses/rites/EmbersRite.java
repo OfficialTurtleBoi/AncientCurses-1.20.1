@@ -15,6 +15,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -93,6 +94,15 @@ public class EmbersRite implements Rite {
                     center.getZ() + dz);
             nodePositions.add(node);
             nodeProgress.put(node, 0);
+
+            ServerLevel level = (ServerLevel) getServerPlayer().level();
+            Mob placeholder = EntityType.STRIDER.create(level);
+            if (placeholder != null) {
+                placeholder.moveTo(node.getX()+0.5, node.getY()+1, node.getZ()+0.5, 0, 0);
+                placeholder.setNoAi(true);
+                placeholder.addEffect(new MobEffectInstance(MobEffects.GLOWING, 7200, 0));
+                level.addFreshEntity(placeholder);
+            }
         }
 
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {

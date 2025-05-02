@@ -34,6 +34,7 @@ import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.ancientcurses.rites.*;
+import net.turtleboi.ancientcurses.util.AltarSavedData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +60,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
     private static final Map<Item, Item> gemUpgradeMap = new HashMap<>();
     private UUID occupantUuid;
     private boolean chunkLoaded;
+    public static String CURSED_SPAWN = "cursed_spawn";
 
     static {
         gemUpgradeMap.put(ModItems.BROKEN_AMETHYST.get(), ModItems.POLISHED_AMETHYST.get());
@@ -684,8 +686,22 @@ public class CursedAltarBlockEntity extends BlockEntity {
     @Override
     public void onLoad() {
         super.onLoad();
-        if (!this.level.isClientSide && this.chunkLoaded) {
-            forceDimensionActive();
+        if (!this.level.isClientSide) {
+            if (this.chunkLoaded) {
+                forceDimensionActive();
+            }
+
+            if (level instanceof ServerLevel serverLevel) {
+                AltarSavedData.get(serverLevel).addAltar(worldPosition);
+            }
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (!this.level.isClientSide && level instanceof ServerLevel serverLevel) {
+            AltarSavedData.get(serverLevel).removeAltar(worldPosition);
         }
     }
 
