@@ -9,7 +9,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
@@ -20,7 +19,8 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.block.entity.renderer.CursedAltarRenderer;
 import net.turtleboi.ancientcurses.entity.ModEntities;
-import net.turtleboi.ancientcurses.entity.client.CursedPortalModel;
+import net.turtleboi.ancientcurses.entity.client.model.CursedPortalModel;
+import net.turtleboi.ancientcurses.entity.client.renderer.CursedNodeRenderer;
 import net.turtleboi.ancientcurses.entity.client.renderer.CursedPortalRenderer;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
@@ -35,6 +35,7 @@ public class ModClientBusEvents {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         EntityRenderers.register(ModEntities.CURSED_PORTAL.get(), CursedPortalRenderer::new);
+        EntityRenderers.register(ModEntities.CURSED_NODE.get(), CursedNodeRenderer::new);
         EntityRenderers.register(ModEntities.CURSED_PEARL.get(), ThrownItemRenderer::new);
         MenuScreens.register(ModMenuTypes.LAPIDARIST_MENU.get(), LapidaristTableContainerScreen::new);
 
@@ -62,6 +63,7 @@ public class ModClientBusEvents {
     @SubscribeEvent
     public static void registerLayer(EntityRenderersEvent.RegisterLayerDefinitions event){
         event.registerLayerDefinition(CursedPortalModel.CURSED_PORTAL_LAYER, CursedPortalModel::createBodyLayer);
+        event.registerLayerDefinition(CursedNodeRenderer.CURSED_NODE_LAYER, CursedNodeRenderer::createBodyLayer);
     }
 
     @SubscribeEvent

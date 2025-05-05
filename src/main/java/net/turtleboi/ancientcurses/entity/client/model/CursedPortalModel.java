@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.entity.client;
+package net.turtleboi.ancientcurses.entity.client.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;

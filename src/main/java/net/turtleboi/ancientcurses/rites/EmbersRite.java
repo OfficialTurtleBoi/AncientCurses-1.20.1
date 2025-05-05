@@ -1,38 +1,41 @@
 package net.turtleboi.ancientcurses.rites;
 
-import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
-import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.entity.CursedNodeEntity;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
+import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
+import net.turtleboi.turtlecore.client.util.ParticleSpawnQueue;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
+import net.turtleboi.turtlecore.particle.CoreParticles;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -49,9 +52,12 @@ public class EmbersRite implements Rite {
     private int portalCooldown = 0;
     private int nodeRadius;
     private static final int spawnInterval = 200;
-    private static final int feedTicks = 400;
+    public static final int feedTicks = 400;
     private final List<BlockPos> nodePositions  = new ArrayList<>();
     private final Map<BlockPos,Integer> nodeProgress = new HashMap<>();
+
+    private final List<CursedNodeEntity> cursedNodes = new ArrayList<>();
+
     private int currentDegree = 0;
     public boolean completedFirstDegree;
     public boolean completedSecondDegree;
@@ -96,12 +102,25 @@ public class EmbersRite implements Rite {
             nodeProgress.put(node, 0);
 
             ServerLevel level = (ServerLevel) getServerPlayer().level();
-            Mob placeholder = EntityType.STRIDER.create(level);
-            if (placeholder != null) {
-                placeholder.moveTo(node.getX()+0.5, node.getY()+1, node.getZ()+0.5, 0, 0);
-                placeholder.setNoAi(true);
-                placeholder.addEffect(new MobEffectInstance(MobEffects.GLOWING, 7200, 0));
-                level.addFreshEntity(placeholder);
+            CursedNodeEntity  cursedNode = ModEntities.CURSED_NODE.get().create(level);
+            if (cursedNode != null) {
+                double x = node.getX() + 0.5;
+                double z = node.getZ() + 0.5;
+                double initialY = node.getY();
+                BlockPos spawnPos = new BlockPos(node.getX(), node.getY(), node.getZ());
+                BlockState spawnState = level.getBlockState(spawnPos);
+                if (spawnState.isSolid() && !spawnState.is(BlockTags.LEAVES)) {
+                    cursedNode.moveTo(x, initialY + 0.75, z, 0, 0);
+                } else {
+                    int groundY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawnPos.getX(), spawnPos.getZ());
+                    cursedNode.moveTo(x, groundY + + 0.75, z, 0, 0);
+                }
+
+                cursedNode.setProgress(0);
+                cursedNode.setNodeLifetime((int) riteDuration);
+                cursedNode.setOwner(altar);
+                level.addFreshEntity(cursedNode);
+                cursedNodes.add(cursedNode);
             }
         }
 
@@ -224,58 +243,72 @@ public class EmbersRite implements Rite {
             }
         }
 
-        for (BlockPos node : nodePositions) {
-            int progress = nodeProgress.getOrDefault(node, 0);
+        for (CursedNodeEntity cursedNode : cursedNodes) {
+            int progress = cursedNode.getProgress();
             if (progress >= feedTicks) continue;
 
-            double cx = node.getX() + 0.5;
-            double cy = node.getY() + 1.0;
-            double cz = node.getZ() + 0.5;
+            double cx = cursedNode.getBlockX() + 0.5;
+            double cz = cursedNode.getBlockZ() + 0.5;
+
             for (int i = 0; i < 20; i++) {
                 double angle = 2 * Math.PI * i / 20;
                 double px = cx + Math.cos(angle) * nodeRadius;
+                double py;
                 double pz = cz + Math.sin(angle) * nodeRadius;
+                BlockPos blockPos = new BlockPos((int)px, cursedNode.getBlockY(), (int)pz);
+                BlockState blockState = level.getBlockState(blockPos);
+                if (blockState.isSolid() && !blockState.is(BlockTags.LEAVES)) {
+                    py = cursedNode.getY();
+                } else {
+                    py = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, blockPos.getX(), blockPos.getZ());
+                }
+
                 CoreNetworking.sendToNear(new SendParticlesS2C(
-                        ModParticleTypes.CURSED_FLAME_PARTICLE.get(), px, cy, pz, 0, 0.1, 0
+                        ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
+                        px, py, pz,
+                        0, 0.1, 0
                 ), player);
             }
         }
 
 
         double feedRadiusSq = nodeRadius * nodeRadius;
-        for (BlockPos node : nodePositions) {
-            int progress = nodeProgress.getOrDefault(node, 0);
+        for (CursedNodeEntity cursedNode : cursedNodes) {
+            int progress = cursedNode.getProgress();
             if (progress >= feedTicks) continue;
 
-            double dx = player.getX() - (node.getX() + 0.5);
-            double dz = player.getZ() - (node.getZ() + 0.5);
+            double dx = player.getX() - (cursedNode.getX() + 0.5);
+            double dz = player.getZ() - (cursedNode.getZ() + 0.5);
             if (dx*dx + dz*dz <= feedRadiusSq) {
-                progress = nodeProgress.merge(node, 1, Integer::sum);
-                if (progress >= feedTicks) {
+                if (progress % 20 == 0) {
+                    player.hurt(level.damageSources().indirectMagic(cursedNode, cursedNode), 2);
+                    spawnLifeDrainParticles(player, cursedNode, 2);
+                }
+
+                cursedNode.setProgress(progress + 1);
+                if (progress + 1 >= feedTicks) {
                     currentDegree++;
                     CoreNetworking.sendToNear(new CameraShakeS2C(0.125F, 1000), player);
+                    cursedNode.discard();
                 }
             }
         }
 
         if (elapsedTime % 100 == 0) {
-            for (int i = 0; i < nodePositions.size(); i++) {
-                BlockPos blockPos = nodePositions.get(i);
-                int progress = nodeProgress.getOrDefault(blockPos, 0);
-                float percentage = 100f * progress / (float) feedTicks;
+            for (int i = 0; i < cursedNodes.size(); i++) {
+                CursedNodeEntity node = cursedNodes.get(i);
+                int progress = node.getProgress();
+                if (progress <= 0 || progress >= feedTicks) continue;
 
-                if (progress <= 0 || progress >= feedTicks) {
-                    continue;
-                }
-
+                float percentage = 100f * progress / feedTicks;
+                BlockPos pos = node.blockPosition();
                 String line = String.format(
                         "Node %d @ [x=%d, y=%d, z=%d]: %d / %d (%.0f%%)",
                         i + 1,
-                        blockPos.getX(), blockPos.getY(), blockPos.getZ(),
+                        pos.getX(), pos.getY(), pos.getZ(),
                         progress, feedTicks,
                         percentage
                 );
-
                 getServerPlayer().sendSystemMessage(Component.literal(line));
             }
         }
@@ -423,5 +456,53 @@ public class EmbersRite implements Rite {
             }
         }
         return mobList.get(mobList.size() - 1).mobType();
+    }
+
+    private static final Random RANDOM = new Random();
+    private static final double SPEED = 0.1;
+    private static final double SIZE = 0.02;
+    private static final double SIZE_VARIATION = 0.03;
+    private static final double POSITION_VARIATION = 0.1;
+    private static final double SPEED_VARIATION = 0.02;
+
+    private static void spawnLifeDrainParticles(LivingEntity targetEntity, CursedNodeEntity originEntity, float healAmount) {
+        if (!originEntity.level().isClientSide) {
+            ServerLevel serverLevel = (ServerLevel) originEntity.level();
+            double targetX = targetEntity.getX();
+            double targetY = targetEntity.getY() + targetEntity.getEyeHeight() / 2.0;
+            double targetZ = targetEntity.getZ();
+            double originX = originEntity.getX();
+            double originY = originEntity.getY() + originEntity.getEyeHeight() / 2.0;
+            double originZ = originEntity.getZ();
+            double dx = originX - targetX;
+            double dy = originY - targetY;
+            double dz = originZ - targetZ;
+            double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            int particlesPerHealth = 8;
+            int numberOfParticles = (int)(healAmount * particlesPerHealth);
+            if (numberOfParticles <= 0) return;
+
+            double interval = distance / numberOfParticles;
+
+            for (int i = 0; i < numberOfParticles; i++) {
+                final int idx = i;
+                long delay = idx * 25L;
+                double size = SIZE + RANDOM.nextDouble() * SIZE_VARIATION;
+                ParticleSpawnQueue.schedule(delay, () -> {
+                    double progress = interval * idx;
+                    double xPos = targetX + dx * (progress / distance) + (RANDOM.nextDouble() - 0.5) * POSITION_VARIATION;
+                    double yPos = targetY + dy * (progress / distance) + (RANDOM.nextDouble() - 0.5) * POSITION_VARIATION;
+                    double zPos = targetZ + dz * (progress / distance) + (RANDOM.nextDouble() - 0.5) * POSITION_VARIATION;
+
+                    double speedFactor = SPEED / distance;
+                    double xSpeed = dx * speedFactor + (RANDOM.nextDouble() - 0.5) * SPEED_VARIATION;
+                    double ySpeed = dy * speedFactor + (RANDOM.nextDouble() - 0.5) * SPEED_VARIATION;
+                    double zSpeed = dz * speedFactor + (RANDOM.nextDouble() - 0.5) * SPEED_VARIATION;
+                    serverLevel.sendParticles(CoreParticles.LIFE_DRAIN_PARTICLES.get(),
+                            xPos, yPos, zPos,
+                            1, xSpeed, ySpeed, zSpeed, size);
+                });
+            }
+        }
     }
 }

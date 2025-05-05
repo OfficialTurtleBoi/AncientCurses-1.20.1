@@ -14,13 +14,11 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.turtleboi.ancientcurses.AncientCurses;
-import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
-import net.turtleboi.ancientcurses.entity.client.CursedPortalModel;
+import net.turtleboi.ancientcurses.entity.client.model.CursedPortalModel;
 import org.jetbrains.annotations.NotNull;
 
 public class CursedPortalRenderer extends EntityRenderer<CursedPortalEntity> {
-    private static final ResourceLocation TEXTURE = new ResourceLocation(AncientCurses.MOD_ID, "textures/entity/cursed_portal.png");
     private final CursedPortalModel<CursedPortalEntity> model;
 
     public CursedPortalRenderer(EntityRendererProvider.Context pContext) {
@@ -60,8 +58,6 @@ public class CursedPortalRenderer extends EntityRenderer<CursedPortalEntity> {
             RenderSystem.disableBlend();
             poseStack.popPose();
         }
-
         super.render(entity, entityYaw, partialTicks, poseStack, bufferSource, light);
     }
-
 }

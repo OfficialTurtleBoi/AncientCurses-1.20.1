@@ -23,6 +23,11 @@ public class ModEntities {
                     .clientTrackingRange(10)
                     .build("cursed_pearl"));
 
+    public static final RegistryObject<EntityType<CursedNodeEntity>> CURSED_NODE =
+            ENTITY_TYPES.register("cursed_node" , () -> EntityType.Builder.of(CursedNodeEntity::new, MobCategory.MISC)
+                    .sized(0.3125F, 0.3125F)
+                    .build("cursed_node"));
+
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);
     }
