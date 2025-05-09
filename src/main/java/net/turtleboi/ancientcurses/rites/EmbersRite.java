@@ -24,10 +24,12 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
+import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.entity.CursedNodeEntity;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
 import net.turtleboi.ancientcurses.entity.ModEntities;
+import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
@@ -128,6 +130,16 @@ public class EmbersRite implements Rite {
             riteData.setCurseEffect(effect);
             riteData.setActiveRite(this);
         });
+
+        if ((player.getMainHandItem().getItem() instanceof DowsingRod) && PlayerClientData.getItemUsed()) {
+            ServerPlayer serverPlayer = getServerPlayer();
+            serverPlayer.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+                Rite activeRite = riteData.getActiveRite();
+                if (activeRite instanceof EmbersRite activeEmbersRite) {
+                    DowsingRod.findNearestNode(serverPlayer, activeEmbersRite);
+                }
+            });
+        }
     }
 
     public EmbersRite(CursedAltarBlockEntity altar) {
@@ -198,6 +210,11 @@ public class EmbersRite implements Rite {
     @Override
     public void setAltar(CursedAltarBlockEntity altar) {
         this.altar = altar;
+    }
+
+    @Override
+    public CursedAltarBlockEntity getAltar() {
+        return this.altar;
     }
 
     @Override
@@ -290,6 +307,14 @@ public class EmbersRite implements Rite {
                     currentDegree++;
                     CoreNetworking.sendToNear(new CameraShakeS2C(0.125F, 1000), player);
                     cursedNode.discard();
+
+                    ServerPlayer serverPlayer = getServerPlayer();
+                    serverPlayer.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
+                        Rite activeRite = riteData.getActiveRite();
+                        if (activeRite instanceof EmbersRite activeEmbersRite) {
+                            DowsingRod.findNearestNode(serverPlayer, activeEmbersRite);
+                        }
+                    });
                 }
             }
         }
@@ -505,4 +530,24 @@ public class EmbersRite implements Rite {
             }
         }
     }
+
+    public List<CursedNodeEntity> getNodes() {
+        return Collections.unmodifiableList(cursedNodes);
+    }
+
+    public BlockPos findNearestIncompleteNode(ServerPlayer player) {
+        BlockPos playerPos = player.blockPosition();
+        CursedNodeEntity nearestNode = null;
+        double bestDistSq = Double.MAX_VALUE;
+        for (CursedNodeEntity cursedNode : this.cursedNodes) {
+            if (cursedNode.getProgress() >= feedTicks) continue;
+            double d2 = cursedNode.blockPosition().distSqr(playerPos);
+            if (d2 < bestDistSq) {
+                bestDistSq = d2;
+                nearestNode = cursedNode;
+            }
+        }
+        return nearestNode != null ? nearestNode.blockPosition() : null;
+    }
+
 }

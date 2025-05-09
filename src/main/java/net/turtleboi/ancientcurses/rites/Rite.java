@@ -30,6 +30,7 @@ public interface Rite {
 
     MobEffect getEffect();
     void setAltar(CursedAltarBlockEntity altar);
+    CursedAltarBlockEntity getAltar();
 
     boolean isCompleted();
     void setCompleted(boolean completed);

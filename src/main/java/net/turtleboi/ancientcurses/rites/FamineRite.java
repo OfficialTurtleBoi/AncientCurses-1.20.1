@@ -164,6 +164,11 @@ public class FamineRite implements Rite {
     }
 
     @Override
+    public CursedAltarBlockEntity getAltar() {
+        return this.altar;
+    }
+
+    @Override
     public boolean isCompleted() {
         return false;
     }

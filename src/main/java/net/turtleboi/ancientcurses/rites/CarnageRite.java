@@ -131,6 +131,11 @@ public class CarnageRite implements Rite {
     }
 
     @Override
+    public CursedAltarBlockEntity getAltar() {
+        return this.altar;
+    }
+
+    @Override
     public MobEffect getEffect() {
         return this.effect;
     }
