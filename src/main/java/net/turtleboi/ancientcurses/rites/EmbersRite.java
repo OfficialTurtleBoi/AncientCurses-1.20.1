@@ -11,6 +11,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
@@ -20,6 +22,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
@@ -79,7 +82,7 @@ public class EmbersRite implements Rite {
         this.completed = false;
         this.portalCooldown = 0;
 
-        this.nodeRadius = Math.max(1, 4 - amplifier);
+        this.nodeRadius = Math.max(1, 9 / this.amplifier);
         Random random = new Random();
         BlockPos center = altar.getBlockPos();
         int sectors = 3 + amplifier;
@@ -266,18 +269,35 @@ public class EmbersRite implements Rite {
 
             double cx = cursedNode.getBlockX() + 0.5;
             double cz = cursedNode.getBlockZ() + 0.5;
+            int baseY  = cursedNode.getBlockY();
 
-            for (int i = 0; i < 20; i++) {
-                double angle = 2 * Math.PI * i / 20;
+            for (int i = 0; i < (nodeRadius * 8); i++) {
+                double angle = 2 * Math.PI * i / (nodeRadius * 8);
                 double px = cx + Math.cos(angle) * nodeRadius;
                 double py;
                 double pz = cz + Math.sin(angle) * nodeRadius;
-                BlockPos blockPos = new BlockPos((int)px, cursedNode.getBlockY(), (int)pz);
-                BlockState blockState = level.getBlockState(blockPos);
-                if (blockState.isSolid() && !blockState.is(BlockTags.LEAVES)) {
-                    py = cursedNode.getY();
+                int ix = Mth.floor(px);
+                int iz = Mth.floor(pz);
+
+                int particleY = Integer.MIN_VALUE;
+                int yTop = Math.min(baseY + nodeRadius, level.getMaxBuildHeight() - 1);
+                int yBot = Math.max(baseY - nodeRadius, level.getMinBuildHeight());
+
+                for (int y = yBot; y <= yTop; y++) {
+                    BlockPos belowPos = new BlockPos(ix, y, iz);
+                    BlockPos abovePos = belowPos.above();
+                    BlockState blockStateBelow = level.getBlockState(belowPos);
+                    BlockState blockStateAbove = level.getBlockState(abovePos);
+                    if (!blockStateBelow.isSolid() && !blockStateAbove.isSolid()) {
+                        particleY = y;
+                        break;
+                    }
+                }
+
+                if (particleY != Integer.MIN_VALUE) {
+                    py = particleY;
                 } else {
-                    py = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, blockPos.getX(), blockPos.getZ());
+                    py = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
                 }
 
                 CoreNetworking.sendToNear(new SendParticlesS2C(
@@ -288,7 +308,6 @@ public class EmbersRite implements Rite {
             }
         }
 
-
         double feedRadiusSq = nodeRadius * nodeRadius;
         for (CursedNodeEntity cursedNode : cursedNodes) {
             int progress = cursedNode.getProgress();
@@ -298,8 +317,12 @@ public class EmbersRite implements Rite {
             double dz = player.getZ() - (cursedNode.getZ() + 0.5);
             if (dx*dx + dz*dz <= feedRadiusSq) {
                 if (progress % 20 == 0) {
-                    player.hurt(level.damageSources().indirectMagic(cursedNode, cursedNode), 2);
-                    spawnLifeDrainParticles(player, cursedNode, 2);
+                    DamageSource damageSource = level.damageSources().indirectMagic(cursedNode, cursedNode);
+                    int damageAmount = this.amplifier;
+                    Vec3 preDelta = player.getDeltaMovement();
+                    player.hurt(damageSource, damageAmount);
+                    player.setDeltaMovement(preDelta);
+                    spawnLifeDrainParticles(player, cursedNode, damageAmount * 2);
                 }
 
                 cursedNode.setProgress(progress + 1);
@@ -484,11 +507,11 @@ public class EmbersRite implements Rite {
     }
 
     private static final Random RANDOM = new Random();
-    private static final double SPEED = 0.1;
-    private static final double SIZE = 0.02;
-    private static final double SIZE_VARIATION = 0.03;
+    private static final double SPEED = 0;//0.0125;
+    private static final double SIZE = 0.025;
+    private static final double SIZE_VARIATION = 0.025;
     private static final double POSITION_VARIATION = 0.1;
-    private static final double SPEED_VARIATION = 0.02;
+    private static final double SPEED_VARIATION = 0;//0.0125;
 
     private static void spawnLifeDrainParticles(LivingEntity targetEntity, CursedNodeEntity originEntity, float healAmount) {
         if (!originEntity.level().isClientSide) {
@@ -503,15 +526,16 @@ public class EmbersRite implements Rite {
             double dy = originY - targetY;
             double dz = originZ - targetZ;
             double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            int particlesPerHealth = 8;
-            int numberOfParticles = (int)(healAmount * particlesPerHealth);
+            if (distance <= 0) return;
+            int particlesPerHealth = 4;
+            int numberOfParticles = (int)(healAmount * particlesPerHealth * Math.max(1, distance));
             if (numberOfParticles <= 0) return;
 
             double interval = distance / numberOfParticles;
 
             for (int i = 0; i < numberOfParticles; i++) {
                 final int idx = i;
-                long delay = idx * 25L;
+                long delay = idx * 10L;
                 double size = SIZE + RANDOM.nextDouble() * SIZE_VARIATION;
                 ParticleSpawnQueue.schedule(delay, () -> {
                     double progress = interval * idx;

@@ -253,11 +253,11 @@ public class PlayerRiteDataCapability {
         nbt.putInt("SurvivalTicks", survivalTicks);
         nbt.putInt("FetchItems", fetchItems);
 
-        ListTag trialRecordsTag = new ListTag();
+        ListTag riteRecordsTag = new ListTag();
         for (RiteRecord record : riteRecords) {
-            trialRecordsTag.add(record.serializeNBT());
+            riteRecordsTag.add(record.serializeNBT());
         }
-        nbt.put("TrialRecords", trialRecordsTag);
+        nbt.put("RiteRecords", riteRecordsTag);
     }
 
     public void loadNBTData(CompoundTag nbt) {
