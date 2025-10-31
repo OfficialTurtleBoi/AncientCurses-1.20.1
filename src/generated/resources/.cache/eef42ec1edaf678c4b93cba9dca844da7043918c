@@ -1,4 +1,4 @@
-// 1.20.1	2025-04-21T15:35:37.676781	Item Models: ancientcurses
+// 1.20.1	2025-10-31T01:32:00.8670498	Item Models: ancientcurses
 c259e04cfd455124bbe16bcae46bef82eb223f0a assets/ancientcurses/models/item/ancient_alexandrite.json
 88cf4211890a0d1e9c58b4accd605061eb521cb3 assets/ancientcurses/models/item/ancient_bismuth.json
 5c626940676a1a23241b8db4cd269b5783223ccb assets/ancientcurses/models/item/ancient_chrysoberyl.json
@@ -23,7 +23,7 @@ c2475accbf2d321769a30295de8654dd0e4afdde assets/ancientcurses/models/item/polish
 5b7421cab001deea3676f262addb3d0293c65d2f assets/ancientcurses/models/item/polished_ruby.json
 2bcdb836c650ddc36b4ef42bc6ec6194a704c132 assets/ancientcurses/models/item/polished_sapphire.json
 5662ab4a70702fbdc2b25363d2851b1e733b3170 assets/ancientcurses/models/item/polished_topaz.json
-09e93c33c17126b0fcc7fb4a75997133766afd23 assets/ancientcurses/models/item/rotclump.json
+2a77cc5ba50edef9f77bd470b6f4d92865c9bc0b assets/ancientcurses/models/item/rot_clump.json
 74f4390b13ea6e45643a9d1a66614faa5cb2cbca assets/ancientcurses/models/item/sconced_cursed_torch.json
 272d4ce0a8951a2fe850c9cc7e9ea45b70469c6b assets/ancientcurses/models/item/sconced_redstone_torch.json
 74971304f08267d37694150301041de5ec4c68b4 assets/ancientcurses/models/item/sconced_soul_torch.json

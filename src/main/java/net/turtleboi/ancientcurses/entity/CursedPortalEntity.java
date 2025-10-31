@@ -428,14 +428,14 @@ public class CursedPortalEntity extends Entity {
 
     public static CursedPortalEntity spawnSummoningPortalAtPos(Level level, CursedAltarBlockEntity altarBlockEntity, BlockPos portalPos, List<Entity> mobsToSpawn) {
         CursedPortalEntity portal = new CursedPortalEntity(ModEntities.CURSED_PORTAL.get(), level);
-        portalLiveTime = (mobsToSpawn.size() + 1) * portal.spawnDelay;
+        portalLiveTime = (mobsToSpawn.size() + 1) * spawnDelay;
         portal.setPos(portalPos.getX() + 0.5, portalPos.getY(), portalPos.getZ() + 0.5);
 
         portal.setOwner(altarBlockEntity);
         portal.setAltarPos(altarBlockEntity.getBlockPos());
         portal.setSpawningEnabled(true);
         portal.setMobsToSpawn(mobsToSpawn);
-        spawningCooldown = portal.spawnDelay;
+        spawningCooldown = spawnDelay;
         //System.out.println(Component.literal("New summoning portal spawned!"));
         level.addFreshEntity(portal);
         return portal;

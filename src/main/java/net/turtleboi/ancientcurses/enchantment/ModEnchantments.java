@@ -8,27 +8,31 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
-import net.turtleboi.ancientcurses.enchantment.goldenfeatherenchantments.FurtherDashEnchantment;
-import net.turtleboi.ancientcurses.enchantment.goldenfeatherenchantments.QuickDashEnchantment;
-import net.turtleboi.ancientcurses.enchantment.goldenfeatherenchantments.SeismicDashEnchantment;
-import net.turtleboi.ancientcurses.enchantment.goldenfeatherenchantments.SpeedDashEnchantment;
+import net.turtleboi.ancientcurses.enchantment.feather.SoaringEnchantment;
+import net.turtleboi.ancientcurses.enchantment.feather.TailwindEnchantment;
+import net.turtleboi.ancientcurses.enchantment.feather.SeismicEnchantment;
+import net.turtleboi.ancientcurses.enchantment.feather.ZephyrRushEnchantment;
 
 public class ModEnchantments {
     public static final DeferredRegister<Enchantment> ENCHANTMENTS =
             DeferredRegister.create(ForgeRegistries.ENCHANTMENTS, AncientCurses.MOD_ID);
 
-    public static RegistryObject<Enchantment> FURTHER_DASH =
-            ENCHANTMENTS.register("further_dash",
-                    ()-> new FurtherDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,EquipmentSlot.values()));
-    public static RegistryObject<Enchantment> QUICK_DASH =
-            ENCHANTMENTS.register("quick_dash",
-                    ()-> new QuickDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,EquipmentSlot.values()));
-    public static RegistryObject<Enchantment> SPEED_DASH =
-            ENCHANTMENTS.register("speed_dash",
-                    ()-> new SpeedDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,EquipmentSlot.values()));
-    public static RegistryObject<Enchantment> SEISMIC_DASH =
-            ENCHANTMENTS.register("seismic_dash",
-                    ()-> new SeismicDashEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,EquipmentSlot.values()));
+    public static RegistryObject<Enchantment> SOARING =
+            ENCHANTMENTS.register("soaring",
+                    ()-> new SoaringEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,EquipmentSlot.values()));
+
+    public static RegistryObject<Enchantment> TAILWIND =
+            ENCHANTMENTS.register("tailwind",
+                    ()-> new TailwindEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,EquipmentSlot.values()));
+
+    public static RegistryObject<Enchantment> ZEPHYR_RUSH =
+            ENCHANTMENTS.register("zephyr_rush",
+                    ()-> new ZephyrRushEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,EquipmentSlot.values()));
+
+    public static RegistryObject<Enchantment> SEISMIC =
+            ENCHANTMENTS.register("seismic",
+                    ()-> new SeismicEnchantment(Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON,EquipmentSlot.values()));
+
     public static void register(IEventBus eventBus){
         ENCHANTMENTS.register(eventBus);
     }

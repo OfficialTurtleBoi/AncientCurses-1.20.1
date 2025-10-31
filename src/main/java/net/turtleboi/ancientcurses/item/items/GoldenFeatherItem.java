@@ -17,6 +17,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.turtleboi.ancientcurses.enchantment.ModEnchantments;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
+import net.turtleboi.turtlecore.client.renderer.ShockwaveRenderer;
+import net.turtleboi.turtlecore.spells.ShockwaveSpell;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -42,10 +44,10 @@ public class GoldenFeatherItem extends Item {
         super.onUseTick(pLevel, pLivingEntity, pStack, pRemainingUseDuration);
         if (pLivingEntity instanceof Player pPlayer ) {
             if (pRemainingUseDuration > 1) {
-                int furtherDashLevel = pStack.getEnchantmentLevel(ModEnchantments.FURTHER_DASH.get());
+                int soaringLevel = pStack.getEnchantmentLevel(ModEnchantments.SOARING.get());
 
                 Vec3 playerLook = pPlayer.getViewVector(1);
-                double dashmodifier = 1 + furtherDashLevel * 0.42;
+                double dashmodifier = 1 + soaringLevel * 0.42;
                 Vec3 dashVec = new Vec3((playerLook.x() * 2) * dashmodifier, playerLook.y() * 0.5 * dashmodifier + 0.4, (playerLook.z() * 1.8) * dashmodifier);
                 pPlayer.setDeltaMovement(dashVec);
 
@@ -65,18 +67,14 @@ public class GoldenFeatherItem extends Item {
     @Override
     public void releaseUsing(ItemStack pStack, Level pLevel, LivingEntity pLivingEntity, int pTimeCharged) {
         super.releaseUsing(pStack, pLevel, pLivingEntity, pTimeCharged);
-        int speedDashLevel = pStack.getEnchantmentLevel(ModEnchantments.SPEED_DASH.get());
-        int quickDashLevel = pStack.getEnchantmentLevel(ModEnchantments.QUICK_DASH.get());
+        int tailwindLevel = pStack.getEnchantmentLevel(ModEnchantments.TAILWIND.get());
         if (pLivingEntity instanceof Player pPlayer) {
-            if (speedDashLevel > 0) {
-                pPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 50, speedDashLevel - 1));
-            }
 
             pStack.hurtAndBreak(1, pPlayer, (p_41300_) -> {
                 p_41300_.broadcastBreakEvent(Objects.requireNonNull(pStack.getEquipmentSlot()));
             });
 
-            int cooldownReduction = 15 * quickDashLevel;
+            int cooldownReduction = 15 * tailwindLevel;
             pPlayer.getCooldowns().addCooldown(this, 75 - cooldownReduction);
             pPlayer.awardStat(Stats.ITEM_USED.get(this));
 
@@ -98,10 +96,11 @@ public class GoldenFeatherItem extends Item {
     @Override
     public void inventoryTick(ItemStack pStack, Level pLevel, Entity pEntity, int pSlotId, boolean pIsSelected) {
         if(pEntity instanceof Player pPlayer) {
-            int seismicDashLevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.SEISMIC_DASH.get(), pPlayer);
+            int seismicLevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.SEISMIC.get(), pPlayer);
+            int zephyrLevel = pStack.getEnchantmentLevel(ModEnchantments.ZEPHYR_RUSH.get());
 
             if (!stopParticles) {
-                for (int j = 0; j < 5; j++) {
+                for (int j = 0; j < 3; j++) {
                     pLevel.addParticle(ModParticleTypes.GOLDEN_FEATHER_PARTICLE.get(),
                             pPlayer.getX() + (pPlayer.getRandom().nextDouble() - 0.5),
                             pPlayer.getY() + (pPlayer.getRandom().nextDouble() - 0.5),
@@ -110,27 +109,14 @@ public class GoldenFeatherItem extends Item {
                 }
 
                 if (pPlayer.onGround() || pPlayer.isSwimming()) {
-                    if(seismicDashLevel > 0) {
-                        AreaEffectCloud DamageCloud = new AreaEffectCloud(pLevel, pEntity.getX(), pEntity.getY(), pEntity.getZ());
-                        DamageCloud.setDuration(1);
-                        DamageCloud.setRadius(3);
-                        DamageCloud.setParticle(ParticleTypes.CLOUD);
-                        pLevel.addFreshEntity(DamageCloud);
-                        List<Entity> entities = pLevel.getEntitiesOfClass(Entity.class, DamageCloud.getBoundingBox().inflate(1.5));
-                        for (Entity entity : entities) {
-                            if (entity instanceof LivingEntity livingEntity) {
-                                if(!livingEntity.is(pEntity)) {
-                                    double throwAngle = 1 + (pLevel.getRandom().nextDouble());
-                                    Vec3 direction = new Vec3(pPlayer.getX() - livingEntity.getX(), pPlayer.getY() - (livingEntity.getY() + throwAngle), pPlayer.getZ() - livingEntity.getZ());
-                                    direction = direction.normalize().scale(-2 * pLevel.getRandom().nextDouble());
-                                    livingEntity.setDeltaMovement(direction);
-                                    livingEntity.hurtMarked = true;
+                    if(seismicLevel > 0) {
+                        int radius = 5;
+                        ShockwaveRenderer.triggerShockwave(pPlayer, radius);
+                        ShockwaveSpell.triggerShockwave(pPlayer, radius, seismicLevel);
+                    }
 
-                                    float damage = 3.0f * Math.max(1.0f, (3.0f - pPlayer.distanceTo(livingEntity)));
-                                    livingEntity.hurt(pLevel.damageSources().magic(), damage);
-                                }
-                            }
-                        }
+                    if (zephyrLevel > 0) {
+                        pPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 50, zephyrLevel - 1));
                     }
                     stopParticles = true;
                 }

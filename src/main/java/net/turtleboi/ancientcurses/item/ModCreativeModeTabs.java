@@ -37,16 +37,16 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.DOWSING_ROD.get());
                         pOutput.accept(ModItems.GOLDEN_FEATHER.get());
                         pOutput.accept(ModItems.FIRST_BEACON.get());
-                        Enchantment enchantment = ModEnchantments.FURTHER_DASH.get();
+                        Enchantment enchantment = ModEnchantments.SOARING.get();
                         EnchantmentInstance instance = new EnchantmentInstance(enchantment, enchantment.getMaxLevel());
                         pOutput.accept(EnchantedBookItem.createForEnchantment(instance));
-                        enchantment = ModEnchantments.QUICK_DASH.get();
+                        enchantment = ModEnchantments.TAILWIND.get();
                         instance = new EnchantmentInstance(enchantment, enchantment.getMaxLevel());
                         pOutput.accept(EnchantedBookItem.createForEnchantment(instance));
-                        enchantment = ModEnchantments.SPEED_DASH.get();
+                        enchantment = ModEnchantments.ZEPHYR_RUSH.get();
                         instance = new EnchantmentInstance(enchantment, enchantment.getMaxLevel());
                         pOutput.accept(EnchantedBookItem.createForEnchantment(instance));
-                        enchantment = ModEnchantments.SEISMIC_DASH.get();
+                        enchantment = ModEnchantments.SEISMIC.get();
                         instance = new EnchantmentInstance(enchantment, enchantment.getMaxLevel());
                         pOutput.accept(EnchantedBookItem.createForEnchantment(instance));
                     })

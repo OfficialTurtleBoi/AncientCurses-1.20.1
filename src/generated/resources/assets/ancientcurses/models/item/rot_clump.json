@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "ancientcurses:item/rotclump"
+    "layer0": "ancientcurses:item/rot_clump"
   }
 }

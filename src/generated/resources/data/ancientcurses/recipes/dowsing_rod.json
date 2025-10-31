@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    "SS",
+    " S"
+  ],
+  "result": {
+    "item": "ancientcurses:dowsing_rod"
+  },
+  "show_notification": true
+}

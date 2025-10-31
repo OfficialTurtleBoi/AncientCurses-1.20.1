@@ -29,6 +29,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Silverfish;
+import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
@@ -48,6 +49,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.AnvilUpdateEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.*;
@@ -622,7 +624,6 @@ public class ModEvents {
         return activeAmulet.get();
     }
 
-
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onEntityHurt(LivingDamageEvent event) {
         Entity attacker = event.getSource().getEntity();
@@ -986,6 +987,62 @@ public class ModEvents {
 
                 player.displayClientMessage(Component.literal("The Altars Feed on your soul...").withStyle(ChatFormatting.DARK_RED), true);
             });
+        }
+
+        if (entity instanceof Slime parentSlime) {
+            if (level instanceof ServerLevel serverLevel) {
+                if (!parentSlime.getPersistentData().getBoolean(CursedAltarBlockEntity.CURSED_SPAWN)) return;
+                int parentSize = parentSlime.getSize();
+                if (parentSize <= 1) return;
+
+                int expectedChildSize = Math.max(1, parentSize / 2);
+                long splitTick = serverLevel.getGameTime();
+                BlockPos splitPosition = parentSlime.blockPosition();
+
+                activeSplitHints.add(new SplitHint(serverLevel, splitTick, splitPosition, expectedChildSize));
+            }
+        }
+    }
+
+    private record SplitHint(ServerLevel serverLevel, long splitTick, BlockPos splitPosition, int expectedChildSize) { }
+    private static final List<SplitHint> activeSplitHints = new ArrayList<>();
+    private static final double matchRadiusSquared = 9.0;
+
+    @SubscribeEvent
+    public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+        Entity entity = event.getEntity();
+        Level level = entity.level();
+        if (level instanceof ServerLevel serverLevel) {
+            if (entity instanceof Slime childSlime) {
+                long currentTick = serverLevel.getGameTime();
+                BlockPos joiningPosition = entity.blockPosition();
+
+                for (SplitHint splitHint : activeSplitHints) {
+                    if (splitHint.serverLevel != serverLevel) continue;
+                    if (splitHint.splitTick != currentTick) continue;
+
+
+                    if (childSlime.getSize() != splitHint.expectedChildSize) continue;
+                    double dx = (joiningPosition.getX() + 0.5) - (splitHint.splitPosition.getX() + 0.5);
+                    double dz = (joiningPosition.getZ() + 0.5) - (splitHint.splitPosition.getZ() + 0.5);
+                    double distanceSquared = dx * dx + dz * dz;
+
+                    if (distanceSquared <= matchRadiusSquared) {
+                        childSlime.getPersistentData().putBoolean(CursedAltarBlockEntity.CURSED_SPAWN, true);
+                    }
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLevelTick(TickEvent.LevelTickEvent event) {
+        Level level = event.level;
+        if (level instanceof ServerLevel serverLevel) {
+            if (event.phase != TickEvent.Phase.END) return;
+
+            long currentTick = serverLevel.getGameTime();
+            activeSplitHints.removeIf(hint -> hint.serverLevel == serverLevel && hint.splitTick < currentTick);
         }
     }
 
