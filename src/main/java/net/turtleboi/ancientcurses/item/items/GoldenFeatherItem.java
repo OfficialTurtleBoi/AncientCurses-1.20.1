@@ -75,7 +75,7 @@ public class GoldenFeatherItem extends Item {
             });
 
             int cooldownReduction = 15 * tailwindLevel;
-            pPlayer.getCooldowns().addCooldown(this, 75 - cooldownReduction);
+            pPlayer.getCooldowns().addCooldown(this, 120 - cooldownReduction);
             pPlayer.awardStat(Stats.ITEM_USED.get(this));
 
             if (!pPlayer.onGround()){

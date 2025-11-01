@@ -5,7 +5,25 @@
       "weight": 1,
       "element": {
         "element_type": "minecraft:single_pool_element",
-        "location": "ancientcurses:cursedaltar_template",
+        "location": "ancientcurses:overworld_altar_big",
+        "projection": "rigid",
+        "processors": "minecraft:empty"
+      }
+    },
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "ancientcurses:overworld_altar_small",
+        "projection": "rigid",
+        "processors": "minecraft:empty"
+      }
+    },
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "ancientcurses:overworld_altar_medium",
         "projection": "rigid",
         "processors": "minecraft:empty"
       }
