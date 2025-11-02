@@ -1,62 +1,62 @@
-[31paü2025 11:30:06.279] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgedatauserdev, --assetIndex, 5, --assetsDir, C:\Users\HARDPC\.gradle\caches\forge_gradle\assets, --gameDir, ., --fml.forgeVersion, 47.3.7, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412, --mod, ancientcurses, --all, --output, C:\Users\HARDPC\Desktop\AncientCurses-1.20.1_t\src\generated\resources, --existing, C:\Users\HARDPC\Desktop\AncientCurses-1.20.1_t\src\main\resources, --mixin.config, mixins.ancientcurses.json]
-[31paü2025 11:30:06.284] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 17.0.10 by Eclipse Adoptium; OS Windows 10 arch amd64 version 10.0
-[31paü2025 11:30:06.415] [main/INFO] [net.minecraftforge.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgedatauserdev
-[31paü2025 11:30:06.468] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/HARDPC/.gradle/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.5/9d1c0c3a304ae6697ecd477218fa61b850bf57fc/mixin-0.8.5.jar%23128!/ Service=ModLauncher Env=CLIENT
-[31paü2025 11:30:06.882] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\HARDPC\.gradle\caches\modules-2\files-2.1\net.minecraftforge\javafmllanguage\1.20.1-47.3.7\5d72a04334eea2494912f0d91216648462bb32c3\javafmllanguage-1.20.1-47.3.7.jar is missing mods.toml file
-[31paü2025 11:30:06.886] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\HARDPC\.gradle\caches\modules-2\files-2.1\net.minecraftforge\lowcodelanguage\1.20.1-47.3.7\74fd0ee16e74766d45d2efe7c74b6d0e121677df\lowcodelanguage-1.20.1-47.3.7.jar is missing mods.toml file
-[31paü2025 11:30:06.890] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\HARDPC\.gradle\caches\modules-2\files-2.1\net.minecraftforge\mclanguage\1.20.1-47.3.7\cf753f5bc19311c127ea07e1ee43d5f9477df22b\mclanguage-1.20.1-47.3.7.jar is missing mods.toml file
-[31paü2025 11:30:06.894] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\HARDPC\.gradle\caches\modules-2\files-2.1\net.minecraftforge\fmlcore\1.20.1-47.3.7\b6a4840dfdc56e2ae2eccdd1bf233959493d11ea\fmlcore-1.20.1-47.3.7.jar is missing mods.toml file
-[31paü2025 11:30:07.000] [main/INFO] [net.minecraftforge.fml.loading.moddiscovery.JarInJarDependencyLocator/]: No dependencies to load found. Skipping!
-[31paü2025 11:30:08.737] [main/WARN] [mixin/]: Compatibility level JAVA_17 specified by mixins.ancientcurses.json is higher than the maximum level supported by this version of mixin (JAVA_13).
-[31paü2025 11:30:08.738] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
-[31paü2025 11:30:08.748] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgedatauserdev' with arguments [--gameDir, ., --assetsDir, C:\Users\HARDPC\.gradle\caches\forge_gradle\assets, --assetIndex, 5, --mod, ancientcurses, --all, --output, C:\Users\HARDPC\Desktop\AncientCurses-1.20.1_t\src\generated\resources, --existing, C:\Users\HARDPC\Desktop\AncientCurses-1.20.1_t\src\main\resources]
-[31paü2025 11:30:08.822] [main/INFO] [mixin/]: Attempting to load Fernflower decompiler (Threaded mode)
-[31paü2025 11:30:08.823] [main/INFO] [mixin/]: Fernflower could not be loaded, exported classes will not be decompiled. NoClassDefFoundError: org/jetbrains/java/decompiler/main/extern/IResultSaver
-[31paü2025 11:30:08.842] [main/INFO] [mixin/]: Preparing mixins for MixinEnvironment[DEFAULT]
-[31paü2025 11:30:08.842] [main/INFO] [mixin/]: Selecting config mixins.ancientcurses.json
-[31paü2025 11:30:08.845] [main/WARN] [mixin/]: Reference map 'ancientcurses.refmap.json' for mixins.ancientcurses.json could not be read. If this is a development environment you can ignore this message
-[31paü2025 11:30:08.846] [main/INFO] [mixin/]: Selecting config curios.mixins.json
-[31paü2025 11:30:09.066] [main/INFO] [mixin/]: Remapping refMap curios.refmap.json using C:\Users\HARDPC\Desktop\AncientCurses-1.20.1_t\build/createSrgToMcp/output.srg
-[31paü2025 11:30:09.066] [main/INFO] [mixin/]: Selecting config mixins.turtlecore.json
-[31paü2025 11:30:09.068] [main/INFO] [mixin/]: Remapping refMap turtlecore.refmap.json using C:\Users\HARDPC\Desktop\AncientCurses-1.20.1_t\build/createSrgToMcp/output.srg
-[31paü2025 11:30:09.068] [main/INFO] [mixin/]: Preparing mixins.ancientcurses.json (3)
-[31paü2025 11:30:09.130] [main/INFO] [mixin/]: Preparing curios.mixins.json (13)
-[31paü2025 11:30:09.191] [main/INFO] [mixin/]: Preparing mixins.turtlecore.json (2)
-[31paü2025 11:30:09.229] [main/INFO] [mixin/]: Prepared 18 mixins in 0,387 sec (21,5ms avg) (0ms load, 0ms transform, 0ms plugin)
-[31paü2025 11:30:09.519] [main/INFO] [net.minecraftforge.data.loading.DatagenModLoader/]: Initializing Data Gatherer for mods [ancientcurses]
-[31paü2025 11:30:09.656] [main/INFO] [mixin/]: Mixing AccessorEntity from curios.mixins.json into net.minecraft.world.entity.Entity
-[31paü2025 11:30:09.776] [main/INFO] [mixin/]: Mixing MixinLivingEntity from curios.mixins.json into net.minecraft.world.entity.LivingEntity
-[31paü2025 11:30:10.597] [main/INFO] [mixin/]: Mixing MixinPowderSnowBlock from curios.mixins.json into net.minecraft.world.level.block.PowderSnowBlock
-[31paü2025 11:30:11.097] [main/INFO] [mixin/]: Mixing MixinAbstractArrow from mixins.turtlecore.json into net.minecraft.world.entity.projectile.AbstractArrow
-[31paü2025 11:30:11.188] [main/INFO] [mixin/]: Mixing MobSunBurnMixin from mixins.ancientcurses.json into net.minecraft.world.entity.Mob
-[31paü2025 11:30:11.814] [main/INFO] [mixin/]: Mixing MixinShearsItem from curios.mixins.json into net.minecraft.world.item.ShearsItem
-[31paü2025 11:30:12.629] [main/INFO] [mixin/]: Mixing MixinThrownTrident from mixins.turtlecore.json into net.minecraft.world.entity.projectile.ThrownTrident
-[31paü2025 11:30:12.759] [main/INFO] [mixin/]: Mixing SlimeMixin from mixins.ancientcurses.json into net.minecraft.world.entity.monster.Slime
-[31paü2025 11:30:13.418] [main/INFO] [mixin/]: Mixing MixinInventory from curios.mixins.json into net.minecraft.world.entity.player.Inventory
-[31paü2025 11:30:13.440] [main/INFO] [mixin/]: Mixing SlotAccessorMixin from mixins.ancientcurses.json into net.minecraft.world.inventory.Slot
-[31paü2025 11:30:13.441] [main/WARN] [mixin/]: @Shadow target mixins.ancientcurses.json:SlotAccessorMixin::x is final but shadow is not decorated with @Final
-[31paü2025 11:30:13.441] [main/WARN] [mixin/]: @Shadow target mixins.ancientcurses.json:SlotAccessorMixin::y is final but shadow is not decorated with @Final
-[31paü2025 11:30:13.549] [main/INFO] [mixin/]: Mixing MixinApplyBonusCount from curios.mixins.json into net.minecraft.world.level.storage.loot.functions.ApplyBonusCount
-[31paü2025 11:30:14.533] [modloading-worker-0/INFO] [net.minecraftforge.common.ForgeMod/FORGEMOD]: Forge mod loading, version 47.3.7, for MC 1.20.1 with MCP 20230612.114412
-[31paü2025 11:30:14.533] [modloading-worker-0/INFO] [net.minecraftforge.common.MinecraftForge/FORGE]: MinecraftForge v47.3.7 Initialized
-[31paü2025 11:30:14.753] [modloading-worker-0/INFO] [mezz.jei.library.load.PluginCaller/]: Sending ConfigManager...
-[31paü2025 11:30:14.762] [modloading-worker-0/INFO] [mezz.jei.library.load.PluginCaller/]: Sending ConfigManager took 6.763 ms
-[31paü2025 11:30:15.300] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/HARDPC/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1/forge-1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1.jar%23191!/assets/.mcassetsroot' uses unexpected schema
-[31paü2025 11:30:15.300] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/HARDPC/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1/forge-1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1.jar%23191!/data/.mcassetsroot' uses unexpected schema
-[31paü2025 11:30:15.549] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Recipes
-[31paü2025 11:30:15.577] [main/INFO] [mixin/]: Mixing MixinNbtPredicate from curios.mixins.json into net.minecraft.advancements.critereon.NbtPredicate
-[31paü2025 11:30:15.643] [main/INFO] [net.minecraft.data.DataGenerator/]: Recipes finished after 92 ms
-[31paü2025 11:30:15.643] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Loot Tables
-[31paü2025 11:30:15.712] [main/INFO] [net.minecraft.data.DataGenerator/]: Loot Tables finished after 68 ms
-[31paü2025 11:30:15.712] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Block States: ancientcurses
-[31paü2025 11:30:15.892] [main/INFO] [net.minecraft.data.DataGenerator/]: Block States: ancientcurses finished after 179 ms
-[31paü2025 11:30:15.892] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Item Models: ancientcurses
-[31paü2025 11:30:15.915] [main/INFO] [net.minecraft.data.DataGenerator/]: Item Models: ancientcurses finished after 22 ms
-[31paü2025 11:30:15.915] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Tags for minecraft:block mod id ancientcurses
-[31paü2025 11:30:15.920] [main/INFO] [net.minecraft.data.DataGenerator/]: Tags for minecraft:block mod id ancientcurses finished after 5 ms
-[31paü2025 11:30:15.921] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Tags for minecraft:item mod id ancientcurses
-[31paü2025 11:30:15.937] [main/INFO] [net.minecraft.data.DataGenerator/]: Tags for minecraft:item mod id ancientcurses finished after 16 ms
-[31paü2025 11:30:15.937] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Languages: en_us
-[31paü2025 11:30:15.939] [main/INFO] [net.minecraft.data.DataGenerator/]: Languages: en_us finished after 1 ms
-[31paü2025 11:30:15.939] [main/INFO] [net.minecraft.data.DataGenerator/]: All providers took: 391 ms
-[31paü2025 11:30:15.949] [main/INFO] [net.minecraft.data.HashCache/]: Caching: total files: 58, old count: 58, new count: 59, removed stale: 0, written: 0
+[02lis2025 09:05:08.499] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgedatauserdev, --assetIndex, 5, --assetsDir, C:\Users\HARDPC\.gradle\caches\forge_gradle\assets, --gameDir, ., --fml.forgeVersion, 47.3.7, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412, --mod, ancientcurses, --all, --output, C:\Users\HARDPC\Desktop\AncientCurses-1.20.1_t\src\generated\resources, --existing, C:\Users\HARDPC\Desktop\AncientCurses-1.20.1_t\src\main\resources, --mixin.config, mixins.ancientcurses.json]
+[02lis2025 09:05:08.504] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 17.0.10 by Eclipse Adoptium; OS Windows 10 arch amd64 version 10.0
+[02lis2025 09:05:08.621] [main/INFO] [net.minecraftforge.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgedatauserdev
+[02lis2025 09:05:08.675] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/HARDPC/.gradle/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.5/9d1c0c3a304ae6697ecd477218fa61b850bf57fc/mixin-0.8.5.jar%23128!/ Service=ModLauncher Env=CLIENT
+[02lis2025 09:05:09.001] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\HARDPC\.gradle\caches\modules-2\files-2.1\net.minecraftforge\javafmllanguage\1.20.1-47.3.7\5d72a04334eea2494912f0d91216648462bb32c3\javafmllanguage-1.20.1-47.3.7.jar is missing mods.toml file
+[02lis2025 09:05:09.004] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\HARDPC\.gradle\caches\modules-2\files-2.1\net.minecraftforge\lowcodelanguage\1.20.1-47.3.7\74fd0ee16e74766d45d2efe7c74b6d0e121677df\lowcodelanguage-1.20.1-47.3.7.jar is missing mods.toml file
+[02lis2025 09:05:09.007] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\HARDPC\.gradle\caches\modules-2\files-2.1\net.minecraftforge\mclanguage\1.20.1-47.3.7\cf753f5bc19311c127ea07e1ee43d5f9477df22b\mclanguage-1.20.1-47.3.7.jar is missing mods.toml file
+[02lis2025 09:05:09.012] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\HARDPC\.gradle\caches\modules-2\files-2.1\net.minecraftforge\fmlcore\1.20.1-47.3.7\b6a4840dfdc56e2ae2eccdd1bf233959493d11ea\fmlcore-1.20.1-47.3.7.jar is missing mods.toml file
+[02lis2025 09:05:09.110] [main/INFO] [net.minecraftforge.fml.loading.moddiscovery.JarInJarDependencyLocator/]: No dependencies to load found. Skipping!
+[02lis2025 09:05:10.652] [main/WARN] [mixin/]: Compatibility level JAVA_17 specified by mixins.ancientcurses.json is higher than the maximum level supported by this version of mixin (JAVA_13).
+[02lis2025 09:05:10.653] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
+[02lis2025 09:05:10.662] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgedatauserdev' with arguments [--gameDir, ., --assetsDir, C:\Users\HARDPC\.gradle\caches\forge_gradle\assets, --assetIndex, 5, --mod, ancientcurses, --all, --output, C:\Users\HARDPC\Desktop\AncientCurses-1.20.1_t\src\generated\resources, --existing, C:\Users\HARDPC\Desktop\AncientCurses-1.20.1_t\src\main\resources]
+[02lis2025 09:05:10.731] [main/INFO] [mixin/]: Attempting to load Fernflower decompiler (Threaded mode)
+[02lis2025 09:05:10.732] [main/INFO] [mixin/]: Fernflower could not be loaded, exported classes will not be decompiled. NoClassDefFoundError: org/jetbrains/java/decompiler/main/extern/IResultSaver
+[02lis2025 09:05:10.748] [main/INFO] [mixin/]: Preparing mixins for MixinEnvironment[DEFAULT]
+[02lis2025 09:05:10.749] [main/INFO] [mixin/]: Selecting config mixins.ancientcurses.json
+[02lis2025 09:05:10.751] [main/WARN] [mixin/]: Reference map 'ancientcurses.refmap.json' for mixins.ancientcurses.json could not be read. If this is a development environment you can ignore this message
+[02lis2025 09:05:10.752] [main/INFO] [mixin/]: Selecting config curios.mixins.json
+[02lis2025 09:05:11.039] [main/INFO] [mixin/]: Remapping refMap curios.refmap.json using C:\Users\HARDPC\Desktop\AncientCurses-1.20.1_t\build/createSrgToMcp/output.srg
+[02lis2025 09:05:11.039] [main/INFO] [mixin/]: Selecting config mixins.turtlecore.json
+[02lis2025 09:05:11.040] [main/INFO] [mixin/]: Remapping refMap turtlecore.refmap.json using C:\Users\HARDPC\Desktop\AncientCurses-1.20.1_t\build/createSrgToMcp/output.srg
+[02lis2025 09:05:11.041] [main/INFO] [mixin/]: Preparing mixins.ancientcurses.json (3)
+[02lis2025 09:05:11.091] [main/INFO] [mixin/]: Preparing curios.mixins.json (13)
+[02lis2025 09:05:11.137] [main/INFO] [mixin/]: Preparing mixins.turtlecore.json (2)
+[02lis2025 09:05:11.171] [main/INFO] [mixin/]: Prepared 18 mixins in 0,423 sec (23,5ms avg) (0ms load, 0ms transform, 0ms plugin)
+[02lis2025 09:05:11.512] [main/INFO] [net.minecraftforge.data.loading.DatagenModLoader/]: Initializing Data Gatherer for mods [ancientcurses]
+[02lis2025 09:05:11.761] [main/INFO] [mixin/]: Mixing AccessorEntity from curios.mixins.json into net.minecraft.world.entity.Entity
+[02lis2025 09:05:11.897] [main/INFO] [mixin/]: Mixing MixinLivingEntity from curios.mixins.json into net.minecraft.world.entity.LivingEntity
+[02lis2025 09:05:12.696] [main/INFO] [mixin/]: Mixing MixinPowderSnowBlock from curios.mixins.json into net.minecraft.world.level.block.PowderSnowBlock
+[02lis2025 09:05:13.275] [main/INFO] [mixin/]: Mixing MixinAbstractArrow from mixins.turtlecore.json into net.minecraft.world.entity.projectile.AbstractArrow
+[02lis2025 09:05:13.365] [main/INFO] [mixin/]: Mixing MobSunBurnMixin from mixins.ancientcurses.json into net.minecraft.world.entity.Mob
+[02lis2025 09:05:13.940] [main/INFO] [mixin/]: Mixing MixinShearsItem from curios.mixins.json into net.minecraft.world.item.ShearsItem
+[02lis2025 09:05:14.621] [main/INFO] [mixin/]: Mixing MixinThrownTrident from mixins.turtlecore.json into net.minecraft.world.entity.projectile.ThrownTrident
+[02lis2025 09:05:14.705] [main/INFO] [mixin/]: Mixing SlimeMixin from mixins.ancientcurses.json into net.minecraft.world.entity.monster.Slime
+[02lis2025 09:05:15.211] [main/INFO] [mixin/]: Mixing MixinInventory from curios.mixins.json into net.minecraft.world.entity.player.Inventory
+[02lis2025 09:05:15.238] [main/INFO] [mixin/]: Mixing SlotAccessorMixin from mixins.ancientcurses.json into net.minecraft.world.inventory.Slot
+[02lis2025 09:05:15.240] [main/WARN] [mixin/]: @Shadow target mixins.ancientcurses.json:SlotAccessorMixin::x is final but shadow is not decorated with @Final
+[02lis2025 09:05:15.240] [main/WARN] [mixin/]: @Shadow target mixins.ancientcurses.json:SlotAccessorMixin::y is final but shadow is not decorated with @Final
+[02lis2025 09:05:15.341] [main/INFO] [mixin/]: Mixing MixinApplyBonusCount from curios.mixins.json into net.minecraft.world.level.storage.loot.functions.ApplyBonusCount
+[02lis2025 09:05:16.115] [modloading-worker-0/INFO] [net.minecraftforge.common.ForgeMod/FORGEMOD]: Forge mod loading, version 47.3.7, for MC 1.20.1 with MCP 20230612.114412
+[02lis2025 09:05:16.117] [modloading-worker-0/INFO] [net.minecraftforge.common.MinecraftForge/FORGE]: MinecraftForge v47.3.7 Initialized
+[02lis2025 09:05:16.358] [modloading-worker-0/INFO] [mezz.jei.library.load.PluginCaller/]: Sending ConfigManager...
+[02lis2025 09:05:16.366] [modloading-worker-0/INFO] [mezz.jei.library.load.PluginCaller/]: Sending ConfigManager took 6.160 ms
+[02lis2025 09:05:16.731] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/HARDPC/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1/forge-1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1.jar%23191!/assets/.mcassetsroot' uses unexpected schema
+[02lis2025 09:05:16.732] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/HARDPC/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1/forge-1.20.1-47.3.7_mapped_parchment_2023.09.03-1.20.1.jar%23191!/data/.mcassetsroot' uses unexpected schema
+[02lis2025 09:05:16.908] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Recipes
+[02lis2025 09:05:16.923] [main/INFO] [mixin/]: Mixing MixinNbtPredicate from curios.mixins.json into net.minecraft.advancements.critereon.NbtPredicate
+[02lis2025 09:05:16.958] [main/INFO] [net.minecraft.data.DataGenerator/]: Recipes finished after 48 ms
+[02lis2025 09:05:16.958] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Loot Tables
+[02lis2025 09:05:16.999] [main/INFO] [net.minecraft.data.DataGenerator/]: Loot Tables finished after 40 ms
+[02lis2025 09:05:16.999] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Block States: ancientcurses
+[02lis2025 09:05:17.115] [main/INFO] [net.minecraft.data.DataGenerator/]: Block States: ancientcurses finished after 116 ms
+[02lis2025 09:05:17.115] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Item Models: ancientcurses
+[02lis2025 09:05:17.140] [main/INFO] [net.minecraft.data.DataGenerator/]: Item Models: ancientcurses finished after 24 ms
+[02lis2025 09:05:17.140] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Tags for minecraft:block mod id ancientcurses
+[02lis2025 09:05:17.142] [main/INFO] [net.minecraft.data.DataGenerator/]: Tags for minecraft:block mod id ancientcurses finished after 2 ms
+[02lis2025 09:05:17.142] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Tags for minecraft:item mod id ancientcurses
+[02lis2025 09:05:17.153] [main/INFO] [net.minecraft.data.DataGenerator/]: Tags for minecraft:item mod id ancientcurses finished after 10 ms
+[02lis2025 09:05:17.154] [main/INFO] [net.minecraft.data.DataGenerator/]: Starting provider: Languages: en_us
+[02lis2025 09:05:17.155] [main/INFO] [net.minecraft.data.DataGenerator/]: Languages: en_us finished after 1 ms
+[02lis2025 09:05:17.155] [main/INFO] [net.minecraft.data.DataGenerator/]: All providers took: 247 ms
+[02lis2025 09:05:17.164] [main/INFO] [net.minecraft.data.HashCache/]: Caching: total files: 58, old count: 58, new count: 59, removed stale: 0, written: 0

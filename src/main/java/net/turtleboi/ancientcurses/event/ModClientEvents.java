@@ -32,6 +32,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
@@ -44,6 +45,7 @@ import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
 import net.turtleboi.ancientcurses.network.packets.rites.RiteOverlayPacketC2S;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
+import net.turtleboi.ancientcurses.util.ModItemProperties;
 import net.turtleboi.turtlecore.client.data.ScreenEffectsData;
 import org.joml.Matrix4f;
 
@@ -98,6 +100,8 @@ public class ModClientEvents {
             }
         }
     }
+
+
 
     @SubscribeEvent
     public static void onRenderFirstPerson(RenderHandEvent event) {
