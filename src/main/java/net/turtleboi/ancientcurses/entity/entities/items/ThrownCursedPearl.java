@@ -1,8 +1,6 @@
-package net.turtleboi.ancientcurses.entity;
+package net.turtleboi.ancientcurses.entity.entities.items;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -12,6 +10,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.turtleboi.ancientcurses.entity.ModEntities;
+import net.turtleboi.ancientcurses.entity.entities.CursedPortalEntity;
 import net.turtleboi.ancientcurses.item.ModItems;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;

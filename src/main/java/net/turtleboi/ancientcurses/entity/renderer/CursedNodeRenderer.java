@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.entity.client.renderer;
+package net.turtleboi.ancientcurses.entity.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -18,10 +18,9 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.entity.player.Player;
 import net.turtleboi.ancientcurses.AncientCurses;
-import net.turtleboi.ancientcurses.entity.CursedNodeEntity;
+import net.turtleboi.ancientcurses.entity.entities.CursedNodeEntity;
 import net.turtleboi.ancientcurses.rites.EmbersRite;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3f;

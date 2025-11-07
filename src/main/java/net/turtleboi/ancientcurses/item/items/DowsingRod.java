@@ -13,7 +13,6 @@ import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
-import net.turtleboi.ancientcurses.entity.CursedNodeEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.items.DowsingRodInfoPacketS2C;
 import net.turtleboi.ancientcurses.rites.EmbersRite;

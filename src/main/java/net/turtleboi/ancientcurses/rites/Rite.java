@@ -14,7 +14,7 @@ public interface Rite {
     String embersRite = "EmbersRite";
     String famineRite = "FamineRite";
     String odysseyRite = "OdysseyRite";
-    String sacrificeRite = "sacrificeRite";
+    String sacrificeRite = "SacrificeRite";
     String alacrityRite = "AlacrityRite";
 
     void trackProgress(Player player);

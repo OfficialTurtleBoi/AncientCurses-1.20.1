@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.entity;
+package net.turtleboi.ancientcurses.entity.entities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

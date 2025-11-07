@@ -446,29 +446,41 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public Rite createRiteForCurse(Player player, MobEffect curseType, int curseDuration, int curseAmplifier) {
         if (curseType == ModEffects.CURSE_OF_AVARICE.get()) {
-            return new FamineRite(player, curseType, curseAmplifier, this);
+            //return new FamineRite(player, curseType, curseAmplifier, this);
+            return new SacrificeRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_ENDING.get()) {
-            return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
+            //return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
+            return new SacrificeRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_ENVY.get()) {
-            return new CarnageRite(player, curseType, curseAmplifier, this);
+            //return new CarnageRite(player, curseType, curseAmplifier, this);
+            return new SacrificeRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_FRAILTY.get()) {
-            return new CarnageRite(player, curseType, curseAmplifier, this);
+            //return new CarnageRite(player, curseType, curseAmplifier, this);
+            return new SacrificeRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_GLUTTONY.get()) {
-            return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
+            //return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
+            return new SacrificeRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_NATURE.get()) {
-            return new FamineRite(player, curseType, curseAmplifier, this);
+            //return new FamineRite(player, curseType, curseAmplifier, this);
+            return new SacrificeRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_OBESSSION.get()) {
-            return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
+            //return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
+            return new SacrificeRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_PESTILENCE.get()) {
-            return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
+            //return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
+            return new SacrificeRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_PRIDE.get()) {
-            return new CarnageRite(player, curseType, curseAmplifier, this);
+            //return new CarnageRite(player, curseType, curseAmplifier, this);
+            return new SacrificeRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_SHADOWS.get()) {
-            return new FamineRite(player, curseType, curseAmplifier, this);
+            //return new FamineRite(player, curseType, curseAmplifier, this);
+            return new SacrificeRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_SLOTH.get()) {
-            return new FamineRite(player, curseType, curseAmplifier, this);
+            //return new FamineRite(player, curseType, curseAmplifier, this);
+            return new SacrificeRite(player, curseType, curseAmplifier, this);
         } else if (curseType == ModEffects.CURSE_OF_WRATH.get()) {
-          return new CarnageRite(player, curseType, curseAmplifier, this);
+          //return new CarnageRite(player, curseType, curseAmplifier, this);
+            return new SacrificeRite(player, curseType, curseAmplifier, this);
         }
         return null;
     }

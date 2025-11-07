@@ -7,6 +7,7 @@ import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.RecordItem;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
+import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -14,6 +15,7 @@ import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.enchantment.ModEnchantments;
+import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.item.items.*;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.turtlecore.item.CoreItems;
@@ -126,6 +128,9 @@ public class ModItems {
 
     public static final RegistryObject<Item> FIRST_BEACON = ITEMS.register("first_beacon",
             () -> new FirstBeaconItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1).durability(600)));
+
+    public static final RegistryObject<Item> ANCIENT_WRAITH_SPAWN_EGG = ITEMS.register("ancient_wraith_spawn_egg",
+            ()-> new ForgeSpawnEggItem(ModEntities.ANCIENT_WRAITH,0x881D2A,0xDDCA28,new Item.Properties()));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
