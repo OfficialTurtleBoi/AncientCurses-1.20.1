@@ -33,6 +33,7 @@ import net.turtleboi.ancientcurses.particle.custom.CursedParticle;
 import net.turtleboi.ancientcurses.particle.custom.GoldenFeatherParticle;
 import net.turtleboi.ancientcurses.screen.LapidaristTableContainerScreen;
 import net.turtleboi.ancientcurses.screen.ModMenuTypes;
+import net.turtleboi.ancientcurses.util.ModItemProperties;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ModClientBusEvents {
@@ -43,26 +44,7 @@ public class ModClientBusEvents {
         EntityRenderers.register(ModEntities.CURSED_NODE.get(), CursedNodeRenderer::new);
         EntityRenderers.register(ModEntities.CURSED_PEARL.get(), ThrownItemRenderer::new);
         MenuScreens.register(ModMenuTypes.LAPIDARIST_MENU.get(), LapidaristTableContainerScreen::new);
-
-        event.enqueueWork(() -> ItemProperties.register(ModItems.GOLDEN_AMULET.get(), new ResourceLocation(AncientCurses.MOD_ID, "main_gem"),
-                (ItemStack stack, ClientLevel level, LivingEntity entity, int seed) -> {
-                    CompoundTag tag = stack.getTag();
-                    if (tag != null && tag.contains("MainGem")) {
-                        ItemStack mainGemStack = ItemStack.of(tag.getCompound("MainGem"));
-                        if (!mainGemStack.isEmpty()) {
-                            if (mainGemStack.getItem() == ModItems.PERFECT_AMETHYST.get() || mainGemStack.getItem() == ModItems.POLISHED_AMETHYST.get()) return 1.0F;
-                            if (mainGemStack.getItem() == ModItems.PERFECT_DIAMOND.get() || mainGemStack.getItem() == ModItems.POLISHED_DIAMOND.get()) return 2.0F;
-                            if (mainGemStack.getItem() == ModItems.PERFECT_EMERALD.get() || mainGemStack.getItem() == ModItems.POLISHED_EMERALD.get()) return 3.0F;
-                            if (mainGemStack.getItem() == ModItems.PERFECT_RUBY.get() || mainGemStack.getItem() == ModItems.POLISHED_RUBY.get()) return 4.0F;
-                            if (mainGemStack.getItem() == ModItems.PERFECT_SAPPHIRE.get() || mainGemStack.getItem() == ModItems.POLISHED_SAPPHIRE.get()) return 5.0F;
-                            if (mainGemStack.getItem() == ModItems.PERFECT_TOPAZ.get() || mainGemStack.getItem() == ModItems.POLISHED_TOPAZ.get()) return 6.0F;
-                            if (mainGemStack.getItem() == ModItems.ANCIENT_ALEXANDRITE.get()) return 7.0F;
-                            if (mainGemStack.getItem() == ModItems.ANCIENT_BISMUTH.get()) return 8.0F;
-                            if (mainGemStack.getItem() == ModItems.ANCIENT_CHRYSOBERYL.get()) return 9.0F;
-                        }
-                    }
-                    return 0.0F;
-                }));
+        event.enqueueWork(ModItemProperties::addCustomItemProperties);
     }
 
     @SubscribeEvent
@@ -70,11 +52,6 @@ public class ModClientBusEvents {
         event.registerLayerDefinition(CursedPortalModel.CURSED_PORTAL_LAYER, CursedPortalModel::createBodyLayer);
         event.registerLayerDefinition(CursedNodeRenderer.CURSED_NODE_LAYER, CursedNodeRenderer::createBodyLayer);
         event.registerLayerDefinition(AncientWraithModel.ANCIENT_WRAITH_LAYER, AncientWraithModel::createBodyLayer);
-    }
-
-    @SubscribeEvent
-    public static void registerAttributes(EntityAttributeCreationEvent event) {
-        event.put(ModEntities.ANCIENT_WRAITH.get(), AncientWraithEntity.createAttributes().build());
     }
 
     @SubscribeEvent

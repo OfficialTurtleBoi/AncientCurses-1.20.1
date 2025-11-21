@@ -1,7 +1,6 @@
 package net.turtleboi.ancientcurses;
 
 import com.mojang.logging.LogUtils;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
@@ -10,7 +9,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.turtleboi.ancientcurses.block.ModBlocks;
@@ -28,7 +26,6 @@ import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.screen.ModMenuTypes;
 import net.turtleboi.ancientcurses.sound.ModSounds;
-import net.turtleboi.ancientcurses.util.ModItemProperties;
 import net.turtleboi.ancientcurses.world.structures.ModStructures;
 import org.slf4j.Logger;
 
@@ -68,7 +65,6 @@ public class AncientCurses {
         event.enqueueWork(() -> {
 
         });
-
         CurseRegistry.initialize();
         ModNetworking.register();
     }
@@ -81,13 +77,5 @@ public class AncientCurses {
     public void onServerStarting(ServerStartingEvent event) {
         ClearCurseCommand.register(event.getServer().getCommands().getDispatcher());
         RiteCompletedCommand.register(event.getServer().getCommands().getDispatcher());
-    }
-
-    @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientModEvents {
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
-            ModItemProperties.addCustomItemProperties();
-        }
     }
 }

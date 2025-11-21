@@ -1,17 +1,43 @@
 package net.turtleboi.ancientcurses.util;
 
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.item.items.GoldenFeatherItem;
 
+@OnlyIn(Dist.CLIENT)
 public class ModItemProperties {
     public static void addCustomItemProperties() {
-        ItemProperties.register(ModItems.GOLDEN_FEATHER.get(), new  ResourceLocation(AncientCurses.MOD_ID, "broken"),
-                (itemStack, clientLevel, livingEntity, i) -> {
-                    return GoldenFeatherItem.canDash(itemStack) ? 0.0F : 1.0F;
-                });
+            ItemProperties.register(ModItems.GOLDEN_FEATHER.get(), new  ResourceLocation(AncientCurses.MOD_ID, "broken"),
+                    (itemStack, clientLevel, livingEntity, i) ->
+                            GoldenFeatherItem.canDash(itemStack) ? 0.0F : 1.0F);
 
+            ItemProperties.register(ModItems.GOLDEN_AMULET.get(), new ResourceLocation(AncientCurses.MOD_ID, "main_gem"),
+                    (ItemStack stack, ClientLevel level, LivingEntity entity, int seed) -> {
+                        CompoundTag tag = stack.getTag();
+                        if (tag != null && tag.contains("MainGem")) {
+                            ItemStack mainGemStack = ItemStack.of(tag.getCompound("MainGem"));
+                            if (!mainGemStack.isEmpty()) {
+                                if (mainGemStack.getItem() == ModItems.PERFECT_AMETHYST.get() || mainGemStack.getItem() == ModItems.POLISHED_AMETHYST.get()) return 1.0F;
+                                if (mainGemStack.getItem() == ModItems.PERFECT_DIAMOND.get() || mainGemStack.getItem() == ModItems.POLISHED_DIAMOND.get()) return 2.0F;
+                                if (mainGemStack.getItem() == ModItems.PERFECT_EMERALD.get() || mainGemStack.getItem() == ModItems.POLISHED_EMERALD.get()) return 3.0F;
+                                if (mainGemStack.getItem() == ModItems.PERFECT_RUBY.get() || mainGemStack.getItem() == ModItems.POLISHED_RUBY.get()) return 4.0F;
+                                if (mainGemStack.getItem() == ModItems.PERFECT_SAPPHIRE.get() || mainGemStack.getItem() == ModItems.POLISHED_SAPPHIRE.get()) return 5.0F;
+                                if (mainGemStack.getItem() == ModItems.PERFECT_TOPAZ.get() || mainGemStack.getItem() == ModItems.POLISHED_TOPAZ.get()) return 6.0F;
+                                if (mainGemStack.getItem() == ModItems.ANCIENT_ALEXANDRITE.get()) return 7.0F;
+                                if (mainGemStack.getItem() == ModItems.ANCIENT_BISMUTH.get()) return 8.0F;
+                                if (mainGemStack.getItem() == ModItems.ANCIENT_CHRYSOBERYL.get()) return 9.0F;
+                            }
+                        }
+                        return 0.0F;
+            });
     }
 }
