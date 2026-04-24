@@ -12,11 +12,12 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.turtlecore.item.CoreItems;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 public class ItemValueMap {
 
-    private static final Map<Item, Integer> ITEM_VALUE_MAP = new HashMap<>();
+    private static final Map<Item, Integer> ITEM_VALUE_MAP = new IdentityHashMap<>();
+    private static final Map<Item, Integer> ITEM_BASE_VALUE_CACHE = new IdentityHashMap<>();
+    private static final Map<RecipeManager, RecipeValueCache> RECIPE_VALUE_CACHES = new IdentityHashMap<>();
 
     static {
         ITEM_VALUE_MAP.put(Items.IRON_INGOT, 10);
@@ -44,16 +45,20 @@ public class ItemValueMap {
         ITEM_VALUE_MAP.put(Items.NETHER_STAR, 400);
     }
 
-    private static final Map<Item, Integer> ITEM_VALUE_CACHE = new HashMap<>();
-    private static final Set<Item> CURRENTLY_PROCESSING_ITEMS = new HashSet<>();
+    public static void clearCaches() {
+        ITEM_BASE_VALUE_CACHE.clear();
+        RECIPE_VALUE_CACHES.clear();
+    }
 
     public static int getItemValue(ItemStack itemStack, Level level) {
         Item item = itemStack.getItem();
-        if (ITEM_VALUE_MAP.containsKey(item)) {
-            int predefinedValue = ITEM_VALUE_MAP.get(item);
+        Integer predefinedValue = ITEM_VALUE_MAP.get(item);
+        if (predefinedValue != null) {
             return predefinedValue + calculateEnchantmentValue(itemStack);
         }
-        int recipeValue = calculateValueFromRecipe(itemStack, level);
+
+        RecipeValueCache recipeValueCache = getRecipeValueCache(level);
+        int recipeValue = recipeValueCache.getRecipeValue(item, level);
         int baseValue = getBaseValue(itemStack);
         int enchantmentValue = calculateEnchantmentValue(itemStack);
         return baseValue + recipeValue + enchantmentValue;
@@ -71,81 +76,179 @@ public class ItemValueMap {
         return enchantmentValue;
     }
 
-    private static int calculateValueFromRecipe(ItemStack itemStack, Level level) {
-        Item item = itemStack.getItem();
-        if (CURRENTLY_PROCESSING_ITEMS.contains(item)) {
-            return ITEM_VALUE_CACHE.getOrDefault(item, 1);
-        }
-        if (ITEM_VALUE_CACHE.containsKey(item)) {
-            return ITEM_VALUE_CACHE.get(item);
-        }
-        CURRENTLY_PROCESSING_ITEMS.add(item);
+    private static RecipeValueCache getRecipeValueCache(Level level) {
         RecipeManager recipeManager = level.getRecipeManager();
-        int totalValue = 0;
-        totalValue += calculateCraftingRecipeValue(itemStack, level, recipeManager);
-        totalValue += calculateSmithingRecipeValue(itemStack, level, recipeManager);
-        totalValue = Math.max(totalValue, 1);
-        ITEM_VALUE_CACHE.put(item, totalValue);
-        CURRENTLY_PROCESSING_ITEMS.remove(item);
-        return totalValue;
+        RecipeValueCache cache = RECIPE_VALUE_CACHES.get(recipeManager);
+        if (cache == null) {
+            cache = new RecipeValueCache(recipeManager);
+            RECIPE_VALUE_CACHES.put(recipeManager, cache);
+        }
+        return cache;
     }
 
-    private static int calculateCraftingRecipeValue(ItemStack itemStack, Level level, RecipeManager recipeManager) {
+    private static int calculateCraftingRecipeValue(Item item, Level level, List<CraftingRecipe> recipes) {
+        if (recipes.isEmpty()) {
+            return 0;
+        }
+
         int totalValue = 0;
-        for (CraftingRecipe recipe : recipeManager.getAllRecipesFor(RecipeType.CRAFTING)) {
-            if (ItemStack.isSameItem(recipe.getResultItem(level.registryAccess()), itemStack)) {
-                int resultCount = recipe.getResultItem(level.registryAccess()).getCount();
-                for (Ingredient ingredient : recipe.getIngredients()) {
-                    ItemStack[] matchingStacks = ingredient.getItems();
-                    if (matchingStacks.length > 0) {
-                        totalValue += getItemValue(matchingStacks[0], level);
-                    }
+        int baseValue = getBaseValue(item);
+
+        for (CraftingRecipe recipe : recipes) {
+            for (Ingredient ingredient : recipe.getIngredients()) {
+                ItemStack[] matchingStacks = ingredient.getItems();
+                if (matchingStacks.length > 0) {
+                    totalValue += getItemValue(matchingStacks[0], level);
                 }
-                totalValue = (totalValue / Math.max(resultCount, 1)) + getBaseValue(itemStack);
             }
+            int resultCount = recipe.getResultItem(level.registryAccess()).getCount();
+            totalValue = (totalValue / Math.max(resultCount, 1)) + baseValue;
         }
         return totalValue;
     }
 
-    private static int calculateSmithingRecipeValue(ItemStack itemStack, Level level, RecipeManager recipeManager) {
+    private static int calculateSmithingRecipeValue(Item item, Level level, List<SmithingRecipeValue> recipes) {
+        if (recipes.isEmpty()) {
+            return 0;
+        }
+
         int totalValue = 0;
-
-        for (SmithingRecipe recipe : recipeManager.getAllRecipesFor(RecipeType.SMITHING)) {
-            if (ItemStack.isSameItem(recipe.getResultItem(level.registryAccess()), itemStack)) {
-                ItemStack base = findMatchingItem(recipe::isBaseIngredient);
-                ItemStack addition = findMatchingItem(recipe::isAdditionIngredient);
-                int baseValue = getItemValue(base, level);
-                int additionValue = getItemValue(addition, level);
-                totalValue += baseValue + additionValue + getBaseValue(itemStack);
-            }
+        int baseValue = getBaseValue(item);
+        for (SmithingRecipeValue recipe : recipes) {
+            totalValue += getItemValue(recipe.baseItem(), level);
+            totalValue += getItemValue(recipe.additionItem(), level);
+            totalValue += baseValue;
         }
         return totalValue;
     }
 
-    private static ItemStack findMatchingItem(Predicate<ItemStack> predicate){
-        for (Item item : ForgeRegistries.ITEMS) {
-            ItemStack stack = new ItemStack(item);
-            if (predicate.test(stack)) {
-                return stack;
-            }
+    private static int getBaseValue(ItemStack itemStack) {
+        return getBaseValue(itemStack.getItem(), itemStack.getRarity());
+    }
+
+    private static int getBaseValue(Item item) {
+        Integer cachedValue = ITEM_BASE_VALUE_CACHE.get(item);
+        if (cachedValue != null) {
+            return cachedValue;
+        }
+
+        int baseValue = getBaseValue(item, new ItemStack(item).getRarity());
+        ITEM_BASE_VALUE_CACHE.put(item, baseValue);
+        return baseValue;
+    }
+
+    private static int getBaseValue(Item item, Rarity rarity) {
+        if (rarity == Rarity.COMMON) return 1;
+        if (rarity == Rarity.UNCOMMON) return 20;
+        if (rarity == Rarity.RARE) return 50;
+        if (rarity == Rarity.EPIC) return 100;
+        if (rarity == CoreItems.LEGENDARY) return 500;
+        return 0;
+    }
+
+    private static ItemStack findFirstMatchingItem(Ingredient ingredient) {
+        ItemStack[] matchingStacks = ingredient.getItems();
+        if (matchingStacks.length > 0) {
+            return matchingStacks[0];
         }
         return ItemStack.EMPTY;
     }
 
-    private static int getBaseValue(ItemStack itemStack) {
-        Rarity rarity = itemStack.getRarity();
-        if (rarity == Rarity.COMMON) {
-            return 1;
-        } else if (rarity == Rarity.UNCOMMON) {
-            return 20;
-        } else if (rarity == Rarity.RARE) {
-            return 50;
-        } else if (rarity == Rarity.EPIC) {
-            return 100;
-        } else if (rarity == CoreItems.LEGENDARY) {
-            return 500;
-        } else {
-            return 0;
+    private record SmithingRecipeValue(ItemStack baseItem, ItemStack additionItem) {}
+
+    private static final class RecipeValueCache {
+        private static final List<CraftingRecipe> NO_CRAFTING_RECIPES = Collections.emptyList();
+        private static final List<SmithingRecipeValue> NO_SMITHING_RECIPES = Collections.emptyList();
+
+        private final RecipeManager recipeManager;
+        private final Map<Item, Integer> itemValueCache = new IdentityHashMap<>();
+        private final Set<Item> currentlyProcessingItems = Collections.newSetFromMap(new IdentityHashMap<>());
+        private final Map<Item, List<CraftingRecipe>> craftingRecipesByResult = new IdentityHashMap<>();
+        private final Map<Item, List<SmithingRecipeValue>> smithingRecipesByResult = new IdentityHashMap<>();
+        private boolean craftingRecipesIndexed;
+        private boolean smithingRecipesIndexed;
+
+        private RecipeValueCache(RecipeManager recipeManager) {
+            this.recipeManager = recipeManager;
+        }
+
+        private int getRecipeValue(Item item, Level level) {
+            Integer cachedValue = itemValueCache.get(item);
+            if (cachedValue != null) {
+                return cachedValue;
+            }
+            if (!currentlyProcessingItems.add(item)) {
+                return itemValueCache.getOrDefault(item, 1);
+            }
+
+            try {
+                int totalValue = calculateCraftingRecipeValue(item, level, getCraftingRecipesFor(item, level));
+                totalValue += calculateSmithingRecipeValue(item, level, getSmithingRecipesFor(item, level));
+                totalValue = Math.max(totalValue, 1);
+
+                itemValueCache.put(item, totalValue);
+                return totalValue;
+            } finally {
+                currentlyProcessingItems.remove(item);
+            }
+        }
+
+        private List<CraftingRecipe> getCraftingRecipesFor(Item item, Level level) {
+            if (!craftingRecipesIndexed) {
+                indexCraftingRecipes(level);
+            }
+            return craftingRecipesByResult.getOrDefault(item, NO_CRAFTING_RECIPES);
+        }
+
+        private List<SmithingRecipeValue> getSmithingRecipesFor(Item item, Level level) {
+            if (!smithingRecipesIndexed) {
+                indexSmithingRecipes(level);
+            }
+            return smithingRecipesByResult.getOrDefault(item, NO_SMITHING_RECIPES);
+        }
+
+        private void indexCraftingRecipes(Level level) {
+            for (CraftingRecipe recipe : recipeManager.getAllRecipesFor(RecipeType.CRAFTING)) {
+                Item resultItem = recipe.getResultItem(level.registryAccess()).getItem();
+                craftingRecipesByResult
+                        .computeIfAbsent(resultItem, ignored -> new ArrayList<>())
+                        .add(recipe);
+            }
+            craftingRecipesIndexed = true;
+        }
+
+        private void indexSmithingRecipes(Level level) {
+            for (SmithingRecipe recipe : recipeManager.getAllRecipesFor(RecipeType.SMITHING)) {
+                if (!(recipe instanceof SmithingTransformRecipe)) {
+                    continue;
+                }
+
+                Item resultItem = recipe.getResultItem(level.registryAccess()).getItem();
+                ItemStack baseItem = resolveSmithingIngredient(recipe, true);
+                ItemStack additionItem = resolveSmithingIngredient(recipe, false);
+                if (baseItem.isEmpty() || additionItem.isEmpty()) {
+                    continue;
+                }
+
+                smithingRecipesByResult
+                        .computeIfAbsent(resultItem, ignored -> new ArrayList<>())
+                        .add(new SmithingRecipeValue(baseItem, additionItem));
+            }
+            smithingRecipesIndexed = true;
+        }
+
+        private ItemStack resolveSmithingIngredient(SmithingRecipe recipe, boolean baseIngredient) {
+            for (Item item : ForgeRegistries.ITEMS) {
+                ItemStack candidate = new ItemStack(item);
+                boolean matches = baseIngredient
+                        ? recipe.isBaseIngredient(candidate)
+                        : recipe.isAdditionIngredient(candidate);
+                if (matches) {
+                    return candidate;
+                }
+            }
+
+            return ItemStack.EMPTY;
         }
     }
 

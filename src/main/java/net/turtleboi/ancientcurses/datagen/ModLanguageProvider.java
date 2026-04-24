@@ -5,8 +5,9 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.enchantment.ModEnchantments;
+import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.item.ModItems;
-import net.turtleboi.turtlecore.util.CoreLanguageProvider;
+import net.turtleboi.turtlecore.datagen.CoreLanguageProvider;
 
 public class ModLanguageProvider extends CoreLanguageProvider {
     public ModLanguageProvider(PackOutput output) {
@@ -46,6 +47,7 @@ public class ModLanguageProvider extends CoreLanguageProvider {
 
         addSimpleNameBlock(ModBlocks.CURSED_ALTAR);
         addSimpleNameBlock(ModBlocks.LAPIDARIST_TABLE);
+        addSimpleNameBlock(ModBlocks.SOUL_ROCK);
         addSimpleNameBlock(ModBlocks.SCONCED_TORCH);
         addSimpleNameBlock(ModBlocks.SCONCED_SOUL_TORCH);
         addSimpleNameBlock(ModBlocks.SCONCED_REDSTONE_TORCH);
@@ -83,9 +85,16 @@ public class ModLanguageProvider extends CoreLanguageProvider {
         addSimpleItemName(ModItems.ANCIENT_CHRYSOBERYL);
         addSimpleItemName(ModItems.CURSED_PEARL);
         addSimpleItemName(ModItems.ROT_CLUMP);
+        addSimpleItemName(ModItems.SMOKY_QUARTZ);
+        addSimpleItemName(ModItems.SOUL_SHARD);
+        addSimpleItemName(ModItems.CURSED_SOUL_SHARD);
         addSimpleItemName(ModItems.GOLDEN_FEATHER);
         addSimpleItemName(ModItems.DOWSING_ROD);
         addSimpleItemName(ModItems.FIRST_BEACON);
+
+        add(ModEntities.CURSED_PEARL.get(), "Cursed Pearl");
+        add(ModEntities.CURSED_NODE.get(), "Cursed Node");
+        add(ModEntities.CURSED_PORTAL.get(), "Cursed Portal");
 
         add("item.ancientcurses.gem.socket", "When socketed:");
         add("item.ancientcurses.amulet.minor_gems", "Minor Gems:");
@@ -93,6 +102,9 @@ public class ModLanguageProvider extends CoreLanguageProvider {
         add("item.ancientcurses.amulet.main_gem", "Main Gem: %s");
         add("item.ancientcurses.amulet.main_gem_none", "Main Gem: None");
         add("item.ancientcurses.amulet.minor_gems_none", "Minor Gems: None");
+        add("item.ancientcurses.soul_shard.energy", "Soul Energy: %s/%s");
+        add("item.ancientcurses.soul_shard.charged", "Charged with harvested souls");
+        add("item.ancientcurses.soul_shard.uncharged", "Charge in your off hand by slaying mobs");
 
         add("item.ancientcurses.broken_amethyst.tooltip", "+2 Health");
         add("item.ancientcurses.polished_amethyst.tooltip", "+4 Health");
@@ -133,7 +145,7 @@ public class ModLanguageProvider extends CoreLanguageProvider {
         add("item.ancientcurses.ancient_chrysoberyl.tooltip",
                 "Electric Skies: When slotted in Main Gem socket, gain the ability to fly|+50% Attack Speed|+50% Movement Speed|+3 Luck");
 
-        add("trial.ancientcurses.survival", "Survive: %s%%");
+        add("trial.ancientcurses.survival", "Feed the souls: %s%%");
         add("trial.ancientcurses.elimination", "Eliminate %s | Wave: %d | Remaining: %d");
         add("trial.ancientcurses.fetch", "Feed the altar: %s/%s %s");
         add("trial.ancientcurses.complete", "The altar beckons your return...");

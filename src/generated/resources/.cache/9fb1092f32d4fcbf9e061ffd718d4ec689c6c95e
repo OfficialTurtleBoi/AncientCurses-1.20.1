@@ -1,3 +1,11 @@
-// 1.20.1	2025-10-31T04:53:28.8134257	Recipes
+// 1.20.1	2026-04-21T22:39:20.8179951	Recipes
+5584a5ff9726eaf0c3d90a491b1ed3adb7b4f54a data/ancientcurses/advancements/recipes/building_blocks/soul_rock_from_soul_sand_smelting.json
+55a624d112994d4d762b8f0ac6a70b1bef3f355c data/ancientcurses/advancements/recipes/building_blocks/soul_rock_from_soul_soil_smelting.json
 aa07749a8c49043743d44223aa052f82f623be27 data/ancientcurses/advancements/recipes/misc/dowsing_rod.json
+10fe732189561326bfd22daf69593e00047d821c data/ancientcurses/advancements/recipes/misc/smoky_quartz.json
+5a9bb2ee5dce02580d6240c29c13447316e49b0a data/ancientcurses/advancements/recipes/misc/soul_shard.json
 d3b592f38374643560282d22f19f3d9fe16f6ada data/ancientcurses/recipes/dowsing_rod.json
+b1057a8706fba0f9c2c36e4ccf0cd8061d08a3dd data/ancientcurses/recipes/smoky_quartz.json
+64eb3268f1161d74416b4e18400efcb504491622 data/ancientcurses/recipes/soul_rock_from_soul_sand_smelting.json
+eb628354fabba74d3db372e5884dd435167437dd data/ancientcurses/recipes/soul_rock_from_soul_soil_smelting.json
+5960c79eb8219ed1239d50909d9be536f59ea93f data/ancientcurses/recipes/soul_shard.json

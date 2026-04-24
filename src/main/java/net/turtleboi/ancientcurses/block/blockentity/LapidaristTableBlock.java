@@ -61,14 +61,4 @@ public class LapidaristTableBlock extends BaseEntityBlock {
     public @Nullable BlockEntity newBlockEntity(BlockPos pPos, BlockState pState) {
         return new LapidaristTableBlockEntity(pPos, pState);
     }
-
-    //@Nullable
-    //@Override
-    //public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, BlockState pState, BlockEntityType<T> pBlockEntityType) {
-    //    if(pLevel.isClientSide()){
-    //        return null;
-    //    }
-    //    return createTickerHelper(pBlockEntityType, ModBlockEntities.LAPIDARIST_TABLE_BE.get(),
-    //            (pLevel1, pPos, pState1, pBlockEntity) -> pBlockEntity.tick(pLevel1, pPos, pState1));
-    //}
 }

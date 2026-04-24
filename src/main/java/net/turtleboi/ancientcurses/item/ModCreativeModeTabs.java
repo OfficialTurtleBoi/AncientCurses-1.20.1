@@ -33,6 +33,10 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.GOLDEN_AMULET.get());
                         pOutput.accept(ModItems.DEPRECOPHOBIA_MUSIC_DISC.get());
                         pOutput.accept(ModItems.ROT_CLUMP.get());
+                        pOutput.accept(ModBlocks.SOUL_ROCK.get());
+                        pOutput.accept(ModItems.SMOKY_QUARTZ.get());
+                        pOutput.accept(ModItems.SOUL_SHARD.get());
+                        pOutput.accept(ModItems.CURSED_SOUL_SHARD.get());
                         pOutput.accept(ModItems.CURSED_PEARL.get());
                         pOutput.accept(ModItems.DOWSING_ROD.get());
                         pOutput.accept(ModItems.GOLDEN_FEATHER.get());

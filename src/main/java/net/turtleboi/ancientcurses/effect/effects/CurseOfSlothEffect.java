@@ -13,9 +13,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.turtlecore.effect.CoreEffects;
-import net.turtleboi.turtlecore.init.CoreAttributeModifiers;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
+import net.turtleboi.turtlecore.util.CoreAttributeModifiers;
 
 import java.util.Random;
 

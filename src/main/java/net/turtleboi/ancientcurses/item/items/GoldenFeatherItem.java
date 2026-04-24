@@ -1,35 +1,42 @@
 package net.turtleboi.ancientcurses.item.items;
 
-import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.AreaEffectCloud;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.enchantment.ModEnchantments;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
-import net.turtleboi.turtlecore.client.renderer.ShockwaveRenderer;
-import net.turtleboi.turtlecore.spells.ShockwaveSpell;
+import net.turtleboi.turtlecore.spell.SpellDispatcher;
+import net.turtleboi.turtlecore.spell.util.SpellManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class GoldenFeatherItem extends Item {
+    private static final String AIRBORNE_TAG = "GoldenFeatherAirborne";
+    private static final ResourceLocation SHOCKWAVE_SPELL_ID =
+            new ResourceLocation(AncientCurses.MOD_ID, "golden_feather_shockwave");
+    private static final float BASE_SHOCKWAVE_RADIUS = 5.0F;
+    private static final float SHOCKWAVE_RADIUS_PER_LEVEL = 0.75F;
+    private static final float BASE_SHOCKWAVE_POWER = 2.0F;
+    private static final float SHOCKWAVE_POWER_PER_LEVEL = 1.0F;
+
     public GoldenFeatherItem(Properties pProperties) {
         super(pProperties);
     }
-
-    private boolean stopParticles = true;
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level pLevel, Player pPlayer, InteractionHand pUsedHand) {
@@ -79,7 +86,7 @@ public class GoldenFeatherItem extends Item {
             pPlayer.awardStat(Stats.ITEM_USED.get(this));
 
             if (!pPlayer.onGround()){
-                stopParticles = false;
+                pStack.getOrCreateTag().putBoolean(AIRBORNE_TAG, true);
             }
         }
     }
@@ -96,10 +103,11 @@ public class GoldenFeatherItem extends Item {
     @Override
     public void inventoryTick(ItemStack pStack, Level pLevel, Entity pEntity, int pSlotId, boolean pIsSelected) {
         if(pEntity instanceof Player pPlayer) {
-            int seismicLevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.SEISMIC.get(), pPlayer);
+            int seismicLevel = pStack.getEnchantmentLevel(ModEnchantments.SEISMIC.get());
             int zephyrLevel = pStack.getEnchantmentLevel(ModEnchantments.ZEPHYR_RUSH.get());
+            boolean airborne = pStack.getOrCreateTag().getBoolean(AIRBORNE_TAG);
 
-            if (!stopParticles) {
+            if (airborne) {
                 for (int j = 0; j < 3; j++) {
                     pLevel.addParticle(ModParticleTypes.GOLDEN_FEATHER_PARTICLE.get(),
                             pPlayer.getX() + (pPlayer.getRandom().nextDouble() - 0.5),
@@ -109,16 +117,27 @@ public class GoldenFeatherItem extends Item {
                 }
 
                 if (pPlayer.onGround() || pPlayer.isSwimming()) {
+                    //AncientCurses.LOGGER.info("Golden Feather landing detected for {} with Seismic level {}", pPlayer.getScoreboardName(), seismicLevel);
                     if(seismicLevel > 0) {
-                        int radius = 5;
-                        ShockwaveRenderer.triggerShockwave(pPlayer, radius);
-                        ShockwaveSpell.triggerShockwave(pPlayer, radius, seismicLevel);
+                        if (pPlayer instanceof ServerPlayer serverPlayer) {
+                            SpellManager.SpellDefinition shockwave = SpellManager.getById(SHOCKWAVE_SPELL_ID);
+                            if (shockwave != null) {
+                                Map<String, Object> overrides = new HashMap<>();
+                                overrides.put("range_override", BASE_SHOCKWAVE_RADIUS + ((seismicLevel - 1) * SHOCKWAVE_RADIUS_PER_LEVEL));
+                                overrides.put("power_override", BASE_SHOCKWAVE_POWER + ((seismicLevel - 1) * SHOCKWAVE_POWER_PER_LEVEL));
+                                overrides.put("origin", "caster");
+                                //AncientCurses.LOGGER.info("Casting Golden Feather shockwave spell {} for {}", SHOCKWAVE_SPELL_ID, pPlayer.getScoreboardName());
+                                SpellDispatcher.castPassive(serverPlayer, shockwave, overrides, serverPlayer);
+                            } else {
+                                //AncientCurses.LOGGER.warn("Golden Feather shockwave spell {} was not found in SpellManager for {}", SHOCKWAVE_SPELL_ID, pPlayer.getScoreboardName());
+                            }
+                        }
                     }
 
                     if (zephyrLevel > 0) {
                         pPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 50, zephyrLevel - 1));
                     }
-                    stopParticles = true;
+                    pStack.getOrCreateTag().putBoolean(AIRBORNE_TAG, false);
                 }
             }
         }

@@ -8,6 +8,7 @@ import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
+import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.item.ModItems;
 
 public class ModItemModelProvider extends ItemModelProvider {
@@ -48,6 +49,10 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.CURSED_PEARL);
         simpleItem(ModItems.DOWSING_ROD);
         simpleItem(ModItems.ROT_CLUMP);
+        withExistingParent(ModBlocks.SOUL_ROCK.getId().getPath(), modLoc("block/soul_rock"));
+        simpleItem(ModItems.SMOKY_QUARTZ);
+        simpleItem(ModItems.SOUL_SHARD);
+        simpleItem(ModItems.CURSED_SOUL_SHARD);
     }
 
     private ItemModelBuilder simpleItem(RegistryObject<Item> item) {

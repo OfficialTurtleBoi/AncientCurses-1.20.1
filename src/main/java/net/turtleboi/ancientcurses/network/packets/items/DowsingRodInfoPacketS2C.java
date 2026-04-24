@@ -40,8 +40,8 @@ public class DowsingRodInfoPacketS2C {
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            PlayerClientData.setItemUsed(beingUsed);
-            PlayerClientData.setItemUsedTime(usedAt);
+            PlayerClientData.setDowsingRodUsed(beingUsed);
+            PlayerClientData.setDowsingRodUsedTime(usedAt);
             PlayerClientData.setAltarX(xCoord);
             PlayerClientData.setAltarY(yCoord);
             PlayerClientData.setAltarZ(zCoord);

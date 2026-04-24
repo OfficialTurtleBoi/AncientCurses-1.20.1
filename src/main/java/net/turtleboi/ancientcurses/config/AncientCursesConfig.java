@@ -8,6 +8,9 @@ public class AncientCursesConfig {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static final ForgeConfigSpec SPEC;
     public static final ForgeConfigSpec.ConfigValue<Double> CURSED_ALTAR_SPAWN_CHANCE;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> CURSED_ALTAR_BIOME_BLACKLIST;
+    public static final ForgeConfigSpec.ConfigValue<Double> CURSED_ALTAR_SURFACE_BIAS;
+    public static final ForgeConfigSpec.ConfigValue<Integer> CURSED_ALTAR_WATER_CHECK_RADIUS;
 
     public static final ForgeConfigSpec.ConfigValue<Double> CURSED_TRIAL_TIER1_CHANCE;
     public static final ForgeConfigSpec.ConfigValue<Double> CURSED_TRIAL_TIER2_CHANCE;
@@ -26,8 +29,33 @@ public class AncientCursesConfig {
         BUILDER.push("Structures");
 
         CURSED_ALTAR_SPAWN_CHANCE = BUILDER
-                .comment("Spawn chance for the Cursed Altar structure")
+                .comment("Secondary spawn chance for the Cursed Altar after structure placement picks a candidate chunk.")
+                .comment("Keep this at 1.0 for fully data-driven, predictable spacing; lower it to make altars rarer.")
                 .defineInRange("cursedAltarSpawnChance", 1.0, 0.0, 1.0);
+
+        CURSED_ALTAR_BIOME_BLACKLIST = BUILDER
+                .comment("Biomes where the Cursed Altar should NOT spawn.")
+                .comment("Use biome IDs (e.g. \"minecraft:ocean\") or tags with a leading # (e.g. \"#minecraft:is_river\")")
+                .comment("Examples: [\"minecraft:ocean\", \"minecraft:river\", \"#minecraft:is_beach\"]")
+                .defineListAllowEmpty(
+                        "cursedAltarBiomeBlacklist",
+                        List.of(
+                                "#minecraft:is_ocean",
+                                "#minecraft:is_river",
+                                "#minecraft:is_beach"
+                        ),
+                        object -> object instanceof String
+                );
+
+        CURSED_ALTAR_SURFACE_BIAS = BUILDER
+                .comment("Chance for a valid cursed altar candidate to use a surface position instead of an underground one.")
+                .comment("Higher values favor surface altars while still allowing underground spawns.")
+                .defineInRange("cursedAltarSurfaceBias", 0.92, 0.0, 1.0);
+
+        CURSED_ALTAR_WATER_CHECK_RADIUS = BUILDER
+                .comment("Horizontal radius used to reject altar placements near fluids such as water or lava.")
+                .comment("Set to 0 to disable the fluid proximity check.")
+                .defineInRange("cursedAltarWaterCheckRadius", 3, 0, 32);
 
         BUILDER.pop();
 
@@ -100,7 +128,7 @@ public class AncientCursesConfig {
                                 "minecraft:sugar",
                                 "minecraft:string"
                         ),
-                        o -> o instanceof String
+                        object -> object instanceof String
                 );
 
         BUILDER.pop();

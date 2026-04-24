@@ -1,6 +1,5 @@
 package net.turtleboi.ancientcurses.block.entity;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -10,36 +9,31 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.TicketType;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.items.ItemStackHandler;
+import net.turtleboi.ancientcurses.block.altar.GemUtil;
+import net.turtleboi.ancientcurses.block.altar.LifecycleUtil;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
-import net.turtleboi.ancientcurses.effect.ModEffects;
-import net.turtleboi.ancientcurses.item.ModItems;
-import net.turtleboi.ancientcurses.sound.ModSounds;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.rites.*;
 import net.turtleboi.ancientcurses.util.AltarSavedData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class CursedAltarBlockEntity extends BlockEntity {
     public int time;
@@ -53,36 +47,44 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public float oRot;
     public float tRot;
     private static final RandomSource RANDOM = RandomSource.create();
-    private final Map<UUID, Rite> playerRites = new HashMap<>();
+    private final Map<UUID, ActiveRiteSession> playerRites = new HashMap<>();
     private final Map<UUID, Long> playerCooldowns = new HashMap<>();
     private boolean isAnimating;
     private long animationStartTime;
-    private static final Map<Item, Item> gemUpgradeMap = new HashMap<>();
     private UUID occupantUuid;
     private boolean chunkLoaded;
+    private ItemStack pendingGemFusionResult = ItemStack.EMPTY;
+    private boolean resolvingPendingGemFusion;
     public static String CURSED_SPAWN = "cursed_spawn";
-
-    static {
-        gemUpgradeMap.put(ModItems.BROKEN_AMETHYST.get(), ModItems.POLISHED_AMETHYST.get());
-        gemUpgradeMap.put(ModItems.POLISHED_AMETHYST.get(), ModItems.PERFECT_AMETHYST.get());
-        gemUpgradeMap.put(ModItems.BROKEN_DIAMOND.get(), ModItems.POLISHED_DIAMOND.get());
-        gemUpgradeMap.put(ModItems.POLISHED_DIAMOND.get(), ModItems.PERFECT_DIAMOND.get());
-        gemUpgradeMap.put(ModItems.BROKEN_EMERALD.get(), ModItems.POLISHED_EMERALD.get());
-        gemUpgradeMap.put(ModItems.POLISHED_EMERALD.get(), ModItems.PERFECT_EMERALD.get());
-        gemUpgradeMap.put(ModItems.BROKEN_RUBY.get(), ModItems.POLISHED_RUBY.get());
-        gemUpgradeMap.put(ModItems.POLISHED_RUBY.get(), ModItems.PERFECT_RUBY.get());
-        gemUpgradeMap.put(ModItems.BROKEN_SAPPHIRE.get(), ModItems.POLISHED_SAPPHIRE.get());
-        gemUpgradeMap.put(ModItems.POLISHED_SAPPHIRE.get(), ModItems.PERFECT_SAPPHIRE.get());
-        gemUpgradeMap.put(ModItems.BROKEN_TOPAZ.get(), ModItems.POLISHED_TOPAZ.get());
-        gemUpgradeMap.put(ModItems.POLISHED_TOPAZ.get(), ModItems.PERFECT_TOPAZ.get());
-    }
-
 
     public final ItemStackHandler itemStackHandler = new ItemStackHandler(3){
         @Override
         protected void onContentsChanged(int slot){
             setChanged();
             if(level != null && !level.isClientSide){
+                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+            }
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return 1;
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            if (stack.getCount() > 1) {
+                stack.setCount(1);
+            }
+            return super.insertItem(slot, stack, simulate);
+        }
+    };
+
+    public final ItemStackHandler ritualStackHandler = new ItemStackHandler(9) {
+        @Override
+        protected void onContentsChanged(int slot) {
+            setChanged();
+            if (level != null && !level.isClientSide) {
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
             }
         }
@@ -174,6 +176,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public void stopAnimation() {
         this.isAnimating = false;
+        this.animationStartTime = 0;
         setChanged();
         if (level != null){
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
@@ -182,6 +185,83 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public boolean isAnimating() {
         return isAnimating;
+    }
+
+    public boolean hasPendingGemFusion() {
+        return !pendingGemFusionResult.isEmpty();
+    }
+
+    public boolean isResolvingPendingGemFusion() {
+        return resolvingPendingGemFusion;
+    }
+
+    public ItemStack getPendingGemFusionResult() {
+        return pendingGemFusionResult;
+    }
+
+    public void setPendingGemFusionResult(ItemStack stack) {
+        this.pendingGemFusionResult = stack.copy();
+        this.resolvingPendingGemFusion = false;
+        setChanged();
+        if (level != null) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
+    }
+
+    public void startPendingGemFusionResolution() {
+        if (!hasPendingGemFusion()) {
+            return;
+        }
+
+        this.resolvingPendingGemFusion = true;
+        startAnimation();
+    }
+
+    public void clearPendingGemFusion() {
+        this.pendingGemFusionResult = ItemStack.EMPTY;
+        this.resolvingPendingGemFusion = false;
+        stopAnimation();
+    }
+
+    public void finishPendingGemFusion() {
+        ItemStack fusedGem = pendingGemFusionResult.copy();
+        for (int slot = 0; slot < itemStackHandler.getSlots(); slot++) {
+            setGemInSlot(slot, ItemStack.EMPTY);
+        }
+        setRitualItemInSlot(0, fusedGem);
+        spawnFusionParticles();
+        clearPendingGemFusion();
+    }
+
+    private void spawnFusionParticles() {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        double centerX = worldPosition.getX() + 0.5D;
+        double centerY = worldPosition.getY() + 1.25D;
+        double centerZ = worldPosition.getZ() + 0.5D;
+        serverLevel.sendParticles(
+                ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
+                centerX,
+                centerY,
+                centerZ,
+                64,
+                0.18D,
+                0.12D,
+                0.18D,
+                0.03D
+        );
+        serverLevel.playSound(
+                null,
+                centerX,
+                centerY,
+                centerZ,
+                SoundEvents.GHAST_SHOOT,
+                SoundSource.BLOCKS,
+                1.0f,
+                0.5f
+        );
     }
 
     public void setAnimationStartTime (Long startTime) {
@@ -198,6 +278,26 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public void setGemInSlot(int slot, ItemStack stack) {
         itemStackHandler.setStackInSlot(slot, stack);
+    }
+
+    public ItemStack getRitualItemInSlot(int slot) {
+        return ritualStackHandler.getStackInSlot(slot);
+    }
+
+    public void setRitualItemInSlot(int slot, ItemStack stack) {
+        ritualStackHandler.setStackInSlot(slot, stack);
+    }
+
+    public UUID getOccupantUuid() {
+        return occupantUuid;
+    }
+
+    public void setOccupantUuid(UUID occupantUuid) {
+        this.occupantUuid = occupantUuid;
+    }
+
+    public void setChunkLoaded(boolean chunkLoaded) {
+        this.chunkLoaded = chunkLoaded;
     }
 
     public boolean canPlayerUse(Player player) {
@@ -228,9 +328,10 @@ public class CursedAltarBlockEntity extends BlockEntity {
         return true;
     }
 
-    public void cursePlayer(Player player, MobEffect curse, int curseAmplifier) {
-        forceDimensionActive();
+    public void cursePlayer(Player player, ModRites.CurseRiteEntry curseEntry, int curseAmplifier) {
+        LifecycleUtil.forceDimensionActive(this);
 
+        MobEffect curse = curseEntry.curse();
         BlockPos altarPos = this.getBlockPos();
         UUID playerUUID = player.getUUID();
         Random random = new Random();
@@ -241,7 +342,10 @@ public class CursedAltarBlockEntity extends BlockEntity {
         int calculatedDuration = randomMultiple * 20;
         int curseDuration = calculatedDuration * (curseAmplifier + 1);
 
-        Rite rite = createRiteForCurse(player, curse, curseDuration, curseAmplifier);
+        Rite rite = ModRites.createRite(curseEntry.riteId(), player, curse, curseAmplifier, curseDuration, this);
+        if (rite == null) {
+            throw new IllegalStateException("No rite registered for curse " + curse + " in rite id " + curseEntry.riteId());
+        }
         addPlayerRite(playerUUID, rite);
 
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
@@ -251,14 +355,13 @@ public class CursedAltarBlockEntity extends BlockEntity {
             //System.out.println("Setting altar dimension to: " + this.getLevel().dimension());
             riteData.setAltarDimension(Objects.requireNonNull(this.getLevel()).dimension());
 
-            String riteType = rite.getType();
-            RiteRecord riteRecord = new RiteRecord(altarPos, riteType, false, false);
+            RiteRecord riteRecord = new RiteRecord(altarPos, rite.getId(), false, false);
             riteData.addOrUpdateRiteRecord(riteRecord);
         });
 
-        player.addEffect(new MobEffectInstance(curse, rite instanceof EmbersRite ? curseDuration : MobEffectInstance.INFINITE_DURATION, curseAmplifier, false, false, true));
+        player.addEffect(new MobEffectInstance(curse, rite.getCurseEffectDurationTicks(curseDuration), curseAmplifier, false, false, true));
 
-        rite.trackProgress(player);
+        rite.syncToClient(player);
     }
 
     public boolean hasPlayerCompletedRite(Player player) {
@@ -269,8 +372,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     private boolean anyActiveRitesRemaining() {
-        for (Rite rite : playerRites.values()) {
-            if (!rite.isCompleted()) {
+        for (ActiveRiteSession session : playerRites.values()) {
+            if (!session.getRite().isCompleted()) {
                 return true;
             }
         }
@@ -280,7 +383,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public void setPlayerRiteCompleted(Player player) {
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
             UUID playerUUID = player.getUUID();
-            Rite rite = playerRites.get(playerUUID);
+            Rite rite = getPlayerRite(playerUUID);
             if (rite != null) {
                 BlockPos altarPos = this.getBlockPos();
                 riteData.setRiteCompleted(altarPos);
@@ -311,11 +414,12 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     public Rite getPlayerRite(UUID playerUUID) {
-        return playerRites.get(playerUUID);
+        ActiveRiteSession session = playerRites.get(playerUUID);
+        return session != null ? session.getRite() : null;
     }
 
     public void addPlayerRite(UUID playerUUID, Rite rite) {
-        playerRites.put(playerUUID, rite);
+        playerRites.put(playerUUID, new ActiveRiteSession(playerUUID, rite));
     }
 
     public void removePlayerRite(UUID playerUUID) {
@@ -324,7 +428,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public void removePlayerFromRite(Player player) {
         UUID playerUUID = player.getUUID();
-        Rite rite = playerRites.get(playerUUID);
+        Rite rite = getPlayerRite(playerUUID);
         if (rite != null) {
             if (!rite.isRiteCompleted(player)) {
                 removePlayerRite(playerUUID);
@@ -336,177 +440,25 @@ public class CursedAltarBlockEntity extends BlockEntity {
         }
     }
 
-    public static MobEffect getRandomCurse() {
-        List<MobEffect> curses = Arrays.asList(
-                ModEffects.CURSE_OF_SLOTH.get(),
-                ModEffects.CURSE_OF_WRATH.get(),
-                ModEffects.CURSE_OF_OBESSSION.get(),
-                ModEffects.CURSE_OF_SHADOWS.get(),
-                ModEffects.CURSE_OF_GLUTTONY.get(),
-                ModEffects.CURSE_OF_ENDING.get(),
-                ModEffects.CURSE_OF_ENVY.get(),
-                ModEffects.CURSE_OF_FRAILTY.get(),
-                ModEffects.CURSE_OF_PESTILENCE.get(),
-                ModEffects.CURSE_OF_PRIDE.get(),
-                ModEffects.CURSE_OF_NATURE.get(),
-                ModEffects.CURSE_OF_AVARICE.get()
-        );
-        return curses.get(new Random().nextInt(curses.size()));
-    }
-
-    public static int getRandomAmplifier(Player player) {
-        int ritesCompleted = player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA)
-                .map(PlayerRiteDataCapability::getPlayerRitesCompleted)
-                .orElse(0);
-
-        List<Integer> weightedAmplifiers = getWeightedAmplifier(ritesCompleted);
-
-        if (weightedAmplifiers.isEmpty()) {
-            System.out.println(
-                    Component.literal("No amplifiers available at this time.")
-                            .withStyle(ChatFormatting.RED)
-            );
-            return 0;
-        }
-
-        int count0 = 0;
-        int count1 = 0;
-        int count2 = 0;
-        for (int amplifier : weightedAmplifiers) {
-            switch (amplifier) {
-                case 0 -> count0++;
-                case 1 -> count1++;
-                case 2 -> count2++;
-                default -> {}
-            }
-        }
-
-        int total = weightedAmplifiers.size();
-        double chance0 = count0 * 100.0 / total;
-        double chance1 = count1 * 100.0 / total;
-        double chance2 = count2 * 100.0 / total;
-
-        Component message = Component.literal("Rites Completed: ")
-                .append(Component.literal(String.valueOf(ritesCompleted)).withStyle(ChatFormatting.GREEN))
-                .append(Component.literal("\nAmplifier Chances:\n"))
-                .append(Component.literal("• Amplifier 0: ").withStyle(ChatFormatting.YELLOW))
-                .append(Component.literal(String.format("%.2f%%", chance0)).withStyle(ChatFormatting.GOLD))
-                .append(Component.literal("\n• Amplifier 1: ").withStyle(ChatFormatting.YELLOW))
-                .append(Component.literal(String.format("%.2f%%", chance1)).withStyle(ChatFormatting.GOLD))
-                .append(Component.literal("\n• Amplifier 2: ").withStyle(ChatFormatting.YELLOW))
-                .append(Component.literal(String.format("%.2f%%", chance2)).withStyle(ChatFormatting.GOLD));
-
-        //System.out.println(message);
-        return weightedAmplifiers.get(ThreadLocalRandom.current().nextInt(weightedAmplifiers.size()));
-    }
-
-    private static @NotNull List<Integer> getWeightedAmplifier(int ritesCompleted) {
-        int thresholdTier2 = AncientCursesConfig.CURSED_TRIAL_TIER2_THRESHOLD.get();
-        int thresholdTier3 = AncientCursesConfig.CURSED_TRIAL_TIER3_THRESHOLD.get();
-        int maxRites = AncientCursesConfig.CURSED_TRIAL_MAX.get();
-
-        double weight0, weight1, weight2;
-
-        if (ritesCompleted < thresholdTier2) {
-            weight0 = AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get();
-            weight1 = 0;
-            weight2 = 0;
-        } else if (ritesCompleted < thresholdTier3) {
-            double factor = (ritesCompleted - thresholdTier2) / (double)(thresholdTier3 - thresholdTier2);
-            weight0 = AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get() * (1.0 - factor);
-            weight1 = AncientCursesConfig.CURSED_TRIAL_TIER2_CHANCE.get() * factor;
-            weight2 = 0;
-        } else if (ritesCompleted < maxRites) {
-            double factor = (ritesCompleted - thresholdTier3) / (double)(maxRites - thresholdTier3);
-            weight0 = AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get() * (1.0 - factor);
-            weight1 = AncientCursesConfig.CURSED_TRIAL_TIER2_CHANCE.get() * (1.0 - factor);
-            weight2 = AncientCursesConfig.CURSED_TRIAL_TIER3_CHANCE.get() * factor;
-        } else {
-            weight0 = 0;
-            weight1 = 0;
-            weight2 = 1;
-        }
-
-        List<Integer> weightedAmplifiers = new ArrayList<>();
-        for (int i = 0; i < (int)Math.round(weight0); i++) {
-            weightedAmplifiers.add(0);
-        }
-        for (int i = 0; i < (int)Math.round(weight1); i++) {
-            weightedAmplifiers.add(1);
-        }
-        for (int i = 0; i < (int)Math.round(weight2); i++) {
-            weightedAmplifiers.add(2);
-        }
-
-        if (weightedAmplifiers.isEmpty()) {
-            weightedAmplifiers.add(0);
-        }
-        return weightedAmplifiers;
-    }
-
-    public Rite createRiteForCurse(Player player, MobEffect curseType, int curseDuration, int curseAmplifier) {
-        if (curseType == ModEffects.CURSE_OF_AVARICE.get()) {
-            return new FamineRite(player, curseType, curseAmplifier, this);
-        } else if (curseType == ModEffects.CURSE_OF_ENDING.get()) {
-            return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
-        } else if (curseType == ModEffects.CURSE_OF_ENVY.get()) {
-            return new CarnageRite(player, curseType, curseAmplifier, this);
-        } else if (curseType == ModEffects.CURSE_OF_FRAILTY.get()) {
-            return new CarnageRite(player, curseType, curseAmplifier, this);
-        } else if (curseType == ModEffects.CURSE_OF_GLUTTONY.get()) {
-            return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
-        } else if (curseType == ModEffects.CURSE_OF_NATURE.get()) {
-            return new FamineRite(player, curseType, curseAmplifier, this);
-        } else if (curseType == ModEffects.CURSE_OF_OBESSSION.get()) {
-            return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
-        } else if (curseType == ModEffects.CURSE_OF_PESTILENCE.get()) {
-            return new EmbersRite(player, curseType, curseAmplifier, curseDuration, this);
-        } else if (curseType == ModEffects.CURSE_OF_PRIDE.get()) {
-            return new CarnageRite(player, curseType, curseAmplifier, this);
-        } else if (curseType == ModEffects.CURSE_OF_SHADOWS.get()) {
-            return new FamineRite(player, curseType, curseAmplifier, this);
-        } else if (curseType == ModEffects.CURSE_OF_SLOTH.get()) {
-            return new FamineRite(player, curseType, curseAmplifier, this);
-        } else if (curseType == ModEffects.CURSE_OF_WRATH.get()) {
-          return new CarnageRite(player, curseType, curseAmplifier, this);
-        }
-        return null;
-    }
-
     public void performGemUpgrade() {
         ItemStack gem1 = getGemInSlot(0);
         ItemStack gem2 = getGemInSlot(1);
         ItemStack gem3 = getGemInSlot(2);
-        if (!gem1.isEmpty() && gem1.is(gem2.getItem()) && gem1.is(gem3.getItem())) {
-            ItemStack upgradedGem = getUpgradedGem(gem1);
-            if (upgradedGem != null) {
-                setGemInSlot(0, ItemStack.EMPTY);
-                setGemInSlot(1, ItemStack.EMPTY);
-                setGemInSlot(2, ItemStack.EMPTY);
-                setGemInSlot(0, upgradedGem);
-                setChanged();
-                if (level != null){
-                    level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-                    level.playSound(
-                            null,
-                            worldPosition,
-                            ModSounds.GEM_PLACE.get(),
-                            SoundSource.BLOCKS,
-                            1.0F + 0.07f,
-                            0.9F + 0.1f + (float) level.getRandom().
-                                    nextIntBetweenInclusive(0, 3) / 100
-                    );
-                }
+        if (GemUtil.canUpgrade(gem1, gem2, gem3)) {
+            ItemStack upgradedGem = GemUtil.getUpgradedGem(gem1);
+            if (upgradedGem.isEmpty()) {
+                return;
             }
-        }
-    }
 
-    public ItemStack getUpgradedGem(ItemStack gem) {
-        Item upgradedItem = gemUpgradeMap.get(gem.getItem());
-        if (upgradedItem != null) {
-            return new ItemStack(upgradedItem);
-        } else {
-            return null;
+            setGemInSlot(0, ItemStack.EMPTY);
+            setGemInSlot(1, ItemStack.EMPTY);
+            setGemInSlot(2, ItemStack.EMPTY);
+            setGemInSlot(0, upgradedGem);
+            setChanged();
+            if (level != null) {
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+                GemUtil.playGemPlaceSound(level, worldPosition, 1);
+            }
         }
     }
 
@@ -515,18 +467,24 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     public void serverTick() {
-        if (isAnimating) {
+        if (isAnimating && !hasPendingGemFusion()) {
             long currentTime = System.currentTimeMillis();
             long animationDuration = 7600;
             if (currentTime - getAnimationStartTime() >= animationDuration) {
                 performGemUpgrade();
                 stopAnimation();
             }
+        } else if (isAnimating && hasPendingGemFusion() && resolvingPendingGemFusion) {
+            long currentTime = System.currentTimeMillis();
+            long animationDuration = 2400;
+            if (currentTime - getAnimationStartTime() >= animationDuration) {
+                finishPendingGemFusion();
+            }
         }
 
         if (!anyActiveRitesRemaining()) {
             if (this.level instanceof ServerLevel serverLevel) {
-                if (hasOccupantEntity(serverLevel)){
+                if (LifecycleUtil.hasOccupantEntity(serverLevel, occupantUuid)){
                     Entity occupant = serverLevel.getEntity(occupantUuid);
                     occupant.remove(Entity.RemovalReason.DISCARDED);
                 }
@@ -534,91 +492,24 @@ public class CursedAltarBlockEntity extends BlockEntity {
         }
     }
 
-    public static final TicketType<ChunkPos> CURSED_ALTAR_TICKET = TicketType.create("cursed_altar_ticket", Comparator.comparingLong(ChunkPos::toLong),33);
-
     public boolean isChunkLoaded() {
         return chunkLoaded;
     }
 
     public void forceLoadChunk() {
-        if (!(this.level instanceof ServerLevel serverLevel)) return;
-        ChunkPos chunkPos = new ChunkPos(this.worldPosition);
-        int ticketDistance = 1;
-        serverLevel.getChunkSource().addRegionTicket(
-                CURSED_ALTAR_TICKET,
-                chunkPos,
-                ticketDistance,
-                chunkPos
-        );
-        this.chunkLoaded = true;
-        setChanged();
+        LifecycleUtil.forceLoadChunk(this);
     }
 
     public void releaseChunkLoad() {
-        if (!(this.level instanceof ServerLevel serverLevel)) return;
-        ChunkPos chunkPos = new ChunkPos(this.worldPosition);
-        int ticketDistance = 1;
-        serverLevel.getChunkSource().removeRegionTicket(
-                CURSED_ALTAR_TICKET,
-                chunkPos,
-                ticketDistance,
-                chunkPos
-        );
-        this.chunkLoaded = false;
-        setChanged();
+        LifecycleUtil.releaseChunkLoad(this);
     }
 
-    private static final EntityType<ArmorStand> OCCUPANT_TYPE = EntityType.ARMOR_STAND;
-
     public void forceDimensionActive() {
-        if (!(this.level instanceof ServerLevel serverLevel)) return;
-        forceLoadChunk();
-        if (!hasOccupantEntity(serverLevel)) {
-            ArmorStand occupant = OCCUPANT_TYPE.create(serverLevel);
-            if (occupant != null) {
-                occupant.setPos(this.worldPosition.getX() + 0.5, this.worldPosition.getY() - 2, this.worldPosition.getZ() + 0.5);
-                occupant.setInvulnerable(true);
-                occupant.setInvisible(true);
-                occupant.setCustomName(Component.literal("Cursed Altar Occupant"));
-                occupant.setCustomNameVisible(false);
-                occupant.setNoGravity(true);
-                serverLevel.addFreshEntity(occupant);
-                occupantUuid = occupant.getUUID();
-            }
-        }
+        LifecycleUtil.forceDimensionActive(this);
     }
 
     public void releaseDimensionActive() {
-        if (!(this.level instanceof ServerLevel serverLevel)) return;
-        if (occupantUuid != null) {
-            Entity occupantEntity = serverLevel.getEntity(occupantUuid);
-            if (occupantEntity != null) {
-                occupantEntity.remove(Entity.RemovalReason.DISCARDED);
-            }
-            occupantUuid = null;
-        }
-        releaseChunkLoad();
-    }
-
-    private boolean hasOccupantEntity(ServerLevel serverLevel) {
-        if (occupantUuid != null) {
-            Entity occupantEntity = serverLevel.getEntity(occupantUuid);
-            return occupantEntity != null;
-        }
-        return false;
-    }
-
-    private Rite reconstructRiteFromNBT(String riteType, CompoundTag riteData) {
-        if (riteType.equals(Rite.embersRite)) {
-            EmbersRite rite = new EmbersRite(this);
-            rite.loadFromNBT(riteData);
-            return rite;
-        } else if (riteType.equals(Rite.carnageRite)) {
-            CarnageRite rite = new CarnageRite(this);
-            rite.loadFromNBT(riteData);
-            return rite;
-        }
-        return null;
+        LifecycleUtil.releaseDimensionActive(this);
     }
 
     @Override
@@ -627,6 +518,11 @@ public class CursedAltarBlockEntity extends BlockEntity {
         tag.putBoolean("IsAnimating", this.isAnimating);
         tag.putLong("AnimationStartTime", this.animationStartTime);
         tag.put("gems", itemStackHandler.serializeNBT());
+        tag.put("ritual_items", ritualStackHandler.serializeNBT());
+        if (!this.pendingGemFusionResult.isEmpty()) {
+            tag.put("PendingGemFusionResult", this.pendingGemFusionResult.save(new CompoundTag()));
+        }
+        tag.putBoolean("ResolvingPendingGemFusion", this.resolvingPendingGemFusion);
 
         tag.putBoolean("ChunkLoaded", this.chunkLoaded);
         if (this.occupantUuid != null) {
@@ -634,19 +530,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
         }
 
         ListTag activeRitesList = new ListTag();
-        for (Map.Entry<UUID, Rite> entry : playerRites.entrySet()) {
-            UUID playerUUID = entry.getKey();
-            Rite rite = entry.getValue();
-
-            CompoundTag playerTag = new CompoundTag();
-            playerTag.putUUID("PlayerUUID", playerUUID);
-            playerTag.putString("RiteType", rite.getType());
-
-            CompoundTag riteData = new CompoundTag();
-            rite.saveToNBT(riteData);
-            playerTag.put("RiteData", riteData);
-
-            activeRitesList.add(playerTag);
+        for (ActiveRiteSession session : playerRites.values()) {
+            activeRitesList.add(session.save());
         }
         tag.put("ActiveRites", activeRitesList);
     }
@@ -659,6 +544,15 @@ public class CursedAltarBlockEntity extends BlockEntity {
         if (tag.contains("gems")) {
             itemStackHandler.deserializeNBT(tag.getCompound("gems"));
         }
+        if (tag.contains("ritual_items")) {
+            ritualStackHandler.deserializeNBT(tag.getCompound("ritual_items"));
+        }
+        if (tag.contains("PendingGemFusionResult")) {
+            this.pendingGemFusionResult = ItemStack.of(tag.getCompound("PendingGemFusionResult"));
+        } else {
+            this.pendingGemFusionResult = ItemStack.EMPTY;
+        }
+        this.resolvingPendingGemFusion = tag.getBoolean("ResolvingPendingGemFusion");
 
         this.chunkLoaded = tag.getBoolean("ChunkLoaded");
         if (tag.hasUUID("OccupantUUID")) {
@@ -671,14 +565,9 @@ public class CursedAltarBlockEntity extends BlockEntity {
         playerRites.clear();
         for (int i = 0; i < activeRitesList.size(); i++) {
             CompoundTag playerTag = activeRitesList.getCompound(i);
-            UUID playerUUID = playerTag.getUUID("PlayerUUID");
-            String riteType = playerTag.getString("RiteType");
-            CompoundTag riteData = playerTag.getCompound("RiteData");
-
-            Rite rite = reconstructRiteFromNBT(riteType, riteData);
-            if (rite != null) {
-                rite.setAltar(this);
-                playerRites.put(playerUUID, rite);
+            ActiveRiteSession session = ActiveRiteSession.load(playerTag, this);
+            if (session != null) {
+                playerRites.put(session.getPlayerUuid(), session);
             }
         }
     }

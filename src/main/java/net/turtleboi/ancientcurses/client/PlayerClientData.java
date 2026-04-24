@@ -1,23 +1,16 @@
 package net.turtleboi.ancientcurses.client;
 
-import net.turtleboi.ancientcurses.rites.Rite;
+import net.turtleboi.ancientcurses.client.rites.ClientRiteState;
+import net.turtleboi.ancientcurses.client.rites.NoRiteState;
 
 public class PlayerClientData {
+    private static final int FIRST_BEACON_WARMUP_LEAD_TICKS = 10;
+
     public static boolean isObsessed = false;
     public static boolean isSingularity = false;
     public static int singularityTimer = 0;
     public static int totalSingularityType = 0;
-    public static String riteType = "None";
-    public static boolean riteComplete;
-    public static String eliminationTarget = "None";
-    public static int waveCount = 0;
-    public static int killsRemaining = 0;
-    public static int waveKillTotal = 0;
-    private static long durationElapsed = 0;
-    private static long durationTotal = 0;
-    public static String fetchItem = "";
-    public static int fetchItems = 0;
-    public static int fetchItemsRequired = 0;
+    private static ClientRiteState activeRiteState = NoRiteState.INSTANCE;
     private static float portalOverlayAlpha = 0;
 
     //Item utils
@@ -29,6 +22,8 @@ public class PlayerClientData {
     private static double itemHitDistance = 0;
     private static boolean itemUsed = false;
     public static long itemUsedTime = 0;
+    private static boolean dowsingRodUsed = false;
+    private static long dowsingRodUsedTime = 0;
 
     public static boolean isObsessed() {
         return isObsessed;
@@ -63,124 +58,27 @@ public class PlayerClientData {
     }
 
     public static boolean hasRite() {
-        if (riteType == null) {
-            return false;
-        }
-        return !riteType.equals("None");
+        return !(activeRiteState instanceof NoRiteState);
     }
 
-    public static String getRiteType(){
-        return riteType;
+    public static String getRiteId(){
+        return activeRiteState.getRiteId();
     }
 
-    public static void setRiteType(String riteString){
-        riteType = riteString;
+    public static ClientRiteState getActiveRiteState() {
+        return activeRiteState;
     }
 
-    public static String getEliminationTarget(){
-        return eliminationTarget;
-    }
-
-    public static void setEliminationTarget(String targetString){
-        eliminationTarget = targetString;
-    }
-
-    public static int getWaveCount(){
-        return waveCount;
-    }
-
-    public static void setWaveCount(int kills) {
-        waveCount = kills;
-    }
-
-    public static int getKillsRemaining(){
-        return killsRemaining;
-    }
-
-    public static void setKillsRemaining(int killsRemaining) {
-        PlayerClientData.killsRemaining = killsRemaining;
-    }
-
-    public static int getWaveKillTotal(){
-        return waveKillTotal;
-    }
-
-    public static void setWaveKillTotal(int waveKillTotal) {
-        PlayerClientData.waveKillTotal = waveKillTotal;
-    }
-
-    public static long getDurationElapsed(){
-        return durationElapsed;
-    }
-
-    public static void setDurationElapsed(long durationElapsed) {
-        PlayerClientData.durationElapsed = durationElapsed;
-    }
-
-    public static long getDurationTotal(){
-        return durationTotal;
-    }
-
-    public static void setDurationTotal(long durationTotal) {
-        PlayerClientData.durationTotal = durationTotal;
-    }
-
-    public static String getFetchItem(){
-        return fetchItem;
-    }
-
-    public static void setFetchItem(String item) {
-        fetchItem = item;
-    }
-
-    public static int getFetchItems(){
-        return fetchItems;
-    }
-
-    public static void setFetchItems(int items) {
-        fetchItems = items;
-    }
-
-    public static int getFetchItemsRequired(){
-        return fetchItemsRequired;
-    }
-
-    public static void setFetchItemsRequired(int itemsRequired) {
-        fetchItemsRequired = itemsRequired;
+    public static void setActiveRiteState(ClientRiteState riteState){
+        activeRiteState = riteState == null ? NoRiteState.INSTANCE : riteState;
     }
 
     public static float getRiteProgress() {
-        String riteType = getRiteType();
-        if (riteType.equalsIgnoreCase(Rite.embersRite)) {
-            long elapsedTime = getDurationElapsed();
-            long totalDuration = getDurationTotal();
-            if (totalDuration == 0) return 0.0F;
-            return Math.min(1.0F, (float) elapsedTime / (float) totalDuration);
-        } else if (riteType.equalsIgnoreCase(Rite.carnageRite)) {
-            long remainingDelay = getDurationElapsed();
-            long totalDelay = getDurationTotal();
-            if (remainingDelay < totalDelay && remainingDelay != 0) {
-                return Math.min(1.0F, 1.0F - ((float) remainingDelay / (float) totalDelay));
-            } else {
-                int killsRemaining = getKillsRemaining();
-                int waveKillTotal = getWaveKillTotal();
-                return Math.min(1.0F, (float) killsRemaining / (float) waveKillTotal);
-            }
-        } else if (riteType.equalsIgnoreCase(Rite.famineRite)) {
-            int items = getFetchItems();
-            int requiredItems = getFetchItemsRequired();
-            if (requiredItems == 0) return 0.0F;
-            return Math.min(1.0F, (float) items / (float) requiredItems);
-        }
-        return 0.0F;
+        return activeRiteState.getProgress();
     }
 
     public static boolean isRiteComplete(){
-        return riteComplete;
-    }
-
-    public static void setRiteComplete(boolean complete) {
-        riteComplete = complete;
+        return activeRiteState.isComplete();
     }
 
     public static float getPortalOverlayAlpha(){
@@ -223,12 +121,51 @@ public class PlayerClientData {
         itemUsed = beingUsed;
     }
 
+    public static void startFirstBeaconUse(int maxDurationTicks) {
+        itemMaxDurationTicks = maxDurationTicks;
+        itemRemainingUseTime = Math.max(0, maxDurationTicks - FIRST_BEACON_WARMUP_LEAD_TICKS);
+        itemHitDistance = 0;
+        itemUsed = true;
+    }
+
+    public static void syncFirstBeaconUse(int maxDurationTicks, int remainingUseTime, double hitDistance, boolean beingUsed) {
+        itemMaxDurationTicks = maxDurationTicks;
+        if (beingUsed && itemUsed) {
+            int currentElapsed = itemMaxDurationTicks - itemRemainingUseTime;
+            int serverElapsed = maxDurationTicks - remainingUseTime;
+            itemRemainingUseTime = serverElapsed < currentElapsed ? itemRemainingUseTime : remainingUseTime;
+        } else {
+            itemRemainingUseTime = remainingUseTime;
+        }
+
+        if (hitDistance != 0) {
+            itemHitDistance = hitDistance;
+        }
+        itemUsed = beingUsed;
+    }
+
     public static long getItemUsedTime() {
         return itemUsedTime;
     }
 
     public static void setItemUsedTime(long usedAt) {
         itemUsedTime = usedAt;
+    }
+
+    public static boolean getDowsingRodUsed() {
+        return dowsingRodUsed;
+    }
+
+    public static void setDowsingRodUsed(boolean beingUsed) {
+        dowsingRodUsed = beingUsed;
+    }
+
+    public static long getDowsingRodUsedTime() {
+        return dowsingRodUsedTime;
+    }
+
+    public static void setDowsingRodUsedTime(long usedAt) {
+        dowsingRodUsedTime = usedAt;
     }
 
     public static double getAltarX() {

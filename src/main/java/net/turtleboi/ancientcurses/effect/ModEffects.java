@@ -9,9 +9,16 @@ import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.effect.effects.*;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
 public class ModEffects {
     public static final DeferredRegister<MobEffect> MOB_EFFECTS =
             DeferredRegister.create(ForgeRegistries.MOB_EFFECTS, AncientCurses.MOD_ID);
+
+    private static final List<MobEffect> CURSE_EFFECTS = new ArrayList<>();
 
     public static final RegistryObject<MobEffect> CURSE_OF_SLOTH = MOB_EFFECTS.register("curse_of_sloth",
             () -> new CurseOfSlothEffect(MobEffectCategory.HARMFUL, 5592405));
@@ -69,5 +76,24 @@ public class ModEffects {
 
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
+    }
+
+    public static void registerCurseEffect(RegistryObject<MobEffect> curse) {
+        registerCurseEffect(curse.get());
+    }
+
+    public static void registerCurseEffect(MobEffect curse) {
+        Objects.requireNonNull(curse, "curse");
+        if (!CURSE_EFFECTS.contains(curse)) {
+            CURSE_EFFECTS.add(curse);
+        }
+    }
+
+    public static boolean isCurseEffect(MobEffect effect) {
+        return CURSE_EFFECTS.contains(effect);
+    }
+
+    public static List<MobEffect> getCurseEffects() {
+        return Collections.unmodifiableList(CURSE_EFFECTS);
     }
 }

@@ -31,6 +31,9 @@ public class ModBlocks {
     public static final RegistryObject<Block> LAPIDARIST_TABLE = registerBlock("lapidarist_table",
             () -> new LapidaristTableBlock(BlockBehaviour.Properties.copy(Blocks.CRAFTING_TABLE).noOcclusion()));
 
+    public static final RegistryObject<Block> SOUL_ROCK = registerBlock("soul_rock",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.BLACKSTONE)));
+
     public static final RegistryObject<Block> SCONCED_TORCH = BLOCKS.register("sconced_torch",
             () -> new SconcedTorchBlock(BlockBehaviour.Properties.copy(Blocks.TORCH), ParticleTypes.FLAME));
 

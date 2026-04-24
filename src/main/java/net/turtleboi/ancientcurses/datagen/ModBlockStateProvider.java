@@ -21,6 +21,9 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
         simpleBlockWithItem(ModBlocks.LAPIDARIST_TABLE.get(),
                 new ModelFile.UncheckedModelFile(modLoc("block/lapidarist_table")));
+
+        simpleBlockWithItem(ModBlocks.SOUL_ROCK.get(),
+                models().cubeAll(ModBlocks.SOUL_ROCK.getId().getPath(), modLoc("block/soul_rock")));
     }
 
     private void blockWithItem(RegistryObject<Block> blockRegistryObject) {

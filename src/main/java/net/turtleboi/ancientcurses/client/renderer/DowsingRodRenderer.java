@@ -31,11 +31,11 @@ public class DowsingRodRenderer {
         }
 
         float animationProgress = 1f;
-        if (PlayerClientData.getItemUsedTime() > 0) {
-            long elapsed = System.currentTimeMillis() - PlayerClientData.getItemUsedTime();
+        if (PlayerClientData.getDowsingRodUsedTime() > 0) {
+            long elapsed = System.currentTimeMillis() - PlayerClientData.getDowsingRodUsedTime();
             animationProgress = Mth.clamp((float)elapsed / 300, 0f, 1f);
             if (animationProgress >= 1f) {
-                PlayerClientData.setItemUsedTime(-1);
+                PlayerClientData.setDowsingRodUsedTime(-1);
             }
         }
 

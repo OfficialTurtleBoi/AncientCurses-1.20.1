@@ -2,13 +2,10 @@ package net.turtleboi.ancientcurses.rites;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -17,28 +14,27 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
-import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
-import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
-import net.turtleboi.ancientcurses.effect.CurseRegistry;
+import net.turtleboi.ancientcurses.client.rites.CarnageClientRiteState;
 import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
-import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
-import net.turtleboi.turtlecore.network.CoreNetworking;
-import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class CarnageRite implements Rite {
-    private UUID playerUUID;
-    private MobEffect effect;
+public class CarnageRite extends AbstractRite {
+    private static final String AMPLIFIER_KEY = "Amplifier";
+    private static final String CURRENT_WAVE_KEY = "CurrentWave";
+    private static final String WAVE_DELAY_KEY = "WaveDelay";
+    private static final String WAVE_KILL_TOTAL_KEY = "WaveKillTotal";
+    private static final String ELIMINATION_TARGET_KEY = "EliminationTarget";
+    private static final String ELIMINATION_TARGET_STRING_KEY = "EliminationTargetString";
+    private static final String COMPLETED_FIRST_KEY = "CompletedFirstDegree";
+    private static final String COMPLETED_SECOND_KEY = "CompletedSecondDegree";
+    private static final String COMPLETED_THIRD_KEY = "CompletedThirdDegree";
+
     private int amplifier;
-    private CursedAltarBlockEntity altar;
-    private boolean completed;
 
     private int currentWave;
     private int waveDelay;
@@ -60,10 +56,10 @@ public class CarnageRite implements Rite {
     public static final String eliminationRequirement = "EliminationRequirement";
 
     public CarnageRite(Player player, MobEffect effect, int amplifier, CursedAltarBlockEntity altar) {
+        super(altar);
         this.playerUUID = player.getUUID();
         this.effect = effect;
         this.amplifier = amplifier + 1;
-        this.altar = altar;
         this.eliminationTarget = selectRandomTargetMob();
         this.currentWave = 0;
         this.waveDelay = 200;
@@ -75,19 +71,10 @@ public class CarnageRite implements Rite {
         }
 
         this.completed = false;
-        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
-            riteData.setCurseEffect(effect);
-            riteData.setActiveRite(this);
-            if (riteData.getCurrentWave() == 0) {
-                riteData.setCurrentWave(0);
-            }
-            this.currentWave = riteData.getCurrentWave();
-        });
     }
 
     public CarnageRite(CursedAltarBlockEntity altar) {
-        this.altar = altar;
-        this.completed = false;
+        super(altar);
     }
 
     public boolean isRiteActive() {
@@ -96,48 +83,45 @@ public class CarnageRite implements Rite {
 
     @Override
     public void saveToNBT(CompoundTag tag) {
-        tag.putUUID("PlayerUUID", playerUUID);
-        tag.putString("Effect", Objects.requireNonNull(ForgeRegistries.MOB_EFFECTS.getKey(effect)).toString());
-        tag.putString("EliminationTarget", Objects.requireNonNull(ForgeRegistries.ENTITY_TYPES.getKey(eliminationTarget)).toString());
-        tag.putString("EliminationTargetString", eliminationTargetString != null ? eliminationTargetString : "");
-        tag.putBoolean("Completed", completed);
+        saveBaseData(tag);
+        tag.putInt(AMPLIFIER_KEY, amplifier);
+        tag.putInt(CURRENT_WAVE_KEY, currentWave);
+        tag.putInt(WAVE_DELAY_KEY, waveDelay);
+        tag.putInt(WAVE_KILL_TOTAL_KEY, waveKillTotal);
+        if (eliminationTarget != null) {
+            tag.putString(ELIMINATION_TARGET_KEY, Objects.requireNonNull(ForgeRegistries.ENTITY_TYPES.getKey(eliminationTarget)).toString());
+        }
+        tag.putString(ELIMINATION_TARGET_STRING_KEY, eliminationTargetString != null ? eliminationTargetString : "");
+        tag.putBoolean(COMPLETED_FIRST_KEY, completedFirstDegree);
+        tag.putBoolean(COMPLETED_SECOND_KEY, completedSecondDegree);
+        tag.putBoolean(COMPLETED_THIRD_KEY, completedThirdDegree);
     }
 
     @Override
     public void loadFromNBT(CompoundTag tag) {
-        this.playerUUID = tag.getUUID("PlayerUUID");
-        String effectName = tag.getString("Effect");
-        this.effect = ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(effectName));
-        String targetName = tag.getString("EliminationTarget");
-        this.eliminationTarget = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(targetName));
-        if (tag.contains("EliminationTargetString")) {
-            this.eliminationTargetString = tag.getString("EliminationTargetString");
+        loadBaseData(tag);
+        this.amplifier = tag.getInt(AMPLIFIER_KEY);
+        this.currentWave = tag.getInt(CURRENT_WAVE_KEY);
+        this.waveDelay = tag.getInt(WAVE_DELAY_KEY);
+        this.waveKillTotal = tag.getInt(WAVE_KILL_TOTAL_KEY);
+        if (tag.contains(ELIMINATION_TARGET_KEY)) {
+            this.eliminationTarget = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(tag.getString(ELIMINATION_TARGET_KEY)));
+        }
+        if (tag.contains(ELIMINATION_TARGET_STRING_KEY)) {
+            this.eliminationTargetString = tag.getString(ELIMINATION_TARGET_STRING_KEY);
         } else if (this.eliminationTarget != null) {
             this.eliminationTargetString = this.eliminationTarget.getDescription().getString();
         } else {
             this.eliminationTargetString = "";
         }
-        this.completed = tag.getBoolean("Completed");
+        this.completedFirstDegree = tag.getBoolean(COMPLETED_FIRST_KEY);
+        this.completedSecondDegree = tag.getBoolean(COMPLETED_SECOND_KEY);
+        this.completedThirdDegree = tag.getBoolean(COMPLETED_THIRD_KEY);
     }
 
     @Override
-    public String getType() {
-        return Rite.carnageRite;
-    }
-
-    @Override
-    public void setAltar(CursedAltarBlockEntity altar) {
-        this.altar = altar;
-    }
-
-    @Override
-    public CursedAltarBlockEntity getAltar() {
-        return this.altar;
-    }
-
-    @Override
-    public MobEffect getEffect() {
-        return this.effect;
+    public ResourceLocation getId() {
+        return ModRites.CARNAGE;
     }
 
     public Player getPlayer() {
@@ -149,6 +133,9 @@ public class CarnageRite implements Rite {
 
     @Override
     public boolean isRiteCompleted(Player player) {
+        if (altar.hasPendingGemFusion()) {
+            return completedFirstDegree;
+        }
         return (completedThirdDegree && activeMobs.isEmpty());
     }
 
@@ -158,16 +145,12 @@ public class CarnageRite implements Rite {
             return;
         }
         if (entity.getType() == eliminationTarget) {
-            player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
-                int newKills = riteData.getCurrentWave() + 1;
-                riteData.setCurrentWave(newKills);
-                activeMobs.removeIf(mob -> mob == entity);
-            });
+            activeMobs.removeIf(mob -> mob == entity);
 
             if (isRiteCompleted(player)) {
                 concludeRite(player);
             } else {
-                trackProgress(player);
+                syncToClient(player);
             }
         }
     }
@@ -223,6 +206,10 @@ public class CarnageRite implements Rite {
                         waveDelay = 200;
                     }
                     completedFirstDegree = true;
+                    if (altar.hasPendingGemFusion()) {
+                        concludeRite(player);
+                        return;
+                    }
                     //System.out.println("[Elimination Rite] Wave " + currentWave + ": Done! First degree complete!");
                 }
             }
@@ -290,121 +277,51 @@ public class CarnageRite implements Rite {
     @Override
     public void trackProgress(Player player) {
         if (player != null) {
-            player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
-                BlockPos altarPos = riteData.getCurrentAltarPos();
-                ResourceKey<Level> altarDimension = riteData.getAltarDimension();
-                if (altarPos != null && altarDimension != null) {
-                    MinecraftServer server = player.getServer();
-                    if (server != null) {
-                        ServerLevel altarLevel = server.getLevel(altarDimension);
-                        if (altarLevel != null) {
-                            BlockEntity blockEntity = altarLevel.getBlockEntity(altarPos);
-                            if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
-                                CompoundTag altarNBT = new CompoundTag();
-                                altarEntity.saveAdditional(altarNBT);
-                                //System.out.println("Altar at " + altarPos + " in dimension "
-                                //        + altarDimension.location() + " reloaded rite data for player "
-                                //        + player.getName().getString());
-                            } else {
-                                //System.out.println("No altar found at " + altarPos + " in dimension "
-                                //        + altarDimension.location() + " for player " + player.getName().getString());
-                            }
-                        } else {
-                            //System.out.println("Could not get ServerLevel for dimension " + altarDimension.location());
-                        }
-                    } else {
-                        //System.out.println("Player server is null.");
-                    }
-                }
-            });
-
-            //System.out.println("Rite Type: " + Rite.eliminationRite);
-            //System.out.println("Rite Completed: " + isRiteCompleted(player));
-            //System.out.println("Elimination Target: " + eliminationTarget);
-            //System.out.println("Elimination Target String: " + eliminationTargetString);
-            //System.out.println("Current Wave: " + currentWave);
-            //System.out.println("Kills Remaining: " + activeMobs.size());
-            //System.out.println("Total kill required this wave: " + waveKillTotal);
-            //System.out.println("Time until next wave: " + waveDelay);
-            //System.out.println("Total wave delay: " + getDefaultWaveDelay());
-
-            ModNetworking.sendToPlayer(
-                    new SyncRiteDataS2C(
-                            Rite.carnageRite,
-                            isRiteCompleted(player),
-                            eliminationTargetString,
-                            currentWave,
-                            activeMobs.size(),
-                            waveKillTotal,
-                            waveDelay,
-                            200,
-                            "",
-                            0,
-                            0),
-                    (ServerPlayer) player);
-
+            syncToClient(player);
         }
     }
 
     @Override
     public void concludeRite(Player player) {
-        //player.displayClientMessage(Component.literal("You have completed the elimination rite! Collect your reward").withStyle(ChatFormatting.GREEN), true);
-        ModNetworking.sendToPlayer(
-                new SyncRiteDataS2C(
-                        Rite.carnageRite,
-                        isRiteCompleted(player),
-                        eliminationTargetString,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        "",
-                        0,
-                        0),
-                (ServerPlayer) player);
-
-        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearCurseEffect);
-
-        List<MobEffect> cursesToRemove = new ArrayList<>();
-        for (MobEffectInstance effectInstance : player.getActiveEffects()) {
-            MobEffect effect = effectInstance.getEffect();
-            if (CurseRegistry.getCurses().contains(effect)) {
-                cursesToRemove.add(effect);
-            }
-        }
-
-        for (MobEffect effect : cursesToRemove) {
-            player.removeEffect(effect);
-        }
-
-        CoreNetworking.sendToNear((new CameraShakeS2C(0.05F, 1000)), player);
-        if (player.level() instanceof ServerLevel serverLevel) {
-            serverLevel.playSound(
-                    null,
-                    player.getX(),
-                    player.getY() + 1,
-                    player.getZ(),
-                    SoundEvents.AMBIENT_SOUL_SAND_VALLEY_MOOD.get(),
-                    SoundSource.AMBIENT,
-                    1.0f,
-                    0.25f
-            );
-        }
-
-        CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(),  altar.getLevel(), altar);
-        altar.setPlayerRiteCompleted(player);
-        setCompleted(true);
+        finishRite(player, true, 0.05F);
     }
 
     @Override
-    public boolean isCompleted() {
-        return this.completed;
+    public int getCompletionDegree() {
+        if (completedThirdDegree) {
+            return 3;
+        }
+        if (completedSecondDegree) {
+            return 2;
+        }
+        if (completedFirstDegree) {
+            return 1;
+        }
+        return 0;
     }
 
     @Override
-    public void setCompleted(boolean completed) {
-        this.completed = completed;
+    public boolean canConcludeAtAltar() {
+        int completionDegree = getCompletionDegree();
+        return completionDegree >= 1 && completionDegree < 3;
+    }
+
+    @Override
+    public boolean shouldClearOnPlayerExit() {
+        return true;
+    }
+
+    @Override
+    protected SyncRiteDataS2C buildSyncPacket(Player player) {
+        return SyncRiteDataS2C.fromState(new CarnageClientRiteState(
+                isRiteCompleted(player),
+                eliminationTargetString,
+                currentWave,
+                activeMobs.size(),
+                waveKillTotal,
+                waveDelay,
+                200
+        ));
     }
 
     private EntityType<?> selectRandomTargetMob() {

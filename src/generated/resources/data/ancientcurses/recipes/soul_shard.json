@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "Q": {
+      "item": "ancientcurses:smoky_quartz"
+    },
+    "S": {
+      "item": "ancientcurses:soul_rock"
+    }
+  },
+  "pattern": [
+    " Q ",
+    "QSQ",
+    " Q "
+  ],
+  "result": {
+    "item": "ancientcurses:soul_shard"
+  },
+  "show_notification": true
+}

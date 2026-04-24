@@ -23,6 +23,7 @@ import net.turtleboi.ancientcurses.entity.client.model.CursedPortalModel;
 import net.turtleboi.ancientcurses.entity.client.renderer.CursedNodeRenderer;
 import net.turtleboi.ancientcurses.entity.client.renderer.CursedPortalRenderer;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.particle.custom.CursedFlameParticle;
 import net.turtleboi.ancientcurses.particle.custom.CursedParticle;
@@ -44,16 +45,8 @@ public class ModClientBusEvents {
                     CompoundTag tag = stack.getTag();
                     if (tag != null && tag.contains("MainGem")) {
                         ItemStack mainGemStack = ItemStack.of(tag.getCompound("MainGem"));
-                        if (!mainGemStack.isEmpty()) {
-                            if (mainGemStack.getItem() == ModItems.PERFECT_AMETHYST.get() || mainGemStack.getItem() == ModItems.POLISHED_AMETHYST.get()) return 1.0F;
-                            if (mainGemStack.getItem() == ModItems.PERFECT_DIAMOND.get() || mainGemStack.getItem() == ModItems.POLISHED_DIAMOND.get()) return 2.0F;
-                            if (mainGemStack.getItem() == ModItems.PERFECT_EMERALD.get() || mainGemStack.getItem() == ModItems.POLISHED_EMERALD.get()) return 3.0F;
-                            if (mainGemStack.getItem() == ModItems.PERFECT_RUBY.get() || mainGemStack.getItem() == ModItems.POLISHED_RUBY.get()) return 4.0F;
-                            if (mainGemStack.getItem() == ModItems.PERFECT_SAPPHIRE.get() || mainGemStack.getItem() == ModItems.POLISHED_SAPPHIRE.get()) return 5.0F;
-                            if (mainGemStack.getItem() == ModItems.PERFECT_TOPAZ.get() || mainGemStack.getItem() == ModItems.POLISHED_TOPAZ.get()) return 6.0F;
-                            if (mainGemStack.getItem() == ModItems.ANCIENT_ALEXANDRITE.get()) return 7.0F;
-                            if (mainGemStack.getItem() == ModItems.ANCIENT_BISMUTH.get()) return 8.0F;
-                            if (mainGemStack.getItem() == ModItems.ANCIENT_CHRYSOBERYL.get()) return 9.0F;
+                        if (mainGemStack.getItem() instanceof PreciousGemItem gemItem) {
+                            return gemItem.getGemType().getAmuletModelValue();
                         }
                     }
                     return 0.0F;

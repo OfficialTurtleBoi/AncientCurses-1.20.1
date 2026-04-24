@@ -40,6 +40,7 @@ public class CursedPortalEntity extends Entity {
     private static final EntityDataAccessor<Optional<UUID>> LINKED_PORTAL_UUID = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
     private static int portalLiveTime = 620;
+    private static final double minReturnDistanceSqr = 256.0D;
 
     private static final int teleportCooldown = 100;
     private Map<UUID, Integer> playerCooldowns = new HashMap<>();
@@ -395,6 +396,10 @@ public class CursedPortalEntity extends Entity {
     }
 
     public static CursedPortalEntity spawnPortalNearPlayer(Player player, BlockPos altarPos, Level level, Object owner) {
+        if (player.blockPosition().distSqr(altarPos) < minReturnDistanceSqr) {
+            return null;
+        }
+
         BlockPos portalPos = findRandomValidLocationNearPlayer(player, level);
 
         if (portalPos != null) {

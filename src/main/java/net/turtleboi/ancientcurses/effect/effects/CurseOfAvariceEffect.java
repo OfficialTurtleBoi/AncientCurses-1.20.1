@@ -13,9 +13,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
-import net.turtleboi.turtlecore.init.CoreAttributeModifiers;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
+import net.turtleboi.turtlecore.util.CoreAttributeModifiers;
 
 public class CurseOfAvariceEffect extends MobEffect {
     private static final ResourceLocation COGrhealthUpdateTag = new ResourceLocation("ancientcurses", "cogr_healthupdated");

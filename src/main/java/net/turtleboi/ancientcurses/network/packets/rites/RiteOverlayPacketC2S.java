@@ -25,20 +25,7 @@ public class RiteOverlayPacketC2S {
             if (player != null) {
                 player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
                     if (riteData.getCurrentAltarPos() == null) {
-                        ModNetworking.sendToPlayer(
-                                new SyncRiteDataS2C(
-                                        "None",
-                                        false,
-                                        "",
-                                        0,
-                                        0,
-                                        0,
-                                        0,
-                                        0,
-                                        "",
-                                        0,
-                                        0),
-                                player);
+                        ModNetworking.sendToPlayer(SyncRiteDataS2C.none(), player);
                     }
                 });
             }

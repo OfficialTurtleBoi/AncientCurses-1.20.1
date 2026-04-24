@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "ancientcurses:soul_rock"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "ancientcurses:blocks/soul_rock"
+}

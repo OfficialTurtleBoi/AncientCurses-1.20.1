@@ -13,9 +13,10 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
-import net.turtleboi.ancientcurses.effect.CurseRegistry;
+import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
+import net.turtleboi.ancientcurses.rites.RiteLocator;
 
 public class ClearCurseCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -29,26 +30,16 @@ public class ClearCurseCommand {
         CommandSourceStack source = context.getSource();
         ServerPlayer target = EntityArgument.getPlayer(context, "target");
 
+        var activeAltar = RiteLocator.findActiveAltar(target);
+        if (activeAltar != null) {
+            activeAltar.removePlayerFromRite(target);
+        }
         target.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearPlayerCurse);
-        ModNetworking.sendToPlayer(
-                new SyncRiteDataS2C(
-                        "None",
-                        false,
-                        "",
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        "",
-                        0,
-                        0),
-                target
-        );
+        ModNetworking.sendToPlayer(SyncRiteDataS2C.none(), target);
 
         for (MobEffectInstance effectInstance : target.getActiveEffects()) {
             MobEffect effect = effectInstance.getEffect();
-            if (CurseRegistry.getCurses().contains(effect)) {
+            if (ModEffects.isCurseEffect(effect)) {
                 target.removeEffect(effect);
             }
         }

@@ -25,6 +25,7 @@ public class ModBlockLootTables extends BlockLootSubProvider {
     protected void generate() {
         this.dropSelf(ModBlocks.CURSED_ALTAR.get());
         this.dropSelf(ModBlocks.LAPIDARIST_TABLE.get());
+        this.dropSelf(ModBlocks.SOUL_ROCK.get());
 
         this.add(ModBlocks.SCONCED_TORCH.get(),
                 block -> createSingleItemTable(ModItems.SCONCED_TORCH_ITEM.get()));

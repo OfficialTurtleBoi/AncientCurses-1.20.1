@@ -1,10 +1,12 @@
 package net.turtleboi.ancientcurses.util;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.turtleboi.ancientcurses.AncientCurses;
 
@@ -24,5 +26,11 @@ public class ModTags {
         private static TagKey<Item> tag(String name){
             return ItemTags.create(new ResourceLocation(AncientCurses.MOD_ID, name));
         }
+    }
+
+    public static final class Biomes {
+        public static final TagKey<Biome> HAS_CURSED_ALTAR =
+                TagKey.create(Registries.BIOME,
+                        new ResourceLocation(AncientCurses.MOD_ID, "has_structure/cursed_altar"));
     }
 }

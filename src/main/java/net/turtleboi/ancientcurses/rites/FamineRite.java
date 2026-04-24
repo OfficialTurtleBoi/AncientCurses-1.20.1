@@ -1,41 +1,40 @@
 package net.turtleboi.ancientcurses.rites;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
-import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
-import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
+import net.turtleboi.ancientcurses.client.rites.FamineClientRiteState;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
-import net.turtleboi.ancientcurses.effect.CurseRegistry;
-import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
-import net.turtleboi.turtlecore.network.CoreNetworking;
-import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class FamineRite implements Rite {
-    private UUID playerUUID;
-    private int collectedCount;
-    private CursedAltarBlockEntity altar;
-    private MobEffect effect;
+public class FamineRite extends AbstractRite {
+    private static final String CURRENT_DEGREE_KEY = "CurrentDegree";
+    private static final String AMPLIFIER_KEY = "Amplifier";
+    private static final String COMPLETED_FIRST_KEY = "CompletedFirst";
+    private static final String COMPLETED_SECOND_KEY = "CompletedSecond";
+    private static final String COMPLETED_THIRD_KEY = "CompletedThird";
 
-    private boolean completed;
-
+    private int amplifier;
     private int currentDegree = 0;
     public boolean completedFirstDegree;
     public boolean completedSecondDegree;
@@ -47,32 +46,24 @@ public class FamineRite implements Rite {
     private final List<String> degreeItemNames = new ArrayList<>();
 
     public FamineRite(Player player, MobEffect effect, int amplifier, CursedAltarBlockEntity altar) {
+        super(altar);
         this.playerUUID = player.getUUID();
-        this.altar = altar;
         this.effect = effect;
-        this.completed = false;
-        this.collectedCount = 0;
+        this.amplifier = amplifier + 1;
 
         for (int i = 0; i < 3; i++) {
             Item item = selectRandomItem();
             degreeItems.add(item);
-            degreeCounts.add(calculateRequiredCount(amplifier + 1));
+            degreeCounts.add(calculateRequiredCount(this.amplifier));
             degreeCollected.add(0);
             ItemStack stack = new ItemStack(item);
             Component itemNameComponent = stack.getDisplayName();
             degreeItemNames.add(itemNameComponent.getString());
         }
-
-        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
-            riteData.setCurseEffect(effect);
-            riteData.setActiveRite(this);
-            this.collectedCount = riteData.getFetchItems();
-        });
     }
 
     public FamineRite(CursedAltarBlockEntity altar) {
-        this.altar = altar;
-        this.completed = false;
+        super(altar);
     }
 
     private Item selectRandomItem() {
@@ -104,12 +95,12 @@ public class FamineRite implements Rite {
 
     @Override
     public void saveToNBT(CompoundTag tag) {
-        tag.putUUID("PlayerUUID", playerUUID);
-        tag.putInt("CurrentDegree", currentDegree);
-        tag.putBoolean("Completed", completed);
-        tag.putBoolean("CompletedFirst", completedFirstDegree);
-        tag.putBoolean("CompletedSecond", completedSecondDegree);
-        tag.putBoolean("CompletedThird", completedThirdDegree);
+        saveBaseData(tag);
+        tag.putInt(CURRENT_DEGREE_KEY, currentDegree);
+        tag.putInt(AMPLIFIER_KEY, amplifier);
+        tag.putBoolean(COMPLETED_FIRST_KEY, completedFirstDegree);
+        tag.putBoolean(COMPLETED_SECOND_KEY, completedSecondDegree);
+        tag.putBoolean(COMPLETED_THIRD_KEY, completedThirdDegree);
 
         for (int i = 0; i < degreeItems.size(); i++) {
             tag.putString("DegreeItem_" + i, ForgeRegistries.ITEMS.getKey(degreeItems.get(i)).toString());
@@ -117,21 +108,16 @@ public class FamineRite implements Rite {
             tag.putInt("DegreeCollected_" + i, degreeCollected.get(i));
             tag.putString("DegreeItemName_" + i, degreeItemNames.get(i));
         }
-
-        if (effect != null) {
-            tag.putString("CurseEffect", ForgeRegistries.MOB_EFFECTS.getKey(effect).toString());
-        }
     }
-
 
     @Override
     public void loadFromNBT(CompoundTag tag) {
-        this.playerUUID = tag.getUUID("PlayerUUID");
-        this.currentDegree = tag.getInt("CurrentDegree");
-        this.completed = tag.getBoolean("Completed");
-        this.completedFirstDegree = tag.getBoolean("CompletedFirst");
-        this.completedSecondDegree = tag.getBoolean("CompletedSecond");
-        this.completedThirdDegree = tag.getBoolean("CompletedThird");
+        loadBaseData(tag);
+        this.currentDegree = tag.getInt(CURRENT_DEGREE_KEY);
+        this.amplifier = tag.getInt(AMPLIFIER_KEY);
+        this.completedFirstDegree = tag.getBoolean(COMPLETED_FIRST_KEY);
+        this.completedSecondDegree = tag.getBoolean(COMPLETED_SECOND_KEY);
+        this.completedThirdDegree = tag.getBoolean(COMPLETED_THIRD_KEY);
 
         degreeItems.clear();
         degreeCounts.clear();
@@ -145,37 +131,11 @@ public class FamineRite implements Rite {
             degreeCollected.add(tag.getInt("DegreeCollected_" + i));
             degreeItemNames.add(tag.getString("DegreeItemName_" + i));
         }
-
-        if (tag.contains("CurseEffect")) {
-            ResourceLocation effectId = new ResourceLocation(tag.getString("CurseEffect"));
-            effect = ForgeRegistries.MOB_EFFECTS.getValue(effectId);
-        }
-    }
-
-
-    @Override
-    public String getType() {
-        return Rite.famineRite;
     }
 
     @Override
-    public void setAltar(CursedAltarBlockEntity altar) {
-        this.altar = altar;
-    }
-
-    @Override
-    public CursedAltarBlockEntity getAltar() {
-        return this.altar;
-    }
-
-    @Override
-    public boolean isCompleted() {
-        return false;
-    }
-
-    @Override
-    public MobEffect getEffect() {
-        return this.effect;
+    public ResourceLocation getId() {
+        return ModRites.FAMINE;
     }
 
     public Player getPlayer() {
@@ -187,103 +147,50 @@ public class FamineRite implements Rite {
 
     @Override
     public boolean isRiteCompleted(Player player) {
+        if (altar.hasPendingGemFusion()) {
+            return completed || completedFirstDegree;
+        }
         return completed || completedThirdDegree;
     }
 
     @Override
-    public void setCompleted(boolean completed) {
-        this.completed = completed;
+    public int getCompletionDegree() {
+        if (completedThirdDegree) {
+            return 3;
+        }
+        if (completedSecondDegree) {
+            return 2;
+        }
+        if (completedFirstDegree) {
+            return 1;
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean canConcludeAtAltar() {
+        int completionDegree = getCompletionDegree();
+        return completionDegree >= 1 && completionDegree < 3;
     }
 
     @Override
     public void onEntityKilled(Player player, Entity entity) {
-
     }
 
     @Override
     public void onPlayerTick(Player player) {
-
     }
 
     @Override
     public void trackProgress(Player player) {
         if (player != null) {
-            String currentItemName = getCurrentItemName();
-            int collected = getCollectedCount();
-            int required = getRequiredCount();
-
-            float progressPercentage = Math.min((float) collectedCount / required, 1.0f);
-            ModNetworking.sendToPlayer(
-                    new SyncRiteDataS2C(
-                            Rite.famineRite,
-                            isRiteCompleted(player),
-                            "",
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            currentItemName,
-                            collected,
-                            required),
-                    (ServerPlayer) player
-            );
-            // player.displayClientMessage(
-            //         Component.literal("Fetch Rite Progress: " + collectedCount + "/" + requiredCount)
-            //                 .withStyle(ChatFormatting.YELLOW), true);
+            syncToClient(player);
         }
     }
 
     @Override
     public void concludeRite(Player player) {
-        // player.displayClientMessage(Component.literal("You have completed the Fetch Rite! Collect your reward.").withStyle(ChatFormatting.GREEN), true);
-        ModNetworking.sendToPlayer(
-                new SyncRiteDataS2C(
-                        Rite.famineRite,
-                        isRiteCompleted(player),
-                        "",
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        "",
-                        0,
-                        0),
-                (ServerPlayer) player
-        );
-        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearCurseEffect);
-
-        List<MobEffect> cursesToRemove = new ArrayList<>();
-        for (MobEffectInstance effectInstance : player.getActiveEffects()) {
-            MobEffect effect = effectInstance.getEffect();
-            if (CurseRegistry.getCurses().contains(effect)) {
-                cursesToRemove.add(effect);
-            }
-        }
-
-        for (MobEffect effect : cursesToRemove) {
-            player.removeEffect(effect);
-        }
-
-        CoreNetworking.sendToNear((new CameraShakeS2C(0.125F, 1000)), player);
-        if (player.level() instanceof ServerLevel serverLevel) {
-            serverLevel.playSound(
-                    null,
-                    player.getX(),
-                    player.getY() + 1,
-                    player.getZ(),
-                    SoundEvents.AMBIENT_SOUL_SAND_VALLEY_MOOD.get(),
-                    SoundSource.AMBIENT,
-                    1.00f,
-                    0.25f
-            );
-        }
-
-        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData ->
-                riteData.setRiteCompleted(altar.getBlockPos()));
-        this.completed = true;
-        altar.setPlayerRiteCompleted(player);
+        finishRite(player, false, 0.125F);
     }
 
     public void advanceDegree(Player player) {
@@ -299,22 +206,19 @@ public class FamineRite implements Rite {
             completedThirdDegree = true;
         }
 
-        if (completedThirdDegree) {
+        if (altar.hasPendingGemFusion() && completedFirstDegree) {
+            concludeRite(player);
+        } else if (completedThirdDegree) {
             concludeRite(player);
         } else {
             trackProgress(player);
         }
     }
 
-    public void incrementFetchCount(Player player, int itemCount) {
+    public void incrementFetchCount(int itemCount) {
         int collected = degreeCollected.get(currentDegree);
         collected += itemCount;
         degreeCollected.set(currentDegree, collected);
-
-        int finalCollected = collected;
-        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
-            riteData.setFetchItems(finalCollected);
-        });
     }
 
     public Item getRequiredItem() {
@@ -331,5 +235,67 @@ public class FamineRite implements Rite {
 
     public String getCurrentItemName() {
         return degreeItemNames.get(currentDegree);
+    }
+
+    @Override
+    public boolean onItemToss(Player player, ItemEntity itemEntity) {
+        Item tossedItem = itemEntity.getItem().getItem();
+        int itemCount = itemEntity.getItem().getCount();
+        BlockPos altarPos = altar.getBlockPos();
+        BlockPos itemPos = itemEntity.blockPosition();
+        BlockPos lowerBound = altarPos.above(1);
+        BlockPos upperBound = altarPos.above(3);
+        boolean isWithinHeight = itemPos.getY() >= lowerBound.getY() && itemPos.getY() <= upperBound.getY();
+        boolean isWithinRadius = altarPos.getCenter().closerThan(itemEntity.position(), 3.0);
+        if (!isWithinHeight || !isWithinRadius) {
+            return false;
+        }
+
+        Item requiredItem = getRequiredItem();
+        if (!tossedItem.equals(requiredItem)) {
+            return false;
+        }
+
+        incrementFetchCount(itemCount);
+        itemEntity.discard();
+        if (player.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(
+                    ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
+                    altarPos.getX() + 0.5,
+                    altarPos.getY() + 1.0,
+                    altarPos.getZ() + 0.5,
+                    100,
+                    0.2,
+                    2.0,
+                    0.2,
+                    0.01
+            );
+            serverLevel.playSound(
+                    null,
+                    altarPos.getX() + 0.5,
+                    altarPos.getY() + 1.0,
+                    altarPos.getZ() + 0.5,
+                    net.minecraft.sounds.SoundEvents.GHAST_SHOOT,
+                    net.minecraft.sounds.SoundSource.HOSTILE,
+                    1.0f,
+                    0.5f
+            );
+        }
+        trackProgress(player);
+
+        if (getCollectedCount() >= getRequiredCount()) {
+            advanceDegree(player);
+        }
+        return true;
+    }
+
+    @Override
+    protected SyncRiteDataS2C buildSyncPacket(Player player) {
+        return SyncRiteDataS2C.fromState(new FamineClientRiteState(
+                isRiteCompleted(player),
+                getCurrentItemName(),
+                getCollectedCount(),
+                getRequiredCount()
+        ));
     }
 }

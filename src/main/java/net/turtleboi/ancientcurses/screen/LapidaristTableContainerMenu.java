@@ -1,7 +1,6 @@
 package net.turtleboi.ancientcurses.screen;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
@@ -10,15 +9,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.SlotItemHandler;
-import net.turtleboi.ancientcurses.api.ISlotAccessor;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.block.entity.LapidaristTableBlockEntity;
-import net.turtleboi.ancientcurses.mixin.SlotAccessorMixin;
-import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.RefreshLapidaryScreenS2C;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.reflect.Field;
 
 public class LapidaristTableContainerMenu extends AbstractContainerMenu {
     public final LapidaristTableBlockEntity blockEntity;

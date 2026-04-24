@@ -7,7 +7,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.turtleboi.turtlecore.init.CoreAttributeModifiers;
+import net.turtleboi.turtlecore.util.CoreAttributeModifiers;
 
 public class FrenziedBlowsEffect extends MobEffect {
     public FrenziedBlowsEffect(MobEffectCategory pCategory, int pColor) {

@@ -3,20 +3,17 @@ package net.turtleboi.ancientcurses.rites;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.effect.MobEffect;
-import net.minecraftforge.registries.ForgeRegistries;
-
 import java.util.Objects;
 
 public class RiteRecord {
     private BlockPos altarPos;
-    private String riteType;
+    private String riteId;
     private boolean completed;
     private boolean rewardCollected;
 
-    public RiteRecord(BlockPos altarPos, String riteType, boolean completed, boolean rewardCollected) {
+    public RiteRecord(BlockPos altarPos, ResourceLocation riteId, boolean completed, boolean rewardCollected) {
         this.altarPos = altarPos;
-        this.riteType = riteType;
+        setRiteId(riteId);
         this.completed = completed;
         this.rewardCollected = rewardCollected;
     }
@@ -33,12 +30,16 @@ public class RiteRecord {
         this.altarPos = altarPos;
     }
 
-    public String getRiteType() {
-        return riteType;
+    public String getRiteIdString() {
+        return riteId;
     }
 
-    public void setRiteType(String riteType) {
-        this.riteType = riteType;
+    public void setRiteId(String riteId) {
+        setRiteId(ModRites.parse(riteId));
+    }
+
+    public void setRiteId(ResourceLocation riteId) {
+        this.riteId = riteId != null ? riteId.toString() : "";
     }
 
     public boolean isCompleted() {
@@ -60,7 +61,7 @@ public class RiteRecord {
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putLong("AltarPos", altarPos.asLong());
-        tag.putString("RiteType", riteType);
+        tag.putString("RiteId", riteId);
         tag.putBoolean("Completed", completed);
         tag.putBoolean("RewardCollected", rewardCollected);
         return tag;
@@ -68,16 +69,16 @@ public class RiteRecord {
 
     public void deserializeNBT(CompoundTag tag) {
         this.altarPos = BlockPos.of(tag.getLong("AltarPos"));
-        this.riteType = tag.getString("RiteType");
+        setRiteId(tag.getString("RiteId"));
         this.completed = tag.getBoolean("Completed");
         this.rewardCollected = tag.getBoolean("RewardCollected");
     }
 
-    public boolean isTrialType(String type) {
-        return Objects.equals(this.riteType, type);
+    public boolean isTrialType(ResourceLocation riteId) {
+        return Objects.equals(getRiteId(), riteId);
     }
 
-    public MobEffect getRiteEffect() {
-        return ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(this.riteType));
+    public ResourceLocation getRiteId() {
+        return ModRites.parse(this.riteId);
     }
 }

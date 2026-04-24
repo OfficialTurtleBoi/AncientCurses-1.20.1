@@ -19,10 +19,12 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 public class FirstBeaconEffectRenderer {
+    public static final ResourceLocation ARCANE_AURA_TEXTURE = new ResourceLocation("turtlecore", "textures/spell_effects/arcane_circle.png");
+
     public void renderThirdPerson(MultiBufferSource bufferSource, PoseStack poseStack, LivingEntity livingEntity, float partialTicks) {
         poseStack.pushPose();
-        float ticksElapsed = (System.currentTimeMillis() % 0) / 50.0f;
-        float tickCount = ticksElapsed + partialTicks - 0;
+        float ticksElapsed = livingEntity.tickCount;
+        float tickCount = ticksElapsed + partialTicks;
 
         if (tickCount < 0) {
             poseStack.popPose();
@@ -36,7 +38,7 @@ public class FirstBeaconEffectRenderer {
         if (tickCount < initialTicks) {
             rotationSpeed = 3.0f;
         } else {
-            rotationSpeed = (float) (10.0f * 0);
+            rotationSpeed = 10.0f;
         }
 
         float rotationAngle = tickCount * rotationSpeed;
@@ -48,12 +50,13 @@ public class FirstBeaconEffectRenderer {
         }
 
         float alpha;
-        if (tickCount < (0 * 0.75f)) {
+        float lifetimeTicks = FirstBeaconItem.chargeRate;
+        if (tickCount < (lifetimeTicks * 0.75f)) {
             alpha = 1.0f;
-        } else if (tickCount > 0){
+        } else if (tickCount > lifetimeTicks){
             alpha = 0.0f;
         } else {
-            alpha = 1.0f - ((tickCount - (0 * 0.75f)) / (0 - (0 * 0.75f)));
+            alpha = 1.0f - ((tickCount - (lifetimeTicks * 0.75f)) / (lifetimeTicks - (lifetimeTicks * 0.75f)));
         }
 
         int vertexAlpha = (int)(alpha * 255.0f);
@@ -62,7 +65,7 @@ public class FirstBeaconEffectRenderer {
         if (tickCount < initialTicks) {
             yPosition = (float) (livingEntity.getBbHeight() * 0.01);
         } else {
-            yPosition = (float) Math.min(livingEntity.getBbHeight() * 1.1, ((livingEntity.getBbHeight() * 0.01) + ((tickCount - initialTicks) / ((0 * 0.75f) - initialTicks)) * (livingEntity.getBbHeight())));
+            yPosition = (float) Math.min(livingEntity.getBbHeight() * 1.1, ((livingEntity.getBbHeight() * 0.01) + ((tickCount - initialTicks) / ((lifetimeTicks * 0.75f) - initialTicks)) * (livingEntity.getBbHeight())));
         }
 
         poseStack.translate(0, yPosition, 0);
@@ -72,7 +75,7 @@ public class FirstBeaconEffectRenderer {
         poseStack.mulPose(Axis.XP.rotationDegrees(-90));
         poseStack.scale(scale, scale, scale);
 
-        ArcaneCircleRenderer.renderArcaneCircle(bufferSource, poseStack, vertexAlpha);
+        //ArcaneCircleRenderer.renderArcaneCircle(bufferSource, poseStack, vertexAlpha);
 
         poseStack.popPose();
     }
@@ -84,7 +87,9 @@ public class FirstBeaconEffectRenderer {
             poseStack.pushPose();
             float ticksElapsed = PlayerClientData.getItemMaxDurationTicks() - remainingUseTime;
             float progress = Math.min(1.0f, ticksElapsed / FirstBeaconItem.chargeRate);
-            double hitDistance = PlayerClientData.getItemHitDistance();
+            double hitDistance = PlayerClientData.getItemHitDistance() > 0
+                    ? PlayerClientData.getItemHitDistance()
+                    : FirstBeaconItem.range;
 
             if (ticksElapsed < 0) {
                 poseStack.popPose();
@@ -144,7 +149,7 @@ public class FirstBeaconEffectRenderer {
             poseStack.mulPose(Axis.ZP.rotationDegrees(-rotationAngle));
             poseStack.scale(scale, scale, scale);
 
-            ArcaneCircleRenderer.renderArcaneCircle(bufferSource, poseStack, vertexAlpha);
+            renderArcaneCircle(bufferSource, poseStack, vertexAlpha, ARCANE_AURA_TEXTURE);
             renderBeam(bufferSource, poseStack, 164, progress, hitDistance);
 
             poseStack.popPose();
@@ -240,5 +245,20 @@ public class FirstBeaconEffectRenderer {
 
 
         return farFace;
+    }
+
+    public static void renderArcaneCircle(MultiBufferSource bufferSource, PoseStack poseStack, int vertexAlpha, ResourceLocation texture) {
+        VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entityTranslucentCull(texture));
+        PoseStack.Pose pose = poseStack.last();
+        Matrix4f matrix = pose.pose();
+        Matrix3f normalMatrix = pose.normal();
+        VertexBuilder.vertex(vertexConsumer, matrix, normalMatrix, -6.0F, -6.0F, 0.0F, 0.0F, 0.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(vertexConsumer, matrix, normalMatrix, 6.0F, -6.0F, 0.0F, 1.0F, 0.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(vertexConsumer, matrix, normalMatrix, 6.0F, 6.0F, 0.0F, 1.0F, 1.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(vertexConsumer, matrix, normalMatrix, -6.0F, 6.0F, 0.0F, 0.0F, 1.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(vertexConsumer, matrix, normalMatrix, -6.0F, 6.0F, 0.0F, 0.0F, 1.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(vertexConsumer, matrix, normalMatrix, 6.0F, 6.0F, 0.0F, 1.0F, 1.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(vertexConsumer, matrix, normalMatrix, 6.0F, -6.0F, 0.0F, 1.0F, 0.0F, 255, 255, 255, vertexAlpha);
+        VertexBuilder.vertex(vertexConsumer, matrix, normalMatrix, -6.0F, -6.0F, 0.0F, 0.0F, 0.0F, 255, 255, 255, vertexAlpha);
     }
 }

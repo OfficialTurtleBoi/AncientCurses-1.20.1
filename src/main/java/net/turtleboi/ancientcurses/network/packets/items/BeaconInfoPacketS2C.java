@@ -36,12 +36,7 @@ public class BeaconInfoPacketS2C {
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            PlayerClientData.setItemMaxDurationTicks(maxDurationTicks);
-            PlayerClientData.setItemRemainingUseTime(remainingDurationTicks);
-            if (hitDistance != 0) {
-                PlayerClientData.setItemHitDistance(hitDistance);
-            }
-            PlayerClientData.setItemUsed(beingUsed);
+            PlayerClientData.syncFirstBeaconUse(maxDurationTicks, remainingDurationTicks, hitDistance, beingUsed);
         });
         context.setPacketHandled(true);
         return true;

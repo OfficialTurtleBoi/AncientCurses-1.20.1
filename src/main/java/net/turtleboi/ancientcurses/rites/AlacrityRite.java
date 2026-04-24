@@ -1,6 +1,7 @@
 package net.turtleboi.ancientcurses.rites;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -43,8 +44,8 @@ public class AlacrityRite implements Rite {
     }
 
     @Override
-    public String getType() {
-        return "";
+    public ResourceLocation getId() {
+        return ModRites.ALACRITY;
     }
 
     @Override

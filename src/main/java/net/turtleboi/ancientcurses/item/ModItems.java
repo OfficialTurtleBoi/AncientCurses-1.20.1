@@ -5,16 +5,26 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.RecordItem;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.ModBlocks;
-import net.turtleboi.ancientcurses.enchantment.ModEnchantments;
-import net.turtleboi.ancientcurses.item.items.*;
+import net.turtleboi.ancientcurses.item.items.CursedPearlItem;
+import net.turtleboi.ancientcurses.item.items.DowsingRod;
+import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
+import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
+import net.turtleboi.ancientcurses.item.items.GoldenFeatherItem;
+import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
+import net.turtleboi.ancientcurses.item.items.PreciousGemType;
+import net.turtleboi.ancientcurses.item.items.SconcedCursedTorchItem;
+import net.turtleboi.ancientcurses.item.items.SconcedRedstoneTorchItem;
+import net.turtleboi.ancientcurses.item.items.SconcedSoulTorchItem;
+import net.turtleboi.ancientcurses.item.items.SconcedTorchItem;
+import net.turtleboi.ancientcurses.item.items.SconcedUnlitSoulTorchItem;
+import net.turtleboi.ancientcurses.item.items.SconcedUnlitTorchItem;
+import net.turtleboi.ancientcurses.item.items.SoulShardItem;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.turtlecore.item.CoreItems;
 
@@ -25,74 +35,45 @@ public class ModItems {
     public static final RegistryObject<Item> GOLDEN_AMULET = ITEMS.register("golden_amulet",
             () -> new GoldenAmuletItem(new Item.Properties()));
 
-    public static final RegistryObject<Item> BROKEN_AMETHYST = ITEMS.register("broken_amethyst",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.UNCOMMON), PreciousGemType.BROKEN_AMETHYST));
+    public static final RegistryObject<Item> BROKEN_AMETHYST = registerGem(PreciousGemType.BROKEN_AMETHYST, Rarity.UNCOMMON);
+    public static final RegistryObject<Item> BROKEN_DIAMOND = registerGem(PreciousGemType.BROKEN_DIAMOND, Rarity.UNCOMMON);
+    public static final RegistryObject<Item> BROKEN_EMERALD = registerGem(PreciousGemType.BROKEN_EMERALD, Rarity.UNCOMMON);
+    public static final RegistryObject<Item> BROKEN_RUBY = registerGem(PreciousGemType.BROKEN_RUBY, Rarity.UNCOMMON);
+    public static final RegistryObject<Item> BROKEN_SAPPHIRE = registerGem(PreciousGemType.BROKEN_SAPPHIRE, Rarity.UNCOMMON);
+    public static final RegistryObject<Item> BROKEN_TOPAZ = registerGem(PreciousGemType.BROKEN_TOPAZ, Rarity.UNCOMMON);
 
-    public static final RegistryObject<Item> BROKEN_DIAMOND = ITEMS.register("broken_diamond",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.UNCOMMON), PreciousGemType.BROKEN_DIAMOND));
+    public static final RegistryObject<Item> POLISHED_AMETHYST = registerGem(PreciousGemType.POLISHED_AMETHYST, Rarity.RARE);
+    public static final RegistryObject<Item> POLISHED_DIAMOND = registerGem(PreciousGemType.POLISHED_DIAMOND, Rarity.RARE);
+    public static final RegistryObject<Item> POLISHED_EMERALD = registerGem(PreciousGemType.POLISHED_EMERALD, Rarity.RARE);
+    public static final RegistryObject<Item> POLISHED_RUBY = registerGem(PreciousGemType.POLISHED_RUBY, Rarity.RARE);
+    public static final RegistryObject<Item> POLISHED_SAPPHIRE = registerGem(PreciousGemType.POLISHED_SAPPHIRE, Rarity.RARE);
+    public static final RegistryObject<Item> POLISHED_TOPAZ = registerGem(PreciousGemType.POLISHED_TOPAZ, Rarity.RARE);
 
-    public static final RegistryObject<Item> BROKEN_EMERALD = ITEMS.register("broken_emerald",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.UNCOMMON), PreciousGemType.BROKEN_EMERALD));
+    public static final RegistryObject<Item> PERFECT_AMETHYST = registerGem(PreciousGemType.PERFECT_AMETHYST, Rarity.EPIC);
+    public static final RegistryObject<Item> PERFECT_DIAMOND = registerGem(PreciousGemType.PERFECT_DIAMOND, Rarity.EPIC);
+    public static final RegistryObject<Item> PERFECT_EMERALD = registerGem(PreciousGemType.PERFECT_EMERALD, Rarity.EPIC);
+    public static final RegistryObject<Item> PERFECT_RUBY = registerGem(PreciousGemType.PERFECT_RUBY, Rarity.EPIC);
+    public static final RegistryObject<Item> PERFECT_SAPPHIRE = registerGem(PreciousGemType.PERFECT_SAPPHIRE, Rarity.EPIC);
+    public static final RegistryObject<Item> PERFECT_TOPAZ = registerGem(PreciousGemType.PERFECT_TOPAZ, Rarity.EPIC);
 
-    public static final RegistryObject<Item> BROKEN_RUBY = ITEMS.register("broken_ruby",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.UNCOMMON), PreciousGemType.BROKEN_RUBY));
-
-    public static final RegistryObject<Item> BROKEN_SAPPHIRE = ITEMS.register("broken_sapphire",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.UNCOMMON), PreciousGemType.BROKEN_SAPPHIRE));
-
-    public static final RegistryObject<Item> BROKEN_TOPAZ = ITEMS.register("broken_topaz",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.UNCOMMON), PreciousGemType.BROKEN_TOPAZ));
-
-    public static final RegistryObject<Item> POLISHED_AMETHYST = ITEMS.register("polished_amethyst",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.RARE), PreciousGemType.POLISHED_AMETHYST));
-
-    public static final RegistryObject<Item> POLISHED_DIAMOND = ITEMS.register("polished_diamond",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.RARE), PreciousGemType.POLISHED_DIAMOND));
-
-    public static final RegistryObject<Item> POLISHED_EMERALD = ITEMS.register("polished_emerald",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.RARE), PreciousGemType.POLISHED_EMERALD));
-
-    public static final RegistryObject<Item> POLISHED_RUBY = ITEMS.register("polished_ruby",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.RARE), PreciousGemType.POLISHED_RUBY));
-
-    public static final RegistryObject<Item> POLISHED_SAPPHIRE = ITEMS.register("polished_sapphire",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.RARE), PreciousGemType.POLISHED_SAPPHIRE));
-
-    public static final RegistryObject<Item> POLISHED_TOPAZ = ITEMS.register("polished_topaz",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.RARE), PreciousGemType.POLISHED_TOPAZ));
-
-    public static final RegistryObject<Item> PERFECT_AMETHYST = ITEMS.register("perfect_amethyst",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC), PreciousGemType.PERFECT_AMETHYST));
-
-    public static final RegistryObject<Item> PERFECT_DIAMOND = ITEMS.register("perfect_diamond",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC), PreciousGemType.PERFECT_DIAMOND));
-
-    public static final RegistryObject<Item> PERFECT_EMERALD = ITEMS.register("perfect_emerald",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC), PreciousGemType.PERFECT_EMERALD));
-
-    public static final RegistryObject<Item> PERFECT_RUBY = ITEMS.register("perfect_ruby",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC), PreciousGemType.PERFECT_RUBY));
-
-    public static final RegistryObject<Item> PERFECT_SAPPHIRE = ITEMS.register("perfect_sapphire",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC), PreciousGemType.PERFECT_SAPPHIRE));
-
-    public static final RegistryObject<Item> PERFECT_TOPAZ = ITEMS.register("perfect_topaz",
-            () -> new PreciousGemItem(new Item.Properties().rarity(Rarity.EPIC), PreciousGemType.PERFECT_TOPAZ));
-
-    public static final RegistryObject<Item> ANCIENT_ALEXANDRITE = ITEMS.register("ancient_alexandrite",
-            () -> new PreciousGemItem(new Item.Properties().rarity(CoreItems.LEGENDARY), PreciousGemType.ANCIENT_ALEXANDRITE));
-
-    public static final RegistryObject<Item> ANCIENT_BISMUTH = ITEMS.register("ancient_bismuth",
-            () -> new PreciousGemItem(new Item.Properties().rarity(CoreItems.LEGENDARY), PreciousGemType.ANCIENT_BISMUTH));
-
-    public static final RegistryObject<Item> ANCIENT_CHRYSOBERYL = ITEMS.register("ancient_chrysoberyl",
-            () -> new PreciousGemItem(new Item.Properties().rarity(CoreItems.LEGENDARY), PreciousGemType.ANCIENT_CHRYSOBERYL));
+    public static final RegistryObject<Item> ANCIENT_ALEXANDRITE = registerGem(PreciousGemType.ANCIENT_ALEXANDRITE, CoreItems.LEGENDARY);
+    public static final RegistryObject<Item> ANCIENT_BISMUTH = registerGem(PreciousGemType.ANCIENT_BISMUTH, CoreItems.LEGENDARY);
+    public static final RegistryObject<Item> ANCIENT_CHRYSOBERYL = registerGem(PreciousGemType.ANCIENT_CHRYSOBERYL, CoreItems.LEGENDARY);
 
     public static final RegistryObject<Item> DEPRECOPHOBIA_MUSIC_DISC = ITEMS.register("deprecophobia_music_disc",
             () -> new RecordItem(13, ModSounds.DEPRECOPHOBIA, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC), 2780));
 
     public static final RegistryObject<Item> ROT_CLUMP = ITEMS.register("rot_clump",
             () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> SMOKY_QUARTZ = ITEMS.register("smoky_quartz",
+            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+
+    public static final RegistryObject<Item> SOUL_SHARD = ITEMS.register("soul_shard",
+            () -> new SoulShardItem(new Item.Properties().rarity(Rarity.RARE).stacksTo(1)));
+
+    public static final RegistryObject<Item> CURSED_SOUL_SHARD = ITEMS.register("cursed_soul_shard",
+            () -> new Item(new Item.Properties().rarity(Rarity.EPIC).stacksTo(16)));
 
     public static final RegistryObject<Item> SCONCED_TORCH_ITEM = ITEMS.register("sconced_torch",
             () -> new SconcedTorchItem(ModBlocks.SCONCED_TORCH.get(), new Item.Properties()));
@@ -126,6 +107,11 @@ public class ModItems {
 
     public static final RegistryObject<Item> FIRST_BEACON = ITEMS.register("first_beacon",
             () -> new FirstBeaconItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1).durability(600)));
+
+    private static RegistryObject<Item> registerGem(PreciousGemType gemType, Rarity rarity) {
+        return ITEMS.register(gemType.getItemName(),
+                () -> new PreciousGemItem(new Item.Properties().rarity(rarity), gemType));
+    }
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

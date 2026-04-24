@@ -1,4 +1,4 @@
-// 1.20.1	2025-04-21T15:24:57.2292381	Loot Tables
+// 1.20.1	2026-04-21T22:39:20.8164936	Loot Tables
 173be01067a3fb33d2abc3a9422ca4085756dfba data/ancientcurses/loot_tables/blocks/cursed_altar.json
 4f59245b1b4c269727359a774cbd1feaa884e621 data/ancientcurses/loot_tables/blocks/cursed_lantern.json
 16062db588157d809db77ca9b0ca9f6eaa0604f9 data/ancientcurses/loot_tables/blocks/lapidarist_table.json
@@ -14,3 +14,4 @@ dfaec291c630140f5f4b765e4ee7ad9de49de0b4 data/ancientcurses/loot_tables/blocks/s
 9db884fff9f107924ab6e1e164b8b1352342e35c data/ancientcurses/loot_tables/blocks/sconced_wall_torch.json
 540f3d9f88267fb4d38d03dae31c926c433af4a5 data/ancientcurses/loot_tables/blocks/sconced_wall_unlit_soul_torch.json
 4c6f9e72a5911893e8e4c27d286e0a13b7a32aea data/ancientcurses/loot_tables/blocks/sconced_wall_unlit_torch.json
+1aa44b2e9f4f113a1864f7958d673deee36f82b7 data/ancientcurses/loot_tables/blocks/soul_rock.json

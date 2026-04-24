@@ -7,7 +7,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.turtleboi.ancientcurses.AncientCurses;
-import net.turtleboi.ancientcurses.rites.Rite;
 
 public class RiteEventBar {
     private static final ResourceLocation RITE_BOSS_BAR =
@@ -16,8 +15,7 @@ public class RiteEventBar {
     public static void render(GuiGraphics guiGraphics, int x, int y, Minecraft minecraft) {
         if (minecraft.player == null) return;
 
-        String riteType = PlayerClientData.getRiteType();
-        if (riteType == null || riteType.equalsIgnoreCase("None")) {
+        if (!PlayerClientData.hasRite()) {
             System.out.println(Component.literal("Removing bar because rite is null"));
             return;
         }
@@ -55,29 +53,7 @@ public class RiteEventBar {
     }
 
     private static Component getTrialDisplayText() {
-        if (!PlayerClientData.isRiteComplete()) {
-            String trialType = PlayerClientData.getRiteType();
-            if (trialType.equalsIgnoreCase(Rite.embersRite)) {
-                int percentComplete = (int) (PlayerClientData.getRiteProgress() * 100);
-                return Component.translatable("trial.ancientcurses.survival", percentComplete);
-            } else if (trialType.equalsIgnoreCase(Rite.carnageRite)) {
-                String targetName = PlayerClientData.getEliminationTarget();
-                int waveCountVal = PlayerClientData.getWaveCount();
-                String waveCount = (waveCountVal == 0) ? "~" : String.valueOf(waveCountVal);
-                int killsRemainingVal = PlayerClientData.getKillsRemaining();
-                String killsRemaining = (killsRemainingVal == 0) ? "~" : String.valueOf(killsRemainingVal);
-                return Component.translatable("trial.ancientcurses.elimination", targetName, waveCount, killsRemaining);
-
-            } else if (trialType.equalsIgnoreCase(Rite.famineRite)) {
-                String fetchItem = PlayerClientData.getFetchItem();
-                int fetchItemCount = PlayerClientData.getFetchItems();
-                int requiredFetchitems = PlayerClientData.getFetchItemsRequired();
-                return Component.translatable("trial.ancientcurses.fetch", fetchItemCount, requiredFetchitems, fetchItem);
-            }
-        } else {
-            return Component.translatable("trial.ancientcurses.complete");
-        }
-        return Component.empty();
+        return PlayerClientData.getActiveRiteState().getDisplayText();
     }
 
 }

@@ -40,6 +40,7 @@ import net.turtleboi.ancientcurses.client.renderer.DowsingRodRenderer;
 import net.turtleboi.ancientcurses.client.renderer.FirstBeaconEffectRenderer;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
+import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
 import net.turtleboi.ancientcurses.network.packets.rites.RiteOverlayPacketC2S;
@@ -53,6 +54,23 @@ import java.util.Random;
 public class ModClientEvents {
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (PlayerClientData.getDowsingRodUsed() && player != null && !(player.getMainHandItem().getItem() instanceof DowsingRod)) {
+            PlayerClientData.setDowsingRodUsed(false);
+            PlayerClientData.setDowsingRodUsedTime(-1);
+        }
+
+        if (PlayerClientData.getItemUsed() && player != null
+                && !(player.getMainHandItem().getItem() instanceof FirstBeaconItem)
+                && !(player.getOffhandItem().getItem() instanceof FirstBeaconItem)) {
+            PlayerClientData.setItemUsed(false);
+            PlayerClientData.setItemRemainingUseTime(0);
+        }
+
+        if (PlayerClientData.getItemUsed() && PlayerClientData.getItemRemainingUseTime() > 0) {
+            PlayerClientData.setItemRemainingUseTime(PlayerClientData.getItemRemainingUseTime() - 1);
+        }
+
         if (!PlayerClientData.getItemUsed() && PlayerClientData.getItemRemainingUseTime() <= 100) {
             if (PlayerClientData.getItemRemainingUseTime() > 0) {
                 PlayerClientData.setItemRemainingUseTime(PlayerClientData.getItemRemainingUseTime() - 1);
@@ -105,9 +123,10 @@ public class ModClientEvents {
         PoseStack poseStack = event.getPoseStack();
         InteractionHand interactionHand = event.getHand();
         ItemStack itemStack = event.getItemStack();
+
         FirstBeaconEffectRenderer.renderFirstPerson(bufferSource, poseStack, interactionHand, itemStack);
 
-        if (itemStack.getItem() instanceof DowsingRod && PlayerClientData.getItemUsed()) {
+        if (itemStack.getItem() instanceof DowsingRod && PlayerClientData.getDowsingRodUsed()) {
             Minecraft minecraft = Minecraft.getInstance();
             LocalPlayer player = minecraft.player;
             if (player == null) return;
@@ -125,11 +144,11 @@ public class ModClientEvents {
                     minecraft.getEntityRenderDispatcher().getRenderer(player);
 
             float slideProgress = 1f;
-            if (PlayerClientData.getItemUsedTime() > 0) {
-                long elapsed = System.currentTimeMillis() - PlayerClientData.getItemUsedTime();
+            if (PlayerClientData.getDowsingRodUsedTime() > 0) {
+                long elapsed = System.currentTimeMillis() - PlayerClientData.getDowsingRodUsedTime();
                 slideProgress = Mth.clamp((float)elapsed / 300, 0f, 1f);
                 if (slideProgress >= 1f) {
-                    PlayerClientData.setItemUsedTime(-1);
+                    PlayerClientData.setDowsingRodUsedTime(-1);
                 }
             }
 
@@ -162,7 +181,7 @@ public class ModClientEvents {
         if (level != null) {
             int itemValue = ItemValueMap.getItemValue(itemStack, level);
             int itemStackValue = itemValue * itemStack.getCount();
-            //event.getToolTip().add(Component.literal("Item Value: " + itemStackValue));
+            event.getToolTip().add(Component.literal("Item Value: " + itemStackValue));
             }
 
         if (level != null && itemStack.hasTag()) {

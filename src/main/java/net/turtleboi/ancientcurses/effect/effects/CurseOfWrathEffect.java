@@ -20,13 +20,13 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
-import net.turtleboi.ancientcurses.ai.AnimalFollowPlayerGoal;
-import net.turtleboi.ancientcurses.ai.FishFollowPlayerGoal;
+import net.turtleboi.ancientcurses.entity.ai.AnimalFollowPlayerGoal;
+import net.turtleboi.ancientcurses.entity.ai.FishFollowPlayerGoal;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
-import net.turtleboi.turtlecore.init.CoreAttributeModifiers;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
+import net.turtleboi.turtlecore.util.CoreAttributeModifiers;
 
 import java.util.List;
 import java.util.Random;

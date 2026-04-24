@@ -10,7 +10,6 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.AutoRegisterCapability;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.turtleboi.ancientcurses.rites.Rite;
 import net.turtleboi.ancientcurses.rites.RiteRecord;
 
 import java.util.ArrayList;
@@ -23,11 +22,8 @@ public class PlayerRiteDataCapability {
     private BlockPos currentAltarPos = null;
     private List<RiteRecord> riteRecords = new ArrayList<>();
     private ResourceKey<Level> altarDimension = null;
-    private Rite activeRite;
     private int pendingRiteUpdateTicks = 0;
-    private int currentWave = 0;
-    private int survivalTicks = 0;
-    private int fetchItems = 0;
+    private int highestCompletedRiteTier = 0;
 
     public boolean isPlayerCursed() {
         return !curseEffect.isEmpty() && curseAmplifier != 0;
@@ -37,7 +33,6 @@ public class PlayerRiteDataCapability {
         curseEffect = "";
         curseAmplifier = 0;
         clearCurrentAltarPos();
-        resetRiteProgress();
     }
 
     public void clearCurseEffect() {
@@ -90,7 +85,7 @@ public class PlayerRiteDataCapability {
         for (int i = 0; i < riteRecords.size(); i++) {
             RiteRecord existingRecord = riteRecords.get(i);
             if (existingRecord.getAltarPos().equals(riteRecord.getAltarPos())) {
-                existingRecord.setRiteType(riteRecord.getRiteType());
+                existingRecord.setRiteId(riteRecord.getRiteId());
                 existingRecord.setCompleted(riteRecord.isCompleted());
                 existingRecord.setRewardCollected(riteRecord.isRewardCollected());
                 found = true;
@@ -174,18 +169,10 @@ public class PlayerRiteDataCapability {
         return null;
     }
 
-    public Rite getActiveRite() {
-        return activeRite;
-    }
-
-    public void setActiveRite(Rite rite) {
-        this.activeRite = rite;
-    }
-
-    public List<RiteRecord> getActiveRitesByType(String trialType) {
+    public List<RiteRecord> getActiveRitesByType(ResourceLocation riteId) {
         List<RiteRecord> activeTrials = new ArrayList<>();
         for (RiteRecord record : riteRecords) {
-            if (record.getRiteType().equals(trialType) && !record.isCompleted()) {
+            if (record.isTrialType(riteId) && !record.isCompleted()) {
                 activeTrials.add(record);
             }
         }
@@ -200,34 +187,12 @@ public class PlayerRiteDataCapability {
         return pendingRiteUpdateTicks;
     }
 
-    public int getCurrentWave() {
-        return currentWave;
+    public void recordCompletedRiteTier(int tier) {
+        this.highestCompletedRiteTier = Math.max(this.highestCompletedRiteTier, tier);
     }
 
-    public void setCurrentWave(int currentWave) {
-        this.currentWave = currentWave;
-    }
-
-    public int getSurvivalTicks() {
-        return survivalTicks;
-    }
-
-    public void setSurvivalTicks(int survivalTicks) {
-        this.survivalTicks = survivalTicks;
-    }
-
-    public int getFetchItems() {
-        return fetchItems;
-    }
-
-    public void setFetchItems(int itemCount) {
-        this.fetchItems = itemCount;
-    }
-
-    public void resetRiteProgress(){
-        this.currentWave = 0;
-        this.survivalTicks = 0;
-        this.fetchItems = 0;
+    public boolean hasCompletedRiteTier(int tier) {
+        return highestCompletedRiteTier >= tier;
     }
 
     public void copyFrom(PlayerRiteDataCapability source) {
@@ -235,6 +200,7 @@ public class PlayerRiteDataCapability {
         this.curseAmplifier = source.curseAmplifier;
         this.currentAltarPos = source.currentAltarPos;
         this.riteRecords = source.riteRecords;
+        this.highestCompletedRiteTier = source.highestCompletedRiteTier;
     }
 
     public void saveNBTData(CompoundTag nbt) {
@@ -248,10 +214,9 @@ public class PlayerRiteDataCapability {
             nbt.putString("AltarDimension", altarDimension.location().toString());
         }
 
+        nbt.putInt("PendingRiteUpdateTicks", pendingRiteUpdateTicks);
         nbt.putInt("PendingTrialUpdateTicks", pendingRiteUpdateTicks);
-        nbt.putInt("EliminationKills", currentWave);
-        nbt.putInt("SurvivalTicks", survivalTicks);
-        nbt.putInt("FetchItems", fetchItems);
+        nbt.putInt("HighestCompletedRiteTier", highestCompletedRiteTier);
 
         ListTag riteRecordsTag = new ListTag();
         for (RiteRecord record : riteRecords) {
@@ -276,10 +241,12 @@ public class PlayerRiteDataCapability {
         } else {
             altarDimension = null;
         }
-        pendingRiteUpdateTicks = nbt.getInt("PendingRiteUpdateTicks");
-        currentWave = nbt.getInt("EliminationKills");
-        survivalTicks = nbt.getInt("SurvivalTicks");
-        fetchItems = nbt.getInt("FetchItems");
+        if (nbt.contains("PendingRiteUpdateTicks")) {
+            pendingRiteUpdateTicks = nbt.getInt("PendingRiteUpdateTicks");
+        } else {
+            pendingRiteUpdateTicks = nbt.getInt("PendingTrialUpdateTicks");
+        }
+        highestCompletedRiteTier = nbt.getInt("HighestCompletedRiteTier");
 
         riteRecords.clear();
         if (nbt.contains("RiteRecords")) {

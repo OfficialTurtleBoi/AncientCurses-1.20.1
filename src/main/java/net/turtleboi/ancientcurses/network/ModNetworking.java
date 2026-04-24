@@ -66,18 +66,6 @@ public class ModNetworking {
                 .consumerMainThread(PortalOverlayPacketC2S::handle)
                 .add();
 
-        net.messageBuilder(RefreshLapidaryScreenS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-                .decoder(RefreshLapidaryScreenS2C::new)
-                .encoder(RefreshLapidaryScreenS2C::toBytes)
-                .consumerMainThread(RefreshLapidaryScreenS2C::handle)
-                .add();
-
-        net.messageBuilder(RefreshLapidaryScreenC2S.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .decoder(RefreshLapidaryScreenC2S::new)
-                .encoder(RefreshLapidaryScreenC2S::toBytes)
-                .consumerMainThread(RefreshLapidaryScreenC2S::handle)
-                .add();
-
         net.messageBuilder(BeaconInfoPacketS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
                 .decoder(BeaconInfoPacketS2C::new)
                 .encoder(BeaconInfoPacketS2C::toBytes)

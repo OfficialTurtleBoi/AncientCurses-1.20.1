@@ -1,90 +1,73 @@
 package net.turtleboi.ancientcurses.network.packets.rites;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.network.NetworkEvent;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
+import net.turtleboi.ancientcurses.client.rites.ClientRiteState;
+import net.turtleboi.ancientcurses.client.rites.ClientRiteStateRegistry;
+import net.turtleboi.ancientcurses.client.rites.NoRiteState;
+import net.turtleboi.ancientcurses.rites.ModRites;
 
 import java.util.function.Supplier;
 
 public class SyncRiteDataS2C {
-    private final String riteType;
+    private static final String NONE_RITE_ID = "None";
+    private final String riteId;
     private final boolean riteComplete;
-    private final String eliminationTarget;
-    private final int waveCount;
-    private final int killsRemaining;
-    private final int waveKillTotal;
-    private final long durationElapsed;
-    private final long durationTotal;
-    private final String fetchItem;
-    private final int itemCount;
-    private final int fetchItemsRequired;
+    private final CompoundTag payload;
 
 
-    public SyncRiteDataS2C(String riteType, boolean riteComplete, String eliminationTarget, int waveCount, int killsRemaining,
-                           int waveKillTotal, long durationElapsed, long durationTotal,
-                           String fetchItem, int itemCount, int itemRequired) {
-        this.riteType = riteType;
+    public SyncRiteDataS2C(String riteId, boolean riteComplete, CompoundTag payload) {
+        this.riteId = normalizeRiteId(riteId);
         this.riteComplete = riteComplete;
-        this.eliminationTarget = eliminationTarget;
-        this.waveCount = waveCount;
-        this.killsRemaining = killsRemaining;
-        this.waveKillTotal = waveKillTotal;
-        this.durationElapsed = durationElapsed;
-        this.durationTotal = durationTotal;
-        this.fetchItem = fetchItem;
-        this.itemCount = itemCount;
-        this.fetchItemsRequired = itemRequired;
+        this.payload = payload == null ? new CompoundTag() : payload.copy();
     }
 
     public SyncRiteDataS2C(FriendlyByteBuf buf) {
-        this.riteType = buf.readUtf();
+        this.riteId = normalizeRiteId(buf.readUtf());
         this.riteComplete = buf.readBoolean();
-        this.eliminationTarget = buf.readUtf();
-        this.waveCount = buf.readInt();
-        this.killsRemaining = buf.readInt();
-        this.waveKillTotal = buf.readInt();
-        this.durationElapsed = buf.readLong();
-        this.durationTotal = buf.readLong();
-        this.fetchItem = buf.readUtf();
-        this.itemCount = buf.readInt();
-        this.fetchItemsRequired = buf.readInt();
+        CompoundTag readPayload = buf.readNbt();
+        this.payload = readPayload == null ? new CompoundTag() : readPayload;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
-        buf.writeUtf(riteType);
+        buf.writeUtf(riteId);
         buf.writeBoolean(riteComplete);
-        buf.writeUtf(eliminationTarget);
-        buf.writeInt(waveCount);
-        buf.writeInt(killsRemaining);
-        buf.writeInt(waveKillTotal);
-        buf.writeLong(durationElapsed);
-        buf.writeLong(durationTotal);
-        buf.writeUtf(fetchItem);
-        buf.writeInt(itemCount);
-        buf.writeInt(fetchItemsRequired);
+        buf.writeNbt(payload);
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            //System.out.println(Component.literal("Sending rite information!"));
-            PlayerClientData.setRiteType(riteType);
-            if (riteType == null || riteType.equals("None")) {
-                PlayerClientData.riteType = "None";
+            if (riteId == null || riteId.equals(NONE_RITE_ID)) {
+                PlayerClientData.setActiveRiteState(NoRiteState.INSTANCE);
             } else {
-                PlayerClientData.setRiteComplete(riteComplete);
-                PlayerClientData.setEliminationTarget(eliminationTarget);
-                PlayerClientData.setWaveCount(waveCount);
-                PlayerClientData.setKillsRemaining(killsRemaining);
-                PlayerClientData.setWaveKillTotal(waveKillTotal);
-                PlayerClientData.setDurationElapsed(durationElapsed);
-                PlayerClientData.setDurationTotal(durationTotal);
-                PlayerClientData.setFetchItem(fetchItem);
-                PlayerClientData.setFetchItems(itemCount);
-                PlayerClientData.setFetchItemsRequired(fetchItemsRequired);
+                ClientRiteState riteState = ClientRiteStateRegistry.decode(riteId, riteComplete, payload);
+                PlayerClientData.setActiveRiteState(riteState);
             }
         });
         context.setPacketHandled(true);
         return true;
+    }
+
+    public static SyncRiteDataS2C none() {
+        return new SyncRiteDataS2C(NONE_RITE_ID, false, new CompoundTag());
+    }
+
+    public static SyncRiteDataS2C fromState(ClientRiteState riteState) {
+        if (riteState == null || riteState instanceof NoRiteState) {
+            return none();
+        }
+        return new SyncRiteDataS2C(riteState.getRiteId(), riteState.isComplete(), riteState.toTag());
+    }
+
+    private static String normalizeRiteId(String riteIdString) {
+        if (riteIdString == null || riteIdString.isBlank() || riteIdString.equals(NONE_RITE_ID)) {
+            return NONE_RITE_ID;
+        }
+
+        net.minecraft.resources.ResourceLocation riteId = ModRites.parse(riteIdString);
+        return riteId != null ? riteId.toString() : NONE_RITE_ID;
     }
 }

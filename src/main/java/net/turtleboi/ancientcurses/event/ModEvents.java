@@ -63,14 +63,17 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
-import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.*;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
 import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
+import net.turtleboi.ancientcurses.item.items.SoulShardItem;
+import net.turtleboi.ancientcurses.item.items.util.GemBonusUtil;
 import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.rites.*;
@@ -95,7 +98,7 @@ public class ModEvents {
         Player player = event.getEntity();
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
             if (riteData.isPlayerCursed()) {
-                Rite activeRite = riteData.getActiveRite();
+                Rite activeRite = RiteLocator.resolveActiveRite(player, riteData);
                 if (activeRite != null) {
                     activeRite.trackProgress(player);
                 } else {
@@ -132,30 +135,21 @@ public class ModEvents {
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         Player player = event.getEntity();
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
-            Rite playerRite = riteData.getActiveRite();
-            if (playerRite instanceof CarnageRite) {
+            Rite playerRite = RiteLocator.resolveActiveRite(player, riteData);
+            if (playerRite != null && playerRite.shouldClearOnPlayerExit()) {
+                CursedAltarBlockEntity activeAltar = RiteLocator.resolveActiveAltar(player, riteData);
+                if (activeAltar != null) {
+                    activeAltar.removePlayerFromRite(player);
+                }
                 riteData.clearPlayerCurse();
 
                 if (player instanceof ServerPlayer serverPlayer) {
-                    ModNetworking.sendToPlayer(
-                            new SyncRiteDataS2C(
-                                    "None",
-                                    false,
-                                    "",
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    "",
-                                    0,
-                                    0),
-                            serverPlayer);
+                    ModNetworking.sendToPlayer(SyncRiteDataS2C.none(), serverPlayer);
                 }
 
                 for (MobEffectInstance effectInstance : player.getActiveEffects()) {
                     MobEffect effect = effectInstance.getEffect();
-                    if (CurseRegistry.getCurses().contains(effect)) {
+                    if (ModEffects.isCurseEffect(effect)) {
                         player.removeEffect(effect);
                     }
                 }
@@ -199,32 +193,27 @@ public class ModEvents {
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         Player player = event.getEntity();
+        if (player instanceof ServerPlayer serverPlayer) {
+            DowsingRod.UseState.clearWithoutPacket(serverPlayer);
+        }
+
         player.reviveCaps();
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
-            Rite playerRite = riteData.getActiveRite();
-            if (playerRite instanceof CarnageRite) {
+            Rite playerRite = RiteLocator.resolveActiveRite(player, riteData);
+            if (playerRite != null && playerRite.shouldClearOnPlayerExit()) {
+                CursedAltarBlockEntity activeAltar = RiteLocator.resolveActiveAltar(player, riteData);
+                if (activeAltar != null) {
+                    activeAltar.removePlayerFromRite(player);
+                }
                 riteData.clearPlayerCurse();
 
                 if (player instanceof ServerPlayer serverPlayer) {
-                    ModNetworking.sendToPlayer(
-                            new SyncRiteDataS2C(
-                                    "None",
-                                    false,
-                                    "",
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    "",
-                                    0,
-                                    0),
-                            serverPlayer);
+                    ModNetworking.sendToPlayer(SyncRiteDataS2C.none(), serverPlayer);
                 }
 
                 for (MobEffectInstance effectInstance : player.getActiveEffects()) {
                     MobEffect effect = effectInstance.getEffect();
-                    if (CurseRegistry.getCurses().contains(effect)) {
+                    if (ModEffects.isCurseEffect(effect)) {
                         player.removeEffect(effect);
                     }
                 }
@@ -902,6 +891,8 @@ public class ModEvents {
         }
 
         if (source instanceof ServerPlayer player) {
+            chargeOffhandSoulShard(player, entity);
+
             player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
                 if (riteData.isPlayerCursed()) {
                     ResourceKey<Level> altarDimension = riteData.getAltarDimension();
@@ -969,20 +960,7 @@ public class ModEvents {
 
                 riteData.clearPlayerCurse();
                 if (player instanceof ServerPlayer serverPlayer) {
-                    ModNetworking.sendToPlayer(
-                            new SyncRiteDataS2C(
-                                    "None",
-                                    false,
-                                    "",
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    "",
-                                    0,
-                                    0),
-                            serverPlayer);
+                    ModNetworking.sendToPlayer(SyncRiteDataS2C.none(), serverPlayer);
                 }
 
                 player.displayClientMessage(Component.literal("The Altars Feed on your soul...").withStyle(ChatFormatting.DARK_RED), true);
@@ -1001,6 +979,24 @@ public class ModEvents {
 
                 activeSplitHints.add(new SplitHint(serverLevel, splitTick, splitPosition, expectedChildSize));
             }
+        }
+    }
+
+    private static void chargeOffhandSoulShard(ServerPlayer player, LivingEntity defeatedEntity) {
+        if (!(defeatedEntity instanceof Mob)) {
+            return;
+        }
+
+        ItemStack offhandStack = player.getOffhandItem();
+        if (!offhandStack.is(ModItems.SOUL_SHARD.get()) || SoulShardItem.isCharged(offhandStack)) {
+            return;
+        }
+
+        int soulValue = Math.max(1, (int) Math.ceil(defeatedEntity.getMaxHealth()));
+        SoulShardItem.addSoulEnergy(offhandStack, soulValue);
+
+        if (SoulShardItem.isCharged(offhandStack)) {
+            player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.8F, 0.8F);
         }
     }
 
@@ -1147,7 +1143,7 @@ public class ModEvents {
             MobEffectInstance curseEffect = event.getEffectInstance();
             if (curseEffect != null) {
                 MobEffect effect = curseEffect.getEffect();
-                if (CurseRegistry.getCurses().contains(effect)) {
+                if (ModEffects.isCurseEffect(effect)) {
                     player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
                         if (riteData.isPlayerCursed()) {
                             event.setCanceled(true);
@@ -1216,60 +1212,9 @@ public class ModEvents {
                 return;
             }
 
-            ServerLevel serverLevel = (ServerLevel) player.level();
-
-            for (RiteRecord riteRecord : riteData.getActiveRitesByType(Rite.famineRite)) {
-                BlockPos altarPos = riteRecord.getAltarPos();
-                BlockPos lowerBound = altarPos.above(1);
-                BlockPos upperBound = altarPos.above(3);
-                boolean isWithinHeight = itemPos.getY() >= lowerBound.getY() && itemPos.getY() <= upperBound.getY();
-                boolean isWithinRadius = altarPos.getCenter().closerThan(itemEntity.position(), 3.0);
-
-                if (isWithinHeight && isWithinRadius) {
-                    BlockEntity blockEntity = serverLevel.getBlockEntity(altarPos);
-                    if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
-                        continue;
-                    }
-
-                    Rite rite = altar.getPlayerRite(player.getUUID());
-                    if (rite instanceof FamineRite famineRite) {
-                        Item requiredItem = famineRite.getRequiredItem();
-
-                        if (tossedItem.equals(requiredItem)) {
-                            famineRite.incrementFetchCount(player, itemCount);
-                            itemEntity.discard();
-                            serverLevel.sendParticles(
-                                    ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
-                                    altarPos.getX() + 0.5,
-                                    altarPos.getY() + 1.0,
-                                    altarPos.getZ() + 0.5,
-                                    100,
-                                    0.2,
-                                    2.0,
-                                    0.2,
-                                    0.01
-                            );
-                            serverLevel.playSound(
-                                    null,
-                                    altarPos.getX() + 0.5,
-                                    altarPos.getY() + 1.0,
-                                    altarPos.getZ() + 0.5,
-                                    SoundEvents.GHAST_SHOOT,
-                                    SoundSource.HOSTILE,
-                                    1.0f,
-                                    0.5f
-                            );
-                            famineRite.trackProgress(player);
-
-                            if (famineRite.getCollectedCount() >= famineRite.getRequiredCount()) {
-                                famineRite.advanceDegree(player);
-                            }
-
-                            //System.out.println("Player " + player.getName().getString() + " has thrown " + tossedItem.getDescriptionId() + " at altar " + altarPos + ". Collected: " + famineRite.getCollectedCount() + "/" + famineRite.getRequiredCount());
-                            break;
-                        }
-                    }
-                }
+            Rite rite = RiteLocator.resolveActiveRite(player, riteData);
+            if (rite != null && rite.onItemToss(player, itemEntity)) {
+                event.setCanceled(true);
             }
         });
     }
@@ -1316,7 +1261,12 @@ public class ModEvents {
         ItemStack itemStack = event.getOriginal();
 
         if (player instanceof ServerPlayer serverPlayer && itemStack.getItem() instanceof FirstBeaconItem) {
-
+            ModNetworking.sendToPlayer(new BeaconInfoPacketS2C(
+                    itemStack.getMaxDamage(),
+                    0,
+                    0,
+                    false
+            ), serverPlayer);
         }
     }
 
@@ -1391,16 +1341,16 @@ public class ModEvents {
         Player player = event.player;
         Level level = player.level();
 
-        PreciousGemItem.removeArmorBonus(player);
+        GemBonusUtil.removeArmorBonus(player);
 
         for (EquipmentSlot slot : EquipmentSlot.values()) {
             if (slot.getType() == EquipmentSlot.Type.ARMOR) {
                 ItemStack armorSlot = player.getItemBySlot(slot);
-                PreciousGemItem.applyArmorGemBonuses(player, armorSlot, slot);
+                GemBonusUtil.applyArmorGemBonuses(player, armorSlot, slot);
             }
         }
 
-        PreciousGemItem.updatePlayerHealth(player);
+        GemBonusUtil.updatePlayerHealth(player);
 
         CompoundTag playerData = player.getPersistentData();
         UUID activeAmuletUUID;
@@ -1422,7 +1372,7 @@ public class ModEvents {
                         if (!necklaceItem.isEmpty() && necklaceItem.getItem() instanceof GoldenAmuletItem goldenAmuletItem) {
                             goldenAmuletItem.applyAmuletGemBonus(player, necklaceItem);
                         } else if (necklaceItem.isEmpty() || !(necklaceItem.getItem() instanceof GoldenAmuletItem)) {
-                            PreciousGemItem.removeAmuletBonus(player);
+                            GemBonusUtil.removeAmuletBonus(player);
                         }
                     });
                 });
@@ -1441,7 +1391,7 @@ public class ModEvents {
                     GoldenAmuletItem amuletItem = (GoldenAmuletItem) activeAmulet.get().getItem();
                     amuletItem.applyAmuletGemBonus(player, activeAmulet.get());
                 } else {
-                    PreciousGemItem.removeAmuletBonus(player);
+                    GemBonusUtil.removeAmuletBonus(player);
                     player.getPersistentData().remove("ActiveAmuletUUID");
 
                     for (ItemStack stack : player.getInventory().items) {
@@ -1514,6 +1464,10 @@ public class ModEvents {
         }
 
         if (event.phase == TickEvent.Phase.END && !player.level().isClientSide()) {
+            if (player instanceof ServerPlayer serverPlayer) {
+                DowsingRod.UseState.clearIfInactiveItem(serverPlayer);
+            }
+
             player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
                 if (riteData.isPlayerCursed()) {
                     //System.out.println("[Tick] Player " + player.getName().getString() + " is cursed.");
@@ -1556,14 +1510,9 @@ public class ModEvents {
                         }
                     }
 
-                    BlockPos currentAltarPos = riteData.getCurrentAltarPos();
-                    if (currentAltarPos == null) return;
-                    BlockEntity blockEntity = player.level().getBlockEntity(currentAltarPos);
-                    if (blockEntity instanceof CursedAltarBlockEntity altar) {
-                        Rite rite = altar.getPlayerRite(player.getUUID());
-                        if (rite != null) {
-                            rite.onPlayerTick(player);
-                        }
+                    Rite rite = RiteLocator.resolveActiveRite(player, riteData);
+                    if (rite != null) {
+                        rite.onPlayerTick(player);
                     }
                 }
             });

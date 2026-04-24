@@ -11,14 +11,17 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
-import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
-import net.turtleboi.ancientcurses.client.PlayerClientData;
-import net.turtleboi.ancientcurses.entity.CursedNodeEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.items.DowsingRodInfoPacketS2C;
-import net.turtleboi.ancientcurses.rites.EmbersRite;
 import net.turtleboi.ancientcurses.rites.Rite;
+import net.turtleboi.ancientcurses.rites.RiteLocator;
 import net.turtleboi.ancientcurses.util.AltarSavedData;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 public class DowsingRod extends Item {
     public DowsingRod(Properties properties) {
@@ -27,7 +30,7 @@ public class DowsingRod extends Item {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        if (level.isClientSide() || hand == InteractionHand.OFF_HAND || PlayerClientData.getItemUsed()) {
+        if (level.isClientSide() || hand == InteractionHand.OFF_HAND) {
             return super.use(level, player, hand);
         }
 
@@ -35,14 +38,26 @@ public class DowsingRod extends Item {
             return super.use(level, player, hand);
         }
 
-        serverPlayer.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
-            Rite activeRite = riteData.getActiveRite();
-            if (activeRite instanceof EmbersRite embersRite) {
-                findNearestNode(serverPlayer, embersRite);
+        if (UseState.isActive(serverPlayer)) {
+            UseState.clear(serverPlayer);
+            return InteractionResultHolder.success(player.getItemInHand(hand));
+        }
+
+        if (UseState.isOnCooldown(serverPlayer)) {
+            return InteractionResultHolder.fail(player.getItemInHand(hand));
+        }
+
+        Rite activeRite = RiteLocator.findActiveRite(serverPlayer);
+        if (activeRite != null) {
+            BlockPos target = activeRite.getGuidanceTarget(serverPlayer);
+            if (target != null) {
+                UseState.activate(serverPlayer, target);
             } else {
-                findNearestAltar(serverPlayer);
+                UseState.clear(serverPlayer);
             }
-        });
+        } else {
+            findNearestAltar(serverPlayer);
+        }
 
         return InteractionResultHolder.success(player.getItemInHand(hand));
     }
@@ -56,15 +71,7 @@ public class DowsingRod extends Item {
             return;
         }
 
-        if (!(pPlayer.getMainHandItem().getItem() instanceof DowsingRod) && PlayerClientData.getItemUsed()) {
-            ModNetworking.sendToPlayer(new DowsingRodInfoPacketS2C(
-                    false,
-                    0,
-                    0,
-                    0,
-                    0
-            ), serverPlayer);
-        }
+        UseState.clearIfInactiveItem(serverPlayer);
     }
 
     private void findNearestAltar(ServerPlayer serverPlayer) {
@@ -84,43 +91,85 @@ public class DowsingRod extends Item {
         }
 
         if (bestAltar != null) {
-            ModNetworking.sendToPlayer(new DowsingRodInfoPacketS2C(
-                    true,
-                    System.currentTimeMillis(),
-                    bestAltar.getX(),
-                    bestAltar.getY(),
-                    bestAltar.getZ()
-            ), serverPlayer);
+            UseState.activate(serverPlayer, bestAltar);
         } else {
             serverPlayer.sendSystemMessage(Component.literal("No altar found nearby."));
-            ModNetworking.sendToPlayer(new DowsingRodInfoPacketS2C(
-                    false, 0, 0, 0, 0
-            ), serverPlayer);
+            UseState.clear(serverPlayer);
         }
     }
 
-    private static void findActiveAltar(ServerPlayer serverPlayer, Rite rite) {
-        BlockPos altarPos = rite.getAltar().getBlockPos();
-        //serverPlayer.sendSystemMessage(Component.literal("All Rite complete! Returning you to the altar."));
-        ModNetworking.sendToPlayer(new DowsingRodInfoPacketS2C(
-                true,
-                System.currentTimeMillis(),
-                altarPos.getX(), altarPos.getY(), altarPos.getZ()
-        ), serverPlayer);
-    }
+    public static final class UseState {
+        private static final int USE_COOLDOWN_TICKS = 5;
+        private static final Set<UUID> ACTIVE_PLAYERS = new HashSet<>();
+        private static final Map<UUID, Long> NEXT_USE_TICK = new HashMap<>();
 
-    public static void findNearestNode(ServerPlayer serverPlayer, EmbersRite embersRite) {
-        BlockPos target = embersRite.findNearestIncompleteNode(serverPlayer);
-        if (target != null) {
+        private UseState() {
+        }
+
+        public static boolean isActive(ServerPlayer player) {
+            return ACTIVE_PLAYERS.contains(player.getUUID());
+        }
+
+        public static boolean isOnCooldown(ServerPlayer player) {
+            return player.level().getGameTime() < NEXT_USE_TICK.getOrDefault(player.getUUID(), 0L);
+        }
+
+        public static void activate(ServerPlayer player, BlockPos target) {
+            if (target == null) {
+                clear(player);
+                return;
+            }
+
+            ACTIVE_PLAYERS.add(player.getUUID());
+            putOnCooldown(player);
+            sendTarget(player, target);
+        }
+
+        public static void updateActiveTarget(ServerPlayer player, BlockPos target) {
+            if (!isActive(player)) {
+                return;
+            }
+
+            if (target == null) {
+                clear(player);
+                return;
+            }
+
+            sendTarget(player, target);
+        }
+
+        public static void clear(ServerPlayer player) {
+            if (!ACTIVE_PLAYERS.remove(player.getUUID())) {
+                return;
+            }
+
+            putOnCooldown(player);
+            ModNetworking.sendToPlayer(new DowsingRodInfoPacketS2C(false, 0, 0, 0, 0), player);
+        }
+
+        public static void clearIfInactiveItem(ServerPlayer player) {
+            if (isActive(player) && !(player.getMainHandItem().getItem() instanceof DowsingRod)) {
+                clear(player);
+            }
+        }
+
+        public static void clearWithoutPacket(ServerPlayer player) {
+            ACTIVE_PLAYERS.remove(player.getUUID());
+            NEXT_USE_TICK.remove(player.getUUID());
+        }
+
+        private static void sendTarget(ServerPlayer player, BlockPos target) {
             ModNetworking.sendToPlayer(new DowsingRodInfoPacketS2C(
                     true,
                     System.currentTimeMillis(),
                     target.getX(),
                     target.getY(),
                     target.getZ()
-            ), serverPlayer);
-        } else {
-            findActiveAltar(serverPlayer, embersRite);
+            ), player);
+        }
+
+        private static void putOnCooldown(ServerPlayer player) {
+            NEXT_USE_TICK.put(player.getUUID(), player.level().getGameTime() + USE_COOLDOWN_TICKS);
         }
     }
 }

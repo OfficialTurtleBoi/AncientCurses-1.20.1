@@ -16,7 +16,6 @@ import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.command.ClearCurseCommand;
 import net.turtleboi.ancientcurses.command.RiteCompletedCommand;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
-import net.turtleboi.ancientcurses.effect.CurseRegistry;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.enchantment.ModEnchantments;
 import net.turtleboi.ancientcurses.entity.ModEntities;
@@ -24,10 +23,11 @@ import net.turtleboi.ancientcurses.item.ModCreativeModeTabs;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
+import net.turtleboi.ancientcurses.rites.ModRites;
 import net.turtleboi.ancientcurses.screen.ModMenuTypes;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.ancientcurses.util.ModItemProperties;
-import net.turtleboi.ancientcurses.world.structures.ModStructures;
+import net.turtleboi.ancientcurses.worldgen.structures.ModStructureTypes;
 import org.slf4j.Logger;
 
 @Mod(AncientCurses.MOD_ID)
@@ -52,7 +52,7 @@ public class AncientCurses {
         ModBlockEntities.register(modEventBus);
         ModMenuTypes.register(modEventBus);
 
-        ModStructures.register(modEventBus);
+        ModStructureTypes.register(modEventBus);
 
         modEventBus.addListener(this::commonSetup);
 
@@ -68,7 +68,7 @@ public class AncientCurses {
         });
 
         ModItemProperties.addCustomItemProperties();
-        CurseRegistry.initialize();
+        ModRites.initialize();
         ModNetworking.register();
     }
 
