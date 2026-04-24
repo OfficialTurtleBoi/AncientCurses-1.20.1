@@ -4,9 +4,6 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
-import net.turtleboi.ancientcurses.AncientCurses;
-import net.turtleboi.ancientcurses.entity.client.renderer.CursedPortalRenderer;
 
 public class ModRenderTypes extends RenderType {
     private ModRenderTypes(String name, VertexFormat format, VertexFormat.Mode mode, int bufferSize, boolean useDelegate, boolean needsSorting, Runnable setupTask, Runnable clearTask) {

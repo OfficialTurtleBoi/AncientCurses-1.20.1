@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.entity.client.renderer;
+package net.turtleboi.ancientcurses.entity.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -14,8 +14,8 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.turtleboi.ancientcurses.AncientCurses;
-import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
-import net.turtleboi.ancientcurses.entity.client.model.CursedPortalModel;
+import net.turtleboi.ancientcurses.entity.entities.CursedPortalEntity;
+import net.turtleboi.ancientcurses.entity.model.CursedPortalModel;
 import org.jetbrains.annotations.NotNull;
 
 public class CursedPortalRenderer extends EntityRenderer<CursedPortalEntity> {

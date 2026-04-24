@@ -25,4 +25,9 @@ public class SoaringEnchantment extends Enchantment {
     public boolean checkCompatibility(@NotNull Enchantment pEnch) {
         return !(pEnch instanceof TailwindEnchantment) && super.checkCompatibility(pEnch);
     }
+
+    @Override
+    public boolean canApplyAtEnchantingTable(ItemStack stack) {
+        return canEnchant(stack);
+    }
 }

@@ -32,6 +32,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
@@ -45,6 +46,7 @@ import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
 import net.turtleboi.ancientcurses.network.packets.rites.RiteOverlayPacketC2S;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
+import net.turtleboi.ancientcurses.util.ModItemProperties;
 import net.turtleboi.turtlecore.client.data.ScreenEffectsData;
 import org.joml.Matrix4f;
 
@@ -117,6 +119,8 @@ public class ModClientEvents {
         }
     }
 
+
+
     @SubscribeEvent
     public static void onRenderFirstPerson(RenderHandEvent event) {
         MultiBufferSource bufferSource = event.getMultiBufferSource();
@@ -188,37 +192,30 @@ public class ModClientEvents {
             CompoundTag itemTag = itemStack.getTag();
 
             if (itemTag != null && itemTag.getBoolean("Socketable")) {
-                if (itemTag != null) {
-                    if (itemTag.contains("MainGem")) {
-                        ItemStack mainGemStack = ItemStack.of(itemTag.getCompound("MainGem"));
-                        event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.main_gem", mainGemStack.getHoverName().getString())
-                                .withStyle(ChatFormatting.GOLD));
-                    } else {
-                        event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.main_gem_none")
-                                .withStyle(ChatFormatting.GRAY));
-                    }
+                if (itemTag.contains("MainGem")) {
+                    ItemStack mainGemStack = ItemStack.of(itemTag.getCompound("MainGem"));
+                    event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.main_gem", mainGemStack.getHoverName().getString())
+                            .withStyle(ChatFormatting.GOLD));
+                } else {
+                    event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.main_gem_none")
+                            .withStyle(ChatFormatting.GRAY));
+                }
 
-                    if (itemTag.contains("MinorGems")) {
-                        ListTag minorGems = itemTag.getList("MinorGems", CompoundTag.TAG_COMPOUND);
-                        if (!minorGems.isEmpty()) {
-                            event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.minor_gems")
-                                    .withStyle(ChatFormatting.GREEN));
-                            for (int i = 0; i < minorGems.size(); i++) {
-                                ItemStack minorGemStack = ItemStack.of(minorGems.getCompound(i));
-                                event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.minor_gem_entry", minorGemStack.getHoverName().getString())
-                                        .withStyle(ChatFormatting.YELLOW));
-                            }
-                        } else {
-                            event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.minor_gems_none")
-                                    .withStyle(ChatFormatting.GRAY));
+                if (itemTag.contains("MinorGems")) {
+                    ListTag minorGems = itemTag.getList("MinorGems", CompoundTag.TAG_COMPOUND);
+                    if (!minorGems.isEmpty()) {
+                        event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.minor_gems")
+                                .withStyle(ChatFormatting.GREEN));
+                        for (int i = 0; i < minorGems.size(); i++) {
+                            ItemStack minorGemStack = ItemStack.of(minorGems.getCompound(i));
+                            event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.minor_gem_entry", minorGemStack.getHoverName().getString())
+                                    .withStyle(ChatFormatting.YELLOW));
                         }
                     } else {
                         event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.minor_gems_none")
                                 .withStyle(ChatFormatting.GRAY));
                     }
                 } else {
-                    event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.main_gem_none")
-                            .withStyle(ChatFormatting.GRAY));
                     event.getToolTip().add(Component.translatable("item.ancientcurses.amulet.minor_gems_none")
                             .withStyle(ChatFormatting.GRAY));
                 }

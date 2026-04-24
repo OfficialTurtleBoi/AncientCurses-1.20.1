@@ -20,5 +20,4 @@ public class ZephyrRushEnchantment extends Enchantment {
     public boolean checkCompatibility(@NotNull Enchantment pEnch) {
         return !(pEnch instanceof SeismicEnchantment) && super.checkCompatibility(pEnch);
     }
-
 }

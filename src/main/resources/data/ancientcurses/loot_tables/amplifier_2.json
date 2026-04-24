@@ -182,7 +182,7 @@
               "function": "minecraft:set_count",
               "count": {
                 "min": 1,
-                "max": 3
+                "max": 5
               }
             }
           ]
@@ -574,7 +574,77 @@
               }
             }
           ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "ancientcurses:golden_feather",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": 1
+            }
+          ],
+          "conditions": [
+            {
+              "condition": "minecraft:random_chance",
+              "chance": 0.1
+            }
+          ]
+        }        ,
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:enchanted_book",
+          "functions": [
+            {
+              "function": "minecraft:enchant_with_levels",
+              "levels": {
+                "min": 20,
+                "max": 30
+              },
+              "treasure": true
+            },
+            {
+              "function": "minecraft:set_enchantments",
+              "enchantments": {
+                "ancientcurses:seismic": 1
+              }
+            }
+          ],
+          "conditions": [
+            {
+              "condition": "minecraft:random_chance",
+              "chance": 0.3
+            }
+          ]
         }
+      ,
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:enchanted_book",
+          "functions": [
+            {
+              "function": "minecraft:enchant_with_levels",
+              "levels": {
+                "min": 20,
+                "max": 30
+              },
+              "treasure": true
+            },
+            {
+              "function": "minecraft:set_enchantments",
+              "enchantments": {
+                "ancientcurses:zephyr_rush": 1
+              }
+            }
+          ],
+          "conditions": [
+            {
+              "condition": "minecraft:random_chance",
+              "chance": 0.3
+            }
+          ]
+        }
+
       ]
     }
   ]

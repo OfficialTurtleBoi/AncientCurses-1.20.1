@@ -2,10 +2,8 @@ package net.turtleboi.ancientcurses.network.packets;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkEvent;
-import net.turtleboi.ancientcurses.client.PlayerClientData;
-import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
+import net.turtleboi.ancientcurses.entity.entities.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 
 import java.util.List;

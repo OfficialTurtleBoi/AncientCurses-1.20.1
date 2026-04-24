@@ -7,10 +7,19 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
+import net.turtleboi.ancientcurses.entity.entities.AncientWraithEntity;
+import net.turtleboi.ancientcurses.entity.entities.CursedNodeEntity;
+import net.turtleboi.ancientcurses.entity.entities.CursedPortalEntity;
+import net.turtleboi.ancientcurses.entity.entities.items.ThrownCursedPearl;
 
 public class ModEntities {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
             DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, AncientCurses.MOD_ID);
+
+    public static final RegistryObject<EntityType<AncientWraithEntity>> ANCIENT_WRAITH =
+            ENTITY_TYPES.register("ancient_wraith" , () -> EntityType.Builder.of(AncientWraithEntity::new, MobCategory.MONSTER)
+                    .sized(0.5F, 1.125F)
+                    .build("ancient_wraith"));
 
     public static final RegistryObject<EntityType<CursedPortalEntity>> CURSED_PORTAL =
             ENTITY_TYPES.register("cursed_portal" , () -> EntityType.Builder.of(CursedPortalEntity::new, MobCategory.MISC)
