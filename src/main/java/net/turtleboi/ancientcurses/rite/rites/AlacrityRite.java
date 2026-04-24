@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.rites;
+package net.turtleboi.ancientcurses.rite.rites;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -6,6 +6,8 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
+import net.turtleboi.ancientcurses.rite.ModRites;
+import net.turtleboi.ancientcurses.rite.Rite;
 
 public class AlacrityRite implements Rite {
     @Override

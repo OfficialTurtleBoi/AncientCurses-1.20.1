@@ -10,7 +10,7 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.AutoRegisterCapability;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.turtleboi.ancientcurses.rites.RiteRecord;
+import net.turtleboi.ancientcurses.rite.util.RiteRecord;
 
 import java.util.ArrayList;
 import java.util.List;

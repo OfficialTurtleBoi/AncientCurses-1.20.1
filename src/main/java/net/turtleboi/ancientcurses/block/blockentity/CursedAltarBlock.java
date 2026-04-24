@@ -26,8 +26,8 @@ import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
-import net.turtleboi.ancientcurses.rites.Rite;
-import net.turtleboi.ancientcurses.rites.RiteLocator;
+import net.turtleboi.ancientcurses.rite.Rite;
+import net.turtleboi.ancientcurses.rite.util.RiteLocator;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;

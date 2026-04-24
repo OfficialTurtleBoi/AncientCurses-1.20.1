@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.rites;
+package net.turtleboi.ancientcurses.rite.rites;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,28 +24,27 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
-import net.turtleboi.ancientcurses.effect.CurseRegistry;
+import net.turtleboi.ancientcurses.client.rites.SacrificeClientRiteState;
+import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
+import net.turtleboi.ancientcurses.rite.ModRites;
+import net.turtleboi.ancientcurses.rite.Rite;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 
 public class SacrificeRite implements Rite {
+    private static final String MAX_DEGREES_KEY = "MaxDegrees";
     private UUID playerUUID;
     private MobEffect effect;
     private int amplifier;
     private CursedAltarBlockEntity altar;
     private boolean completed;
+    private int maxDegrees = 3;
 
     private int totalHealthOffered;
 
-    public static final int baseFirstDegreeThresholdHealth = 20;
-    public static final int baseSecondDegreeThresholdHealth = 60;
-    public static final int baseThirdDegreeThresholdHealth = 120;
-
-    private boolean completedFirstDegree;
-    private boolean completedSecondDegree;
-    private boolean completedThirdDegree;
+    public static final int baseDegreeThresholdHealth = 20;
 
     private static final double offeringMaxDistance = 6.0D;
 
@@ -57,13 +56,10 @@ public class SacrificeRite implements Rite {
         this.completed = false;
 
         this.totalHealthOffered = 0;
-        this.completedFirstDegree = false;
-        this.completedSecondDegree = false;
-        this.completedThirdDegree = false;
 
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
             riteData.setCurseEffect(effect);
-            riteData.setActiveRite(this);
+            //riteData.setActiveRite(this);
         });
     }
 
@@ -75,7 +71,7 @@ public class SacrificeRite implements Rite {
 
     @Override
     public String getType() {
-        return Rite.sacrificeRite;
+        return getId().toString();
     }
 
     @Override
@@ -106,7 +102,7 @@ public class SacrificeRite implements Rite {
 
     @Override
     public boolean isRiteCompleted(Player player) {
-        return completedThirdDegree;
+        return completedDegreeIndex() >= getMaxDegrees();
     }
 
     @Override
@@ -115,6 +111,7 @@ public class SacrificeRite implements Rite {
         tag.putString("Effect", Objects.requireNonNull(ForgeRegistries.MOB_EFFECTS.getKey(effect)).toString());
         tag.putInt("TotalHealthOffered", totalHealthOffered);
         tag.putBoolean("Completed", completed);
+        tag.putInt(MAX_DEGREES_KEY, maxDegrees);
     }
 
     @Override
@@ -124,10 +121,28 @@ public class SacrificeRite implements Rite {
         this.effect = ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(effectName));
         this.totalHealthOffered = tag.getInt("TotalHealthOffered");
         this.completed = tag.getBoolean("Completed");
+        this.maxDegrees = Math.max(1, tag.contains(MAX_DEGREES_KEY) ? tag.getInt(MAX_DEGREES_KEY) : 3);
+    }
 
-        this.completedFirstDegree = totalHealthOffered >= getFirstDegreeThresholdHalfHearts();
-        this.completedSecondDegree = totalHealthOffered >= getSecondDegreeThresholdHalfHearts();
-        this.completedThirdDegree = totalHealthOffered >= getThirdDegreeThresholdHalfHearts();
+    @Override
+    public ResourceLocation getId() {
+        return ModRites.SACRIFICE;
+    }
+
+    @Override
+    public int getMaxDegrees() {
+        return maxDegrees;
+    }
+
+    @Override
+    public void setMaxDegrees(int maxDegrees) {
+        this.maxDegrees = Math.max(1, maxDegrees);
+    }
+
+    @Override
+    public boolean canConcludeAtAltar() {
+        int completionDegree = completedDegreeIndex();
+        return completionDegree >= 1 && completionDegree < getMaxDegrees();
     }
 
     @Override
@@ -185,20 +200,19 @@ public class SacrificeRite implements Rite {
         });
 
         int nextThreshold = getNextThresholdHalfHearts();
+        int completedDegrees = completedDegreeIndex();
+        int totalDegrees = getMaxDegrees();
+        int activeDegreeIndex = isRiteCompleted(player) ? -1 : Math.min(completedDegrees, totalDegrees - 1);
 
         ModNetworking.sendToPlayer(
-                new SyncRiteDataS2C(
-                        Rite.sacrificeRite,
+                SyncRiteDataS2C.fromState(new SacrificeClientRiteState(
                         isRiteCompleted(player),
-                        "Health Offered",
                         totalHealthOffered,
-                        0,
                         nextThreshold,
-                        0, 0,
-                        "",
-                        completedDegreeIndex(),
-                        0
-                ),
+                        totalDegrees,
+                        completedDegrees,
+                        activeDegreeIndex
+                )),
                 (ServerPlayer) player
         );
     }
@@ -206,15 +220,14 @@ public class SacrificeRite implements Rite {
     @Override
     public void concludeRite(Player player) {
         ModNetworking.sendToPlayer(
-                new SyncRiteDataS2C(
-                        Rite.sacrificeRite,
+                SyncRiteDataS2C.fromState(new SacrificeClientRiteState(
                         true,
-                        "Complete",
-                        0, 0, 0, 0, 0,
-                        "",
-                        3,
-                        0
-                ),
+                        totalHealthOffered,
+                        getThresholdHalfHearts(getMaxDegrees()),
+                        getMaxDegrees(),
+                        getMaxDegrees(),
+                        -1
+                )),
                 (ServerPlayer) player
         );
 
@@ -223,7 +236,7 @@ public class SacrificeRite implements Rite {
         List<MobEffect> cursesToRemove = new ArrayList<>();
         for (var effectInstance : player.getActiveEffects()) {
             MobEffect mobEffect = effectInstance.getEffect();
-            if (CurseRegistry.getCurses().contains(mobEffect)) {
+            if (ModEffects.isCurseEffect(mobEffect)) {
                 cursesToRemove.add(mobEffect);
             }
         }
@@ -269,38 +282,31 @@ public class SacrificeRite implements Rite {
     }
 
     private void checkDegreesAndMaybeConclude(Player player) {
-        completedFirstDegree  = totalHealthOffered >= getFirstDegreeThresholdHalfHearts();
-        completedSecondDegree = totalHealthOffered >= getSecondDegreeThresholdHalfHearts();
-        completedThirdDegree  = totalHealthOffered >= getThirdDegreeThresholdHalfHearts();
-
         if (isRiteCompleted(player)) {
             concludeRite(player);
         }
     }
 
     private int completedDegreeIndex() {
-        if (completedThirdDegree) return 3;
-        if (completedSecondDegree) return 2;
-        if (completedFirstDegree) return 1;
-        return 0;
+        int completedDegrees = 0;
+        for (int degree = 1; degree <= getMaxDegrees(); degree++) {
+            if (totalHealthOffered >= getThresholdHalfHearts(degree)) {
+                completedDegrees = degree;
+            } else {
+                break;
+            }
+        }
+        return completedDegrees;
     }
 
-    private int getFirstDegreeThresholdHalfHearts() {
-        return scaleThreshold(baseFirstDegreeThresholdHealth);
-    }
-
-    private int getSecondDegreeThresholdHalfHearts() {
-        return scaleThreshold(baseSecondDegreeThresholdHealth);
-    }
-
-    private int getThirdDegreeThresholdHalfHearts() {
-        return scaleThreshold(baseThirdDegreeThresholdHealth);
+    private int getThresholdHalfHearts(int degreeNumber) {
+        int triangularScale = degreeNumber * (degreeNumber + 1) / 2;
+        return scaleThreshold(baseDegreeThresholdHealth * triangularScale);
     }
 
     private int getNextThresholdHalfHearts() {
-        if (!completedFirstDegree) return getFirstDegreeThresholdHalfHearts();
-        if (!completedSecondDegree) return getSecondDegreeThresholdHalfHearts();
-        return getThirdDegreeThresholdHalfHearts();
+        int nextDegree = Math.min(getMaxDegrees(), completedDegreeIndex() + 1);
+        return getThresholdHalfHearts(nextDegree);
     }
 
     private int scaleThreshold(int baseHalfHearts) {

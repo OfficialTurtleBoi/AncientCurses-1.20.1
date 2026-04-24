@@ -2,7 +2,7 @@ package net.turtleboi.ancientcurses.client.rites;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.turtleboi.ancientcurses.rites.ModRites;
+import net.turtleboi.ancientcurses.rite.ModRites;
 
 public class CarnageClientRiteState implements ClientRiteState {
     private static final String TARGET_KEY = "EliminationTarget";
@@ -19,9 +19,13 @@ public class CarnageClientRiteState implements ClientRiteState {
     private final int waveKillTotal;
     private final long durationElapsed;
     private final long durationTotal;
+    private final int totalDegrees;
+    private final int completedDegrees;
+    private final int activeDegreeIndex;
 
     public CarnageClientRiteState(boolean complete, String eliminationTarget, int waveCount, int killsRemaining,
-                                  int waveKillTotal, long durationElapsed, long durationTotal) {
+                                  int waveKillTotal, long durationElapsed, long durationTotal,
+                                  int totalDegrees, int completedDegrees, int activeDegreeIndex) {
         this.complete = complete;
         this.eliminationTarget = eliminationTarget;
         this.waveCount = waveCount;
@@ -29,6 +33,9 @@ public class CarnageClientRiteState implements ClientRiteState {
         this.waveKillTotal = waveKillTotal;
         this.durationElapsed = durationElapsed;
         this.durationTotal = durationTotal;
+        this.totalDegrees = totalDegrees;
+        this.completedDegrees = completedDegrees;
+        this.activeDegreeIndex = activeDegreeIndex;
     }
 
     public static CarnageClientRiteState fromTag(boolean complete, CompoundTag tag) {
@@ -39,7 +46,10 @@ public class CarnageClientRiteState implements ClientRiteState {
                 tag.getInt(KILLS_REMAINING_KEY),
                 tag.getInt(WAVE_KILL_TOTAL_KEY),
                 tag.getLong(DURATION_ELAPSED_KEY),
-                tag.getLong(DURATION_TOTAL_KEY)
+                tag.getLong(DURATION_TOTAL_KEY),
+                tag.getInt(TOTAL_DEGREES_KEY),
+                tag.getInt(COMPLETED_DEGREES_KEY),
+                tag.getInt(ACTIVE_DEGREE_INDEX_KEY)
         );
     }
 
@@ -76,8 +86,23 @@ public class CarnageClientRiteState implements ClientRiteState {
     }
 
     @Override
+    public int getTotalDegrees() {
+        return totalDegrees;
+    }
+
+    @Override
+    public int getCompletedDegrees() {
+        return completedDegrees;
+    }
+
+    @Override
+    public int getActiveDegreeIndex() {
+        return activeDegreeIndex;
+    }
+
+    @Override
     public CompoundTag toTag() {
-        CompoundTag tag = new CompoundTag();
+        CompoundTag tag = ClientRiteState.super.toTag();
         tag.putString(TARGET_KEY, eliminationTarget);
         tag.putInt(WAVE_COUNT_KEY, waveCount);
         tag.putInt(KILLS_REMAINING_KEY, killsRemaining);

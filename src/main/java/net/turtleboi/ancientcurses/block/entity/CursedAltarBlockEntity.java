@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -28,7 +27,8 @@ import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
-import net.turtleboi.ancientcurses.rites.*;
+import net.turtleboi.ancientcurses.rite.*;
+import net.turtleboi.ancientcurses.rite.util.RiteRecord;
 import net.turtleboi.ancientcurses.util.AltarSavedData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -346,6 +346,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
         if (rite == null) {
             throw new IllegalStateException("No rite registered for curse " + curse + " in rite id " + curseEntry.riteId());
         }
+        rite.setMaxDegrees(determineMaxDegreesForNewRite());
         addPlayerRite(playerUUID, rite);
 
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
@@ -362,6 +363,10 @@ public class CursedAltarBlockEntity extends BlockEntity {
         player.addEffect(new MobEffectInstance(curse, rite.getCurseEffectDurationTicks(curseDuration), curseAmplifier, false, false, true));
 
         rite.syncToClient(player);
+    }
+
+    private int determineMaxDegreesForNewRite() {
+        return hasPendingGemFusion() ? 1 : 3;
     }
 
     public boolean hasPlayerCompletedRite(Player player) {

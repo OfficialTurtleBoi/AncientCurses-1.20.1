@@ -1,7 +1,7 @@
 package net.turtleboi.ancientcurses.client.rites;
 
 import net.minecraft.nbt.CompoundTag;
-import net.turtleboi.ancientcurses.rites.ModRites;
+import net.turtleboi.ancientcurses.rite.ModRites;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +13,7 @@ public final class ClientRiteStateRegistry {
         register(ModRites.CARNAGE.toString(), CarnageClientRiteState::fromTag);
         register(ModRites.EMBERS.toString(), EmbersClientRiteState::fromTag);
         register(ModRites.FAMINE.toString(), FamineClientRiteState::fromTag);
+        register(ModRites.SACRIFICE.toString(), SacrificeClientRiteState::fromTag);
     }
 
     private ClientRiteStateRegistry() {

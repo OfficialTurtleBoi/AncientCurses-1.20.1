@@ -1,8 +1,10 @@
-package net.turtleboi.ancientcurses.rites;
+package net.turtleboi.ancientcurses.rite.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.turtleboi.ancientcurses.rite.ModRites;
+
 import java.util.Objects;
 
 public class RiteRecord {

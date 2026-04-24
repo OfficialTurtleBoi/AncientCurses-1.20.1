@@ -11,8 +11,7 @@ import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.item.items.SoulShardItem;
-import net.turtleboi.ancientcurses.rites.ModRites;
-import net.turtleboi.ancientcurses.rites.Rite;
+import net.turtleboi.ancientcurses.rite.ModRites;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.ancientcurses.util.ModTags;
 

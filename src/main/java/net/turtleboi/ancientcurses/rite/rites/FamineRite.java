@@ -1,11 +1,10 @@
-package net.turtleboi.ancientcurses.rites;
+package net.turtleboi.ancientcurses.rite.rites;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -19,26 +18,21 @@ import net.turtleboi.ancientcurses.client.rites.FamineClientRiteState;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
+import net.turtleboi.ancientcurses.rite.AbstractRite;
+import net.turtleboi.ancientcurses.rite.ModRites;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class FamineRite extends AbstractRite {
     private static final String CURRENT_DEGREE_KEY = "CurrentDegree";
     private static final String AMPLIFIER_KEY = "Amplifier";
-    private static final String COMPLETED_FIRST_KEY = "CompletedFirst";
-    private static final String COMPLETED_SECOND_KEY = "CompletedSecond";
-    private static final String COMPLETED_THIRD_KEY = "CompletedThird";
 
     private int amplifier;
     private int currentDegree = 0;
-    public boolean completedFirstDegree;
-    public boolean completedSecondDegree;
-    public boolean completedThirdDegree;
 
     private final List<Item> degreeItems = new ArrayList<>();
     private final List<Integer> degreeCounts = new ArrayList<>();
@@ -50,16 +44,7 @@ public class FamineRite extends AbstractRite {
         this.playerUUID = player.getUUID();
         this.effect = effect;
         this.amplifier = amplifier + 1;
-
-        for (int i = 0; i < 3; i++) {
-            Item item = selectRandomItem();
-            degreeItems.add(item);
-            degreeCounts.add(calculateRequiredCount(this.amplifier));
-            degreeCollected.add(0);
-            ItemStack stack = new ItemStack(item);
-            Component itemNameComponent = stack.getDisplayName();
-            degreeItemNames.add(itemNameComponent.getString());
-        }
+        ensureDegreeDataSize();
     }
 
     public FamineRite(CursedAltarBlockEntity altar) {
@@ -98,9 +83,6 @@ public class FamineRite extends AbstractRite {
         saveBaseData(tag);
         tag.putInt(CURRENT_DEGREE_KEY, currentDegree);
         tag.putInt(AMPLIFIER_KEY, amplifier);
-        tag.putBoolean(COMPLETED_FIRST_KEY, completedFirstDegree);
-        tag.putBoolean(COMPLETED_SECOND_KEY, completedSecondDegree);
-        tag.putBoolean(COMPLETED_THIRD_KEY, completedThirdDegree);
 
         for (int i = 0; i < degreeItems.size(); i++) {
             tag.putString("DegreeItem_" + i, ForgeRegistries.ITEMS.getKey(degreeItems.get(i)).toString());
@@ -115,16 +97,13 @@ public class FamineRite extends AbstractRite {
         loadBaseData(tag);
         this.currentDegree = tag.getInt(CURRENT_DEGREE_KEY);
         this.amplifier = tag.getInt(AMPLIFIER_KEY);
-        this.completedFirstDegree = tag.getBoolean(COMPLETED_FIRST_KEY);
-        this.completedSecondDegree = tag.getBoolean(COMPLETED_SECOND_KEY);
-        this.completedThirdDegree = tag.getBoolean(COMPLETED_THIRD_KEY);
 
         degreeItems.clear();
         degreeCounts.clear();
         degreeCollected.clear();
         degreeItemNames.clear();
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < getMaxDegrees(); i++) {
             ResourceLocation itemId = new ResourceLocation(tag.getString("DegreeItem_" + i));
             degreeItems.add(ForgeRegistries.ITEMS.getValue(itemId));
             degreeCounts.add(tag.getInt("DegreeCount_" + i));
@@ -147,30 +126,12 @@ public class FamineRite extends AbstractRite {
 
     @Override
     public boolean isRiteCompleted(Player player) {
-        if (altar.hasPendingGemFusion()) {
-            return completed || completedFirstDegree;
-        }
-        return completed || completedThirdDegree;
+        return completed || getCompletionDegree() >= getMaxDegrees();
     }
 
     @Override
     public int getCompletionDegree() {
-        if (completedThirdDegree) {
-            return 3;
-        }
-        if (completedSecondDegree) {
-            return 2;
-        }
-        if (completedFirstDegree) {
-            return 1;
-        }
-        return 0;
-    }
-
-    @Override
-    public boolean canConcludeAtAltar() {
-        int completionDegree = getCompletionDegree();
-        return completionDegree >= 1 && completionDegree < 3;
+        return Math.min(currentDegree, getMaxDegrees());
     }
 
     @Override
@@ -194,21 +155,11 @@ public class FamineRite extends AbstractRite {
     }
 
     public void advanceDegree(Player player) {
-        if (currentDegree < 3) {
+        if (currentDegree < getMaxDegrees()) {
             currentDegree++;
         }
 
-        if (currentDegree == 1) {
-            completedFirstDegree = true;
-        } else if (currentDegree == 2) {
-            completedSecondDegree = true;
-        } else if (currentDegree == 3) {
-            completedThirdDegree = true;
-        }
-
-        if (altar.hasPendingGemFusion() && completedFirstDegree) {
-            concludeRite(player);
-        } else if (completedThirdDegree) {
+        if (getCompletionDegree() >= getMaxDegrees()) {
             concludeRite(player);
         } else {
             trackProgress(player);
@@ -216,25 +167,25 @@ public class FamineRite extends AbstractRite {
     }
 
     public void incrementFetchCount(int itemCount) {
-        int collected = degreeCollected.get(currentDegree);
+        int collected = degreeCollected.get(getActiveDegreeIndexForProgress());
         collected += itemCount;
-        degreeCollected.set(currentDegree, collected);
+        degreeCollected.set(getActiveDegreeIndexForProgress(), collected);
     }
 
     public Item getRequiredItem() {
-        return degreeItems.get(currentDegree);
+        return degreeItems.get(getActiveDegreeIndexForProgress());
     }
 
     public int getRequiredCount() {
-        return degreeCounts.get(currentDegree);
+        return degreeCounts.get(getActiveDegreeIndexForProgress());
     }
 
     public int getCollectedCount() {
-        return degreeCollected.get(currentDegree);
+        return degreeCollected.get(getActiveDegreeIndexForProgress());
     }
 
     public String getCurrentItemName() {
-        return degreeItemNames.get(currentDegree);
+        return degreeItemNames.get(getActiveDegreeIndexForProgress());
     }
 
     @Override
@@ -291,11 +242,50 @@ public class FamineRite extends AbstractRite {
 
     @Override
     protected SyncRiteDataS2C buildSyncPacket(Player player) {
+        int completedDegrees = getCompletionDegree();
+        int totalDegrees = getDisplayDegreeCount();
+        int activeDegreeIndex = isRiteCompleted(player) ? -1 : Math.min(currentDegree, totalDegrees - 1);
         return SyncRiteDataS2C.fromState(new FamineClientRiteState(
                 isRiteCompleted(player),
                 getCurrentItemName(),
                 getCollectedCount(),
-                getRequiredCount()
+                getRequiredCount(),
+                totalDegrees,
+                completedDegrees,
+                activeDegreeIndex
         ));
+    }
+
+    @Override
+    public void setMaxDegrees(int maxDegrees) {
+        super.setMaxDegrees(maxDegrees);
+        ensureDegreeDataSize();
+    }
+
+    private void ensureDegreeDataSize() {
+        while (degreeItems.size() < getMaxDegrees()) {
+            Item item = selectRandomItem();
+            degreeItems.add(item);
+            degreeCounts.add(calculateRequiredCount(this.amplifier));
+            degreeCollected.add(0);
+            ItemStack stack = new ItemStack(item);
+            Component itemNameComponent = stack.getDisplayName();
+            degreeItemNames.add(itemNameComponent.getString());
+        }
+
+        trimToMaxDegrees(degreeItems);
+        trimToMaxDegrees(degreeCounts);
+        trimToMaxDegrees(degreeCollected);
+        trimToMaxDegrees(degreeItemNames);
+    }
+
+    private int getActiveDegreeIndexForProgress() {
+        return Math.min(currentDegree, Math.max(0, getMaxDegrees() - 1));
+    }
+
+    private <T> void trimToMaxDegrees(List<T> values) {
+        while (values.size() > getMaxDegrees()) {
+            values.remove(values.size() - 1);
+        }
     }
 }

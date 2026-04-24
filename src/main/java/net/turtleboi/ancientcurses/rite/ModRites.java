@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.rites;
+package net.turtleboi.ancientcurses.rite;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -9,6 +9,9 @@ import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.rite.rites.CarnageRite;
+import net.turtleboi.ancientcurses.rite.rites.EmbersRite;
+import net.turtleboi.ancientcurses.rite.rites.FamineRite;
 
 import java.util.ArrayList;
 import java.util.Collection;

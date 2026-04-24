@@ -12,8 +12,8 @@ import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
-import net.turtleboi.ancientcurses.rites.ModRites;
-import net.turtleboi.ancientcurses.rites.Rite;
+import net.turtleboi.ancientcurses.rite.ModRites;
+import net.turtleboi.ancientcurses.rite.Rite;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 

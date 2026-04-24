@@ -4,36 +4,32 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.turtleboi.ancientcurses.rite.ModRites;
 
-public class FamineClientRiteState implements ClientRiteState {
-    private static final String FETCH_ITEM_KEY = "FetchItem";
-    private static final String FETCH_ITEMS_KEY = "FetchItems";
-    private static final String FETCH_ITEMS_REQUIRED_KEY = "FetchItemsRequired";
+public class SacrificeClientRiteState implements ClientRiteState {
+    private static final String TOTAL_HEALTH_OFFERED_KEY = "TotalHealthOffered";
+    private static final String NEXT_THRESHOLD_KEY = "NextThreshold";
 
     private final boolean complete;
-    private final String fetchItem;
-    private final int fetchItems;
-    private final int fetchItemsRequired;
+    private final int totalHealthOffered;
+    private final int nextThreshold;
     private final int totalDegrees;
     private final int completedDegrees;
     private final int activeDegreeIndex;
 
-    public FamineClientRiteState(boolean complete, String fetchItem, int fetchItems, int fetchItemsRequired,
-                                 int totalDegrees, int completedDegrees, int activeDegreeIndex) {
+    public SacrificeClientRiteState(boolean complete, int totalHealthOffered, int nextThreshold,
+                                    int totalDegrees, int completedDegrees, int activeDegreeIndex) {
         this.complete = complete;
-        this.fetchItem = fetchItem;
-        this.fetchItems = fetchItems;
-        this.fetchItemsRequired = fetchItemsRequired;
+        this.totalHealthOffered = totalHealthOffered;
+        this.nextThreshold = nextThreshold;
         this.totalDegrees = totalDegrees;
         this.completedDegrees = completedDegrees;
         this.activeDegreeIndex = activeDegreeIndex;
     }
 
-    public static FamineClientRiteState fromTag(boolean complete, CompoundTag tag) {
-        return new FamineClientRiteState(
+    public static SacrificeClientRiteState fromTag(boolean complete, CompoundTag tag) {
+        return new SacrificeClientRiteState(
                 complete,
-                tag.getString(FETCH_ITEM_KEY),
-                tag.getInt(FETCH_ITEMS_KEY),
-                tag.getInt(FETCH_ITEMS_REQUIRED_KEY),
+                tag.getInt(TOTAL_HEALTH_OFFERED_KEY),
+                tag.getInt(NEXT_THRESHOLD_KEY),
                 tag.getInt(TOTAL_DEGREES_KEY),
                 tag.getInt(COMPLETED_DEGREES_KEY),
                 tag.getInt(ACTIVE_DEGREE_INDEX_KEY)
@@ -42,7 +38,7 @@ public class FamineClientRiteState implements ClientRiteState {
 
     @Override
     public String getRiteId() {
-        return ModRites.FAMINE.toString();
+        return ModRites.SACRIFICE.toString();
     }
 
     @Override
@@ -52,10 +48,10 @@ public class FamineClientRiteState implements ClientRiteState {
 
     @Override
     public float getProgress() {
-        if (fetchItemsRequired == 0) {
-            return 0.0F;
+        if (nextThreshold <= 0) {
+            return complete ? 1.0F : 0.0F;
         }
-        return Math.min(1.0F, (float) fetchItems / (float) fetchItemsRequired);
+        return Math.min(1.0F, (float) totalHealthOffered / (float) nextThreshold);
     }
 
     @Override
@@ -64,7 +60,7 @@ public class FamineClientRiteState implements ClientRiteState {
             return Component.translatable("trial.ancientcurses.complete");
         }
 
-        return Component.translatable("trial.ancientcurses.fetch", fetchItems, fetchItemsRequired, fetchItem);
+        return Component.literal("Health Offered: " + totalHealthOffered + " / " + nextThreshold);
     }
 
     @Override
@@ -85,9 +81,8 @@ public class FamineClientRiteState implements ClientRiteState {
     @Override
     public CompoundTag toTag() {
         CompoundTag tag = ClientRiteState.super.toTag();
-        tag.putString(FETCH_ITEM_KEY, fetchItem);
-        tag.putInt(FETCH_ITEMS_KEY, fetchItems);
-        tag.putInt(FETCH_ITEMS_REQUIRED_KEY, fetchItemsRequired);
+        tag.putInt(TOTAL_HEALTH_OFFERED_KEY, totalHealthOffered);
+        tag.putInt(NEXT_THRESHOLD_KEY, nextThreshold);
         return tag;
     }
 }

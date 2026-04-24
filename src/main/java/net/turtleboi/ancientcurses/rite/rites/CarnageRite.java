@@ -1,11 +1,10 @@
-package net.turtleboi.ancientcurses.rites;
+package net.turtleboi.ancientcurses.rite.rites;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -17,25 +16,26 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.client.rites.CarnageClientRiteState;
-import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
+import net.turtleboi.ancientcurses.entity.entities.CursedPortalEntity;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
+import net.turtleboi.ancientcurses.rite.AbstractRite;
+import net.turtleboi.ancientcurses.rite.ModRites;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class CarnageRite extends AbstractRite {
     private static final String AMPLIFIER_KEY = "Amplifier";
+    private static final String CURRENT_DEGREE_KEY = "CurrentDegree";
     private static final String CURRENT_WAVE_KEY = "CurrentWave";
     private static final String WAVE_DELAY_KEY = "WaveDelay";
     private static final String WAVE_KILL_TOTAL_KEY = "WaveKillTotal";
     private static final String ELIMINATION_TARGET_KEY = "EliminationTarget";
     private static final String ELIMINATION_TARGET_STRING_KEY = "EliminationTargetString";
-    private static final String COMPLETED_FIRST_KEY = "CompletedFirstDegree";
-    private static final String COMPLETED_SECOND_KEY = "CompletedSecondDegree";
-    private static final String COMPLETED_THIRD_KEY = "CompletedThirdDegree";
 
     private int amplifier;
 
+    private int currentDegree;
     private int currentWave;
     private int waveDelay;
 
@@ -44,13 +44,6 @@ public class CarnageRite extends AbstractRite {
     private int waveKillTotal;
 
     private List<Entity> activeMobs = new ArrayList<>();
-
-    public static final int firstDegreeThreshold = 1;
-    public boolean completedFirstDegree;
-    public static final int secondDegreeThreshold = 3;
-    public boolean completedSecondDegree;
-    public static final int thirdDegreeThreshold = 5;
-    public boolean completedThirdDegree;
 
     public static final String eliminationCount = "EliminationCount";
     public static final String eliminationRequirement = "EliminationRequirement";
@@ -61,11 +54,9 @@ public class CarnageRite extends AbstractRite {
         this.effect = effect;
         this.amplifier = amplifier + 1;
         this.eliminationTarget = selectRandomTargetMob();
+        this.currentDegree = 0;
         this.currentWave = 0;
         this.waveDelay = 200;
-        this.completedFirstDegree = false;
-        this.completedSecondDegree = false;
-        this.completedThirdDegree = false;
         if (this.eliminationTarget != null) {
             this.eliminationTargetString = this.eliminationTarget.getDescription().getString();
         }
@@ -85,6 +76,7 @@ public class CarnageRite extends AbstractRite {
     public void saveToNBT(CompoundTag tag) {
         saveBaseData(tag);
         tag.putInt(AMPLIFIER_KEY, amplifier);
+        tag.putInt(CURRENT_DEGREE_KEY, currentDegree);
         tag.putInt(CURRENT_WAVE_KEY, currentWave);
         tag.putInt(WAVE_DELAY_KEY, waveDelay);
         tag.putInt(WAVE_KILL_TOTAL_KEY, waveKillTotal);
@@ -92,15 +84,13 @@ public class CarnageRite extends AbstractRite {
             tag.putString(ELIMINATION_TARGET_KEY, Objects.requireNonNull(ForgeRegistries.ENTITY_TYPES.getKey(eliminationTarget)).toString());
         }
         tag.putString(ELIMINATION_TARGET_STRING_KEY, eliminationTargetString != null ? eliminationTargetString : "");
-        tag.putBoolean(COMPLETED_FIRST_KEY, completedFirstDegree);
-        tag.putBoolean(COMPLETED_SECOND_KEY, completedSecondDegree);
-        tag.putBoolean(COMPLETED_THIRD_KEY, completedThirdDegree);
     }
 
     @Override
     public void loadFromNBT(CompoundTag tag) {
         loadBaseData(tag);
         this.amplifier = tag.getInt(AMPLIFIER_KEY);
+        this.currentDegree = tag.getInt(CURRENT_DEGREE_KEY);
         this.currentWave = tag.getInt(CURRENT_WAVE_KEY);
         this.waveDelay = tag.getInt(WAVE_DELAY_KEY);
         this.waveKillTotal = tag.getInt(WAVE_KILL_TOTAL_KEY);
@@ -114,9 +104,6 @@ public class CarnageRite extends AbstractRite {
         } else {
             this.eliminationTargetString = "";
         }
-        this.completedFirstDegree = tag.getBoolean(COMPLETED_FIRST_KEY);
-        this.completedSecondDegree = tag.getBoolean(COMPLETED_SECOND_KEY);
-        this.completedThirdDegree = tag.getBoolean(COMPLETED_THIRD_KEY);
     }
 
     @Override
@@ -133,10 +120,7 @@ public class CarnageRite extends AbstractRite {
 
     @Override
     public boolean isRiteCompleted(Player player) {
-        if (altar.hasPendingGemFusion()) {
-            return completedFirstDegree;
-        }
-        return (completedThirdDegree && activeMobs.isEmpty());
+        return getCompletionDegree() >= getMaxDegrees() && activeMobs.isEmpty();
     }
 
     @Override
@@ -170,7 +154,7 @@ public class CarnageRite extends AbstractRite {
                         riteMob.setTarget(player);
                     }
 
-                    if ((currentWave == firstDegreeThreshold || currentWave == secondDegreeThreshold || currentWave == thirdDegreeThreshold) && waveDelay <= 0) {
+                    if (isDegreeThresholdWave(currentWave) && waveDelay <= 0) {
                         if (!livingMob.hasEffect(MobEffects.GLOWING)) {
                             livingMob.addEffect(new MobEffectInstance(MobEffects.GLOWING, 72000, 0));
                             //System.out.println("Come kill this guy! At: " + livingMob.getX() + ", " + livingMob.getY() + ", " + livingMob.getZ());
@@ -180,91 +164,33 @@ public class CarnageRite extends AbstractRite {
             }
         }
 
-        if (!completedFirstDegree) {
-            if (waveDelay > 0 ) {
-                //System.out.println("[Elimination Rite] Subtracting wave delay");
+        if (getCompletionDegree() < getMaxDegrees()) {
+            if (waveDelay > 0) {
                 waveDelay--;
             }
 
-            if (currentWave < firstDegreeThreshold) {
+            int targetWave = getWaveThresholdForDegree(currentDegree);
+            if (currentWave < targetWave) {
                 if (waveDelay <= 0 || (activeMobs.isEmpty() && currentWave != 0)) {
-                    //System.out.println("[Elimination Rite] Wave " + currentWave + ": Timed out! Spawning wave: " + (currentWave + 1));
                     if (waveDelay <= 0) {
                         spawnWave(player);
                         currentWave++;
                     }
 
-                    if (activeMobs.isEmpty()) {
-                        if (currentWave != 0 && waveDelay > 200) {
-                            waveDelay = 200;
-                        }
+                    if (activeMobs.isEmpty() && currentWave != 0 && waveDelay > 200) {
+                        waveDelay = 200;
                     }
                 }
-            } else if (currentWave == firstDegreeThreshold && (waveDelay <= 0 || activeMobs.isEmpty())) {
+            } else if (currentWave == targetWave && (waveDelay <= 0 || activeMobs.isEmpty())) {
                 if (activeMobs.isEmpty()) {
                     if (waveDelay > 200) {
                         waveDelay = 200;
                     }
-                    completedFirstDegree = true;
-                    if (altar.hasPendingGemFusion()) {
+                    currentDegree++;
+                    if (getCompletionDegree() >= getMaxDegrees()) {
                         concludeRite(player);
                         return;
                     }
-                    //System.out.println("[Elimination Rite] Wave " + currentWave + ": Done! First degree complete!");
-                }
-            }
-        } else if (!completedSecondDegree) {
-            if (waveDelay > 0 ) {
-                waveDelay--;
-            }
-
-            if (currentWave < secondDegreeThreshold) {
-                if (waveDelay <= 0 || activeMobs.isEmpty()) {
-                    if (waveDelay <= 0) {
-                        spawnWave(player);
-                        currentWave++;
-                    }
-
-                    if (activeMobs.isEmpty()) {
-                        if (waveDelay > 200) {
-                            waveDelay = 200;
-                        }
-                    }
-                }
-            } else if (currentWave == secondDegreeThreshold && (waveDelay <= 0 || activeMobs.isEmpty())) {
-                if (activeMobs.isEmpty()) {
-                    if (waveDelay > 200) {
-                        waveDelay = 200;
-                    }
-                    completedSecondDegree = true;
-                    //System.out.println("[Elimination Rite] Wave " + currentWave + ": Done! First degree complete!");
-                }
-            }
-        } else if (!completedThirdDegree) {
-            if (waveDelay > 0 ) {
-                waveDelay--;
-            }
-
-            if (currentWave < thirdDegreeThreshold) {
-                if (waveDelay <= 0 || activeMobs.isEmpty()) {
-                    if (waveDelay <= 0) {
-                        spawnWave(player);
-                        currentWave++;
-                    }
-
-                    if (activeMobs.isEmpty()) {
-                        if (waveDelay > 200) {
-                            waveDelay = 200;
-                        }
-                    }
-                }
-            } else if (currentWave == thirdDegreeThreshold && (waveDelay <= 0 || activeMobs.isEmpty())) {
-                if (activeMobs.isEmpty()) {
-                    if (waveDelay > 200) {
-                        waveDelay = 200;
-                    }
-                    completedThirdDegree = true;
-                    //System.out.println("[Elimination Rite] Wave " + currentWave + ": Done! First degree complete!");
                 }
             }
         }
@@ -288,22 +214,7 @@ public class CarnageRite extends AbstractRite {
 
     @Override
     public int getCompletionDegree() {
-        if (completedThirdDegree) {
-            return 3;
-        }
-        if (completedSecondDegree) {
-            return 2;
-        }
-        if (completedFirstDegree) {
-            return 1;
-        }
-        return 0;
-    }
-
-    @Override
-    public boolean canConcludeAtAltar() {
-        int completionDegree = getCompletionDegree();
-        return completionDegree >= 1 && completionDegree < 3;
+        return Math.min(currentDegree, getMaxDegrees());
     }
 
     @Override
@@ -313,6 +224,9 @@ public class CarnageRite extends AbstractRite {
 
     @Override
     protected SyncRiteDataS2C buildSyncPacket(Player player) {
+        int completedDegrees = getCompletionDegree();
+        int totalDegrees = getDisplayDegreeCount();
+        int activeDegreeIndex = isRiteCompleted(player) ? -1 : Math.min(completedDegrees, totalDegrees - 1);
         return SyncRiteDataS2C.fromState(new CarnageClientRiteState(
                 isRiteCompleted(player),
                 eliminationTargetString,
@@ -320,7 +234,10 @@ public class CarnageRite extends AbstractRite {
                 activeMobs.size(),
                 waveKillTotal,
                 waveDelay,
-                200
+                200,
+                totalDegrees,
+                completedDegrees,
+                activeDegreeIndex
         ));
     }
 
@@ -390,6 +307,19 @@ public class CarnageRite extends AbstractRite {
 
     private void addWaveDelay(int delayTicks) {
         waveDelay = getDefaultWaveDelay() + delayTicks;
+    }
+
+    private int getWaveThresholdForDegree(int degreeIndex) {
+        return 1 + (degreeIndex * 2);
+    }
+
+    private boolean isDegreeThresholdWave(int wave) {
+        for (int i = 0; i < getMaxDegrees(); i++) {
+            if (getWaveThresholdForDegree(i) == wave) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public record WeightedMob(EntityType<?> mobType, double weight) { }

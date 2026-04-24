@@ -3,8 +3,8 @@ package net.turtleboi.ancientcurses.block.entity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import net.turtleboi.ancientcurses.rites.ModRites;
-import net.turtleboi.ancientcurses.rites.Rite;
+import net.turtleboi.ancientcurses.rite.ModRites;
+import net.turtleboi.ancientcurses.rite.Rite;
 
 import java.util.UUID;
 

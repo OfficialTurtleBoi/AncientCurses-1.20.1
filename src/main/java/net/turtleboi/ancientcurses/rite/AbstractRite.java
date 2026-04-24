@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.rites;
+package net.turtleboi.ancientcurses.rite;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -15,7 +15,7 @@ import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.effect.ModEffects;
-import net.turtleboi.ancientcurses.entity.CursedPortalEntity;
+import net.turtleboi.ancientcurses.entity.entities.CursedPortalEntity;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
@@ -30,11 +30,13 @@ public abstract class AbstractRite implements Rite {
     protected static final String PLAYER_UUID_KEY = "PlayerUUID";
     protected static final String EFFECT_KEY = "Effect";
     protected static final String COMPLETED_KEY = "Completed";
+    protected static final String MAX_DEGREES_KEY = "MaxDegrees";
 
     protected UUID playerUUID;
     protected MobEffect effect;
     protected CursedAltarBlockEntity altar;
     protected boolean completed;
+    protected int maxDegrees = 3;
 
     protected AbstractRite(CursedAltarBlockEntity altar) {
         this.altar = altar;
@@ -69,6 +71,26 @@ public abstract class AbstractRite implements Rite {
         return SyncRiteDataS2C.none();
     }
 
+    protected int getDisplayDegreeCount() {
+        return getMaxDegrees();
+    }
+
+    @Override
+    public int getMaxDegrees() {
+        return maxDegrees;
+    }
+
+    @Override
+    public void setMaxDegrees(int maxDegrees) {
+        this.maxDegrees = Math.max(1, maxDegrees);
+    }
+
+    @Override
+    public boolean canConcludeAtAltar() {
+        int completionDegree = getCompletionDegree();
+        return completionDegree >= 1 && completionDegree < getMaxDegrees();
+    }
+
     @Override
     public void syncToClient(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
@@ -78,36 +100,28 @@ public abstract class AbstractRite implements Rite {
 
     @Override
     public int getMinRewardRolls() {
-        return switch (getCompletionDegree()) {
-            case 3 -> 3;
-            case 2 -> 2;
-            default -> 1;
-        };
+        return Math.max(1, getCompletionDegree());
     }
 
     @Override
     public int getMaxRewardRolls() {
-        return switch (getCompletionDegree()) {
-            case 3 -> 5;
-            case 2 -> 3;
-            default -> 2;
-        };
+        int completedDegrees = Math.max(1, getCompletionDegree());
+        int bonusRollRange = Math.max(1, (int) Math.ceil(completedDegrees * 0.5D));
+        return completedDegrees + bonusRollRange;
     }
 
     @Override
     public float getSoulShardDropChance(int amplifier) {
-        if (amplifier >= 3) {
-            return 1.0F;
-        }
         if (amplifier < 2) {
             return 0.0F;
         }
 
-        return switch (Math.max(1, getCompletionDegree())) {
-            case 3 -> 0.5F;
-            case 2 -> 0.35F;
-            default -> 0.2F;
-        };
+        int completionDegree = Math.max(0, getCompletionDegree());
+        if (amplifier >= 3) {
+            return 1.0F + Math.max(0, completionDegree - 1) * 0.05F;
+        }
+
+        return completionDegree * 0.05F;
     }
 
     @Override
@@ -179,6 +193,7 @@ public abstract class AbstractRite implements Rite {
             tag.putString(EFFECT_KEY, net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getKey(effect).toString());
         }
         tag.putBoolean(COMPLETED_KEY, completed);
+        tag.putInt(MAX_DEGREES_KEY, maxDegrees);
     }
 
     protected void loadBaseData(CompoundTag tag) {
@@ -189,5 +204,6 @@ public abstract class AbstractRite implements Rite {
             this.effect = net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(tag.getString(EFFECT_KEY)));
         }
         this.completed = tag.getBoolean(COMPLETED_KEY);
+        this.maxDegrees = Math.max(1, tag.contains(MAX_DEGREES_KEY) ? tag.getInt(MAX_DEGREES_KEY) : 3);
     }
 }

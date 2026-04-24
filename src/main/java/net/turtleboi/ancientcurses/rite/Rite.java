@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.rites;
+package net.turtleboi.ancientcurses.rite;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -35,7 +35,14 @@ public interface Rite {
     }
 
     default int getCompletionDegree() {
-        return isCompleted() ? 3 : 0;
+        return isCompleted() ? getMaxDegrees() : 0;
+    }
+
+    default int getMaxDegrees() {
+        return 3;
+    }
+
+    default void setMaxDegrees(int maxDegrees) {
     }
 
     default boolean canConcludeAtAltar() {

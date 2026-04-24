@@ -1,4 +1,4 @@
-package net.turtleboi.ancientcurses.rites;
+package net.turtleboi.ancientcurses.rite.rites;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -18,14 +18,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.client.rites.EmbersClientRiteState;
-import net.turtleboi.ancientcurses.entity.CursedNodeEntity;
 import net.turtleboi.ancientcurses.entity.ModEntities;
+import net.turtleboi.ancientcurses.entity.entities.CursedNodeEntity;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
+import net.turtleboi.ancientcurses.rite.AbstractRite;
+import net.turtleboi.ancientcurses.rite.ModRites;
 import net.turtleboi.turtlecore.client.util.ParticleSpawnQueue;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
@@ -41,9 +42,6 @@ public class EmbersRite extends AbstractRite {
     private static final String PORTAL_COOLDOWN_KEY = "PortalCooldown";
     private static final String NODE_RADIUS_KEY = "NodeRadius";
     private static final String CURRENT_DEGREE_KEY = "CurrentDegree";
-    private static final String COMPLETED_FIRST_KEY = "CompletedFirstDegree";
-    private static final String COMPLETED_SECOND_KEY = "CompletedSecondDegree";
-    private static final String COMPLETED_THIRD_KEY = "CompletedThirdDegree";
 
     private int amplifier;
 
@@ -59,9 +57,6 @@ public class EmbersRite extends AbstractRite {
     private final List<CursedNodeEntity> cursedNodes = new ArrayList<>();
 
     private int currentDegree = 0;
-    public boolean completedFirstDegree;
-    public boolean completedSecondDegree;
-    public boolean completedThirdDegree;
 
     public static final String riteDurationTotal = "RiteDuration";
     public static final String riteDurationElapsed = "RiteElapsedTime";
@@ -76,51 +71,7 @@ public class EmbersRite extends AbstractRite {
         this.portalCooldown = 0;
 
         this.nodeRadius = Math.max(1, 9 / this.amplifier);
-        Random random = new Random();
-        BlockPos center = altar.getBlockPos();
-        int sectors = 3 + amplifier;
-        double minDistance = 8.0 * (1 + amplifier);
-        double maxDistance = 64.0 * (1 + amplifier);
-        for (int i = 0; i < sectors; i++) {
-            double sectorStart = i * (360.0 / sectors);
-            double randomOffset = random.nextDouble() * (360.0 / sectors);
-            double degreeOffset = sectorStart + randomOffset;
-            double radians = Math.toRadians(degreeOffset);
-
-            double distance = minDistance + random.nextDouble() * (maxDistance - minDistance);
-
-            int dx = (int) Math.round(Math.cos(radians) * distance);
-            int dz = (int) Math.round(Math.sin(radians) * distance);
-
-            BlockPos node = new BlockPos(
-                    center.getX() + dx,
-                    center.getY(),
-                    center.getZ() + dz);
-            nodePositions.add(node);
-            nodeProgress.put(node, 0);
-
-            ServerLevel level = (ServerLevel) getServerPlayer().level();
-            CursedNodeEntity  cursedNode = ModEntities.CURSED_NODE.get().create(level);
-            if (cursedNode != null) {
-                double x = node.getX() + 0.5;
-                double z = node.getZ() + 0.5;
-                double initialY = node.getY();
-                BlockPos spawnPos = new BlockPos(node.getX(), node.getY(), node.getZ());
-                BlockState spawnState = level.getBlockState(spawnPos);
-                if (spawnState.isSolid() && !spawnState.is(BlockTags.LEAVES)) {
-                    cursedNode.moveTo(x, initialY + 0.75, z, 0, 0);
-                } else {
-                    int groundY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawnPos.getX(), spawnPos.getZ());
-                    cursedNode.moveTo(x, groundY + + 0.75, z, 0, 0);
-                }
-
-                cursedNode.setProgress(0);
-                cursedNode.setNodeLifetime((int) riteDuration);
-                cursedNode.setOwner(altar);
-                level.addFreshEntity(cursedNode);
-                cursedNodes.add(cursedNode);
-            }
-        }
+        syncNodeCountToMaxDegrees();
 
         ServerPlayer serverPlayer = getServerPlayer();
         if (serverPlayer != null && (player.getMainHandItem().getItem() instanceof DowsingRod) && DowsingRod.UseState.isActive(serverPlayer)) {
@@ -145,9 +96,6 @@ public class EmbersRite extends AbstractRite {
         tag.putInt(PORTAL_COOLDOWN_KEY, portalCooldown);
         tag.putInt(NODE_RADIUS_KEY, nodeRadius);
         tag.putInt(CURRENT_DEGREE_KEY, currentDegree);
-        tag.putBoolean(COMPLETED_FIRST_KEY, completedFirstDegree);
-        tag.putBoolean(COMPLETED_SECOND_KEY, completedSecondDegree);
-        tag.putBoolean(COMPLETED_THIRD_KEY, completedThirdDegree);
 
         ListTag nodesTag = new ListTag();
         for (BlockPos pos : nodePositions) {
@@ -168,9 +116,6 @@ public class EmbersRite extends AbstractRite {
         this.portalCooldown = tag.getInt(PORTAL_COOLDOWN_KEY);
         this.nodeRadius = tag.getInt(NODE_RADIUS_KEY);
         this.currentDegree = tag.getInt(CURRENT_DEGREE_KEY);
-        this.completedFirstDegree = tag.getBoolean(COMPLETED_FIRST_KEY);
-        this.completedSecondDegree = tag.getBoolean(COMPLETED_SECOND_KEY);
-        this.completedThirdDegree = tag.getBoolean(COMPLETED_THIRD_KEY);
 
         this.nodePositions.clear();
         this.nodeProgress.clear();
@@ -183,16 +128,8 @@ public class EmbersRite extends AbstractRite {
             nodeProgress.put(pos, prog);
         }
 
-        if (nodePositions.isEmpty() && amplifier > 0) {
-            Random rnd = new Random();
-            BlockPos center = altar.getBlockPos();
-            for (int i = 0; i < amplifier; i++) {
-                int dx = rnd.nextInt(61) - 30;
-                int dz = rnd.nextInt(61) - 30;
-                BlockPos pos = new BlockPos(center.getX() + dx, center.getY(), center.getZ() + dz);
-                nodePositions.add(pos);
-                nodeProgress.put(pos, 0);
-            }
+        if (nodePositions.isEmpty() && getMaxDegrees() > 0) {
+            syncNodeCountToMaxDegrees();
         }
     }
 
@@ -215,10 +152,7 @@ public class EmbersRite extends AbstractRite {
 
     @Override
     public boolean isRiteCompleted(Player player) {
-        if (altar.hasPendingGemFusion()) {
-            return completedFirstDegree;
-        }
-        return currentDegree >= 3;
+        return currentDegree >= getMaxDegrees();
     }
 
     @Override
@@ -311,20 +245,13 @@ public class EmbersRite extends AbstractRite {
                 cursedNode.setProgress(progress + 1);
                 if (progress + 1 >= feedTicks) {
                     currentDegree++;
-                    if (currentDegree == 1) {
-                        completedFirstDegree = true;
-                    } else if (currentDegree == 2) {
-                        completedSecondDegree = true;
-                    } else if (currentDegree == 3) {
-                        completedThirdDegree = true;
-                    }
                     CoreNetworking.sendToNear(new CameraShakeS2C(0.125F, 1000), player);
                     cursedNode.discard();
 
                     ServerPlayer serverPlayer = getServerPlayer();
                     sendGuidance(serverPlayer, getGuidanceTarget(serverPlayer));
 
-                    if (altar.hasPendingGemFusion() && completedFirstDegree) {
+                    if (getCompletionDegree() >= getMaxDegrees()) {
                         concludeRite(player);
                         return;
                     }
@@ -392,16 +319,7 @@ public class EmbersRite extends AbstractRite {
 
     @Override
     public int getCompletionDegree() {
-        if (completedThirdDegree) {
-            return 3;
-        }
-        if (completedSecondDegree) {
-            return 2;
-        }
-        if (completedFirstDegree) {
-            return 1;
-        }
-        return 0;
+        return Math.min(currentDegree, getMaxDegrees());
     }
 
     private List<Entity> buildPortalSpawnList(ServerLevel level, int mobCount) {
@@ -505,11 +423,90 @@ public class EmbersRite extends AbstractRite {
 
     @Override
     protected SyncRiteDataS2C buildSyncPacket(Player player) {
+        int completedDegrees = getCompletionDegree();
+        int totalDegrees = getDisplayDegreeCount();
+        int activeDegreeIndex = isRiteCompleted(player) ? -1 : Math.min(currentDegree, totalDegrees - 1);
         return SyncRiteDataS2C.fromState(new EmbersClientRiteState(
                 isRiteCompleted(player),
                 elapsedTime,
-                riteDuration
+                riteDuration,
+                totalDegrees,
+                completedDegrees,
+                activeDegreeIndex
         ));
+    }
+
+    @Override
+    public void setMaxDegrees(int maxDegrees) {
+        super.setMaxDegrees(maxDegrees);
+        syncNodeCountToMaxDegrees();
+    }
+
+    private void syncNodeCountToMaxDegrees() {
+        if (!(altar.getLevel() instanceof ServerLevel level)) {
+            return;
+        }
+
+        while (nodePositions.size() > getMaxDegrees()) {
+            int lastIndex = nodePositions.size() - 1;
+            BlockPos removedPos = nodePositions.remove(lastIndex);
+            nodeProgress.remove(removedPos);
+            if (lastIndex < cursedNodes.size()) {
+                CursedNodeEntity removedNode = cursedNodes.remove(lastIndex);
+                if (removedNode != null && removedNode.isAlive()) {
+                    removedNode.discard();
+                }
+            }
+        }
+
+        Random random = new Random();
+        while (nodePositions.size() < getMaxDegrees()) {
+            int nodeIndex = nodePositions.size();
+            BlockPos nodePos = generateNodePosition(random, nodeIndex, getMaxDegrees());
+            nodePositions.add(nodePos);
+            nodeProgress.put(nodePos, 0);
+            spawnCursedNode(level, nodePos);
+        }
+    }
+
+    private BlockPos generateNodePosition(Random random, int nodeIndex, int totalNodes) {
+        BlockPos center = altar.getBlockPos();
+        double minDistance = 8.0 * (1 + amplifier);
+        double maxDistance = 64.0 * (1 + amplifier);
+        double sectorStart = nodeIndex * (360.0 / totalNodes);
+        double randomOffset = random.nextDouble() * (360.0 / totalNodes);
+        double degreeOffset = sectorStart + randomOffset;
+        double radians = Math.toRadians(degreeOffset);
+        double distance = minDistance + random.nextDouble() * (maxDistance - minDistance);
+
+        int dx = (int) Math.round(Math.cos(radians) * distance);
+        int dz = (int) Math.round(Math.sin(radians) * distance);
+        return new BlockPos(center.getX() + dx, center.getY(), center.getZ() + dz);
+    }
+
+    private void spawnCursedNode(ServerLevel level, BlockPos node) {
+        CursedNodeEntity cursedNode = ModEntities.CURSED_NODE.get().create(level);
+        if (cursedNode == null) {
+            return;
+        }
+
+        double x = node.getX() + 0.5;
+        double z = node.getZ() + 0.5;
+        double initialY = node.getY();
+        BlockPos spawnPos = new BlockPos(node.getX(), node.getY(), node.getZ());
+        BlockState spawnState = level.getBlockState(spawnPos);
+        if (spawnState.isSolid() && !spawnState.is(BlockTags.LEAVES)) {
+            cursedNode.moveTo(x, initialY + 0.75, z, 0, 0);
+        } else {
+            int groundY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawnPos.getX(), spawnPos.getZ());
+            cursedNode.moveTo(x, groundY + 0.75, z, 0, 0);
+        }
+
+        cursedNode.setProgress(0);
+        cursedNode.setNodeLifetime((int) riteDuration);
+        cursedNode.setOwner(altar);
+        level.addFreshEntity(cursedNode);
+        cursedNodes.add(cursedNode);
     }
 
 }

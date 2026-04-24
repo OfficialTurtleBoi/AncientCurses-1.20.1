@@ -23,8 +23,8 @@ import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
-import net.turtleboi.ancientcurses.rites.Rite;
-import net.turtleboi.ancientcurses.rites.RiteLocator;
+import net.turtleboi.ancientcurses.rite.Rite;
+import net.turtleboi.ancientcurses.rite.util.RiteLocator;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 
@@ -162,18 +162,19 @@ public final class RewardUtil {
     }
 
     private static void addCursedSoulShardLoot(int amplifier, Rite rite, Random random, List<ItemStack> totalGeneratedLoot) {
-        if (amplifier >= 3) {
-            totalGeneratedLoot.add(new ItemStack(ModItems.CURSED_SOUL_SHARD.get()));
-            return;
-        }
-
         if (amplifier < 2) {
             return;
         }
 
         float chance = rite.getSoulShardDropChance(amplifier);
+        int guaranteedShards = (int) Math.floor(chance);
+        float bonusShardChance = chance - guaranteedShards;
 
-        if (random.nextFloat() < chance) {
+        for (int i = 0; i < guaranteedShards; i++) {
+            totalGeneratedLoot.add(new ItemStack(ModItems.CURSED_SOUL_SHARD.get()));
+        }
+
+        if (random.nextFloat() < bonusShardChance) {
             totalGeneratedLoot.add(new ItemStack(ModItems.CURSED_SOUL_SHARD.get()));
         }
     }

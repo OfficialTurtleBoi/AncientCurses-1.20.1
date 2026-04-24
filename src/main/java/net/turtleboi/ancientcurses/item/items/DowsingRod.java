@@ -13,8 +13,8 @@ import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.items.DowsingRodInfoPacketS2C;
-import net.turtleboi.ancientcurses.rites.Rite;
-import net.turtleboi.ancientcurses.rites.RiteLocator;
+import net.turtleboi.ancientcurses.rite.Rite;
+import net.turtleboi.ancientcurses.rite.util.RiteLocator;
 import net.turtleboi.ancientcurses.util.AltarSavedData;
 
 import java.util.HashMap;

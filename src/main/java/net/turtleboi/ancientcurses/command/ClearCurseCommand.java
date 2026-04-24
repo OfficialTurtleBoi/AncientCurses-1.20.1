@@ -1,7 +1,6 @@
 package net.turtleboi.ancientcurses.command;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
@@ -16,7 +15,7 @@ import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
-import net.turtleboi.ancientcurses.rites.RiteLocator;
+import net.turtleboi.ancientcurses.rite.util.RiteLocator;
 
 public class ClearCurseCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {

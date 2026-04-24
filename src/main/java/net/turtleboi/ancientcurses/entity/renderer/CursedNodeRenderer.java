@@ -21,7 +21,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.entity.entities.CursedNodeEntity;
-import net.turtleboi.ancientcurses.rites.EmbersRite;
+import net.turtleboi.ancientcurses.rite.rites.EmbersRite;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;

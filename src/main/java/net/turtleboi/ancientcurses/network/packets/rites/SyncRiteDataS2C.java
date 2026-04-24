@@ -7,7 +7,7 @@ import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.client.rites.ClientRiteState;
 import net.turtleboi.ancientcurses.client.rites.ClientRiteStateRegistry;
 import net.turtleboi.ancientcurses.client.rites.NoRiteState;
-import net.turtleboi.ancientcurses.rites.ModRites;
+import net.turtleboi.ancientcurses.rite.ModRites;
 
 import java.util.function.Supplier;
 
