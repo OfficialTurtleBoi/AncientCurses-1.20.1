@@ -8,6 +8,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -26,8 +27,11 @@ import net.turtleboi.ancientcurses.block.altar.LifecycleUtil;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.config.AncientCursesConfig;
+import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.rite.*;
+import net.turtleboi.ancientcurses.rite.rites.EmbersRite;
 import net.turtleboi.ancientcurses.rite.util.RiteRecord;
 import net.turtleboi.ancientcurses.util.AltarSavedData;
 import org.jetbrains.annotations.NotNull;
@@ -265,11 +269,11 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     public void setAnimationStartTime (Long startTime) {
-        this.getPersistentData().putLong("AnimationStartTime", startTime);
+        this.animationStartTime = startTime;
     }
 
     public long getAnimationStartTime() {
-        return this.getPersistentData().getLong("AnimationStartTime");
+        return this.animationStartTime;
     }
 
     public ItemStack getGemInSlot(int slot) {
@@ -294,10 +298,12 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     public void setOccupantUuid(UUID occupantUuid) {
         this.occupantUuid = occupantUuid;
+        setChanged();
     }
 
     public void setChunkLoaded(boolean chunkLoaded) {
         this.chunkLoaded = chunkLoaded;
+        setChanged();
     }
 
     public boolean canPlayerUse(Player player) {
@@ -346,7 +352,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
         if (rite == null) {
             throw new IllegalStateException("No rite registered for curse " + curse + " in rite id " + curseEntry.riteId());
         }
-        rite.setMaxDegrees(determineMaxDegreesForNewRite());
+        rite.setMaxDegrees(determineMaxDegreesForNewRite(rite, curseAmplifier));
         addPlayerRite(playerUUID, rite);
 
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
@@ -365,8 +371,16 @@ public class CursedAltarBlockEntity extends BlockEntity {
         rite.syncToClient(player);
     }
 
-    private int determineMaxDegreesForNewRite() {
-        return hasPendingGemFusion() ? 1 : 3;
+    private int determineMaxDegreesForNewRite(Rite rite, int curseAmplifier) {
+        if (hasPendingGemFusion()) {
+            return 1;
+        }
+
+        if (rite.getId().equals(ModRites.EMBERS)) {
+            return EmbersRite.getMaxDegreesForTier(curseAmplifier + 1);
+        }
+
+        return rite.getMaxDegrees();
     }
 
     public boolean hasPlayerCompletedRite(Player player) {
@@ -378,7 +392,8 @@ public class CursedAltarBlockEntity extends BlockEntity {
 
     private boolean anyActiveRitesRemaining() {
         for (ActiveRiteSession session : playerRites.values()) {
-            if (!session.getRite().isCompleted()) {
+            Rite rite = session.getRite();
+            if (!rite.isCompleted() || rite.hasPendingAltarWork()) {
                 return true;
             }
         }
@@ -414,6 +429,7 @@ public class CursedAltarBlockEntity extends BlockEntity {
             BlockPos altarPos = this.getBlockPos();
             riteData.setRewardCollected(altarPos);
             riteData.clearCurrentAltarPos();
+            syncClearedRiteOverlay(player);
             setChanged();
         });
     }
@@ -437,11 +453,18 @@ public class CursedAltarBlockEntity extends BlockEntity {
         if (rite != null) {
             if (!rite.isRiteCompleted(player)) {
                 removePlayerRite(playerUUID);
+                syncClearedRiteOverlay(player);
                 setChanged();
                 //System.out.println("Removed rite for player: " + player.getName().getString()); //debug code
             } else {
                 //System.out.println("Attempted to remove a completed rite for player: " + player.getName().getString()); //debug code
             }
+        }
+    }
+
+    private void syncClearedRiteOverlay(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            ModNetworking.sendToPlayer(SyncRiteDataS2C.none(), serverPlayer);
         }
     }
 
@@ -472,6 +495,12 @@ public class CursedAltarBlockEntity extends BlockEntity {
     }
 
     public void serverTick() {
+        if (this.level instanceof ServerLevel serverLevel) {
+            for (ActiveRiteSession session : new java.util.ArrayList<>(playerRites.values())) {
+                session.getRite().onAltarTick(serverLevel);
+            }
+        }
+
         if (isAnimating && !hasPendingGemFusion()) {
             long currentTime = System.currentTimeMillis();
             long animationDuration = 7600;
@@ -581,12 +610,13 @@ public class CursedAltarBlockEntity extends BlockEntity {
     public void onLoad() {
         super.onLoad();
         if (!this.level.isClientSide) {
-            if (this.chunkLoaded) {
+            if (this.chunkLoaded || anyActiveRitesRemaining()) {
                 forceDimensionActive();
             }
 
             if (level instanceof ServerLevel serverLevel) {
                 AltarSavedData.get(serverLevel).addAltar(worldPosition);
+                serverLevel.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
             }
         }
     }
@@ -594,9 +624,6 @@ public class CursedAltarBlockEntity extends BlockEntity {
     @Override
     public void setRemoved() {
         super.setRemoved();
-        if (!this.level.isClientSide && level instanceof ServerLevel serverLevel) {
-            AltarSavedData.get(serverLevel).removeAltar(worldPosition);
-        }
     }
 
     @Override

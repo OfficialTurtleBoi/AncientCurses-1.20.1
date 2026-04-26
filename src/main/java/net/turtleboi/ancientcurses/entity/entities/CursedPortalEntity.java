@@ -3,6 +3,7 @@ package net.turtleboi.ancientcurses.entity.entities;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -15,6 +16,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.monster.*;
@@ -23,17 +25,24 @@ import net.minecraft.world.entity.monster.piglin.PiglinBrute;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketS2C;
+import net.turtleboi.turtlecore.particle.CoreParticles;
 import org.joml.Vector3f;
 
 import java.util.*;
 
 public class CursedPortalEntity extends Entity {
+    private static final int MOB_SPAWN_RADIUS_MIN = 3;
+    private static final int MOB_SPAWN_RADIUS_MAX = 7;
+    private static final int MOB_SPAWN_ATTEMPTS = 16;
     private static final EntityDataAccessor<Integer> TEXTURE_INDEX = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> TELEPORT_ENABLED = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SPAWNING_ENABLED = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.BOOLEAN);
@@ -290,7 +299,9 @@ public class CursedPortalEntity extends Entity {
                     livingMob.setItemSlot(EquipmentSlot.MAINHAND, Items.TRIDENT.getDefaultInstance());
                 }
 
-                livingMob.setPos(this.getX(), this.getY(), this.getZ());
+                Vec3 spawnPos = findSpawnPositionForMob(livingMob);
+                spawnSpawnTrail(spawnPos);
+                livingMob.moveTo(spawnPos.x, spawnPos.y, spawnPos.z, this.getYRot(), this.getXRot());
                 if (livingMob instanceof Mob mob) {
                     mob.skipDropExperience();
                     mob.getPersistentData().putBoolean(CursedAltarBlockEntity.CURSED_SPAWN, true);
@@ -300,6 +311,140 @@ public class CursedPortalEntity extends Entity {
                 //System.out.println("[CursedPortal] Spawned mob: " + spawnedMob);
             }
         }
+    }
+
+    private Vec3 findSpawnPositionForMob(LivingEntity mob) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return getPortalSpawnCenter();
+        }
+
+        RandomSource random = serverLevel.getRandom();
+        BlockPos portalPos = this.blockPosition();
+        Vec3 fallbackPos = getPortalSpawnCenter();
+
+        for (int attempt = 0; attempt < MOB_SPAWN_ATTEMPTS; attempt++) {
+            float angle = random.nextFloat() * Mth.TWO_PI;
+            int distance = getBiasedSpawnDistance(random);
+            int offsetX = Mth.floor(Mth.cos(angle) * distance);
+            int offsetZ = Mth.floor(Mth.sin(angle) * distance);
+
+            BlockPos columnPos = portalPos.offset(offsetX, 0, offsetZ);
+            BlockPos groundPos = serverLevel.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, columnPos).below();
+            Vec3 candidatePos = getGroundSpawnCenter(groundPos);
+
+            if (isValidMobSpawnPosition(serverLevel, mob, groundPos, candidatePos)) {
+                return candidatePos;
+            }
+        }
+
+        return fallbackPos;
+    }
+
+    private int getBiasedSpawnDistance(RandomSource random) {
+        double biased = Math.max(random.nextDouble(), random.nextDouble());
+        return Mth.floor(Mth.lerp(biased, MOB_SPAWN_RADIUS_MIN, MOB_SPAWN_RADIUS_MAX + 1.0D));
+    }
+
+    private Vec3 getPortalSpawnCenter() {
+        return new Vec3(this.getX(), this.getY(), this.getZ());
+    }
+
+    private Vec3 getGroundSpawnCenter(BlockPos groundPos) {
+        return new Vec3(
+                groundPos.getX() + 0.5D,
+                groundPos.getY() + 1.0D,
+                groundPos.getZ() + 0.5D
+        );
+    }
+
+    private boolean isValidMobSpawnPosition(ServerLevel level, LivingEntity mob, BlockPos groundPos, Vec3 spawnPos) {
+        if (groundPos.getY() < level.getMinBuildHeight()) {
+            return false;
+        }
+
+        BlockState groundState = level.getBlockState(groundPos);
+        if (groundState.isAir() || !groundState.blocksMotion() || !groundState.getFluidState().isEmpty()) {
+            return false;
+        }
+
+        if (!level.getFluidState(groundPos.above()).isEmpty()) {
+            return false;
+        }
+
+        AABB spawnBounds = mob.getType().getDimensions().makeBoundingBox(spawnPos.x, spawnPos.y, spawnPos.z);
+        return level.noCollision(spawnBounds);
+    }
+
+    private void spawnSpawnTrail(Vec3 spawnPos) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        Vec3 start = new Vec3(this.getX(), this.getY() + 1.0D, this.getZ());
+        Vec3 end = new Vec3(spawnPos.x, spawnPos.y + 0.35D, spawnPos.z);
+        Vec3 direction = end.subtract(start);
+        double distance = direction.length();
+        if (distance < 0.1D) {
+            return;
+        }
+
+        Vec3 normalized = direction.normalize();
+        Vec3 horizontalPerpendicular = new Vec3(-normalized.z, 0.0D, normalized.x);
+        if (horizontalPerpendicular.lengthSqr() < 1.0E-4D) {
+            horizontalPerpendicular = new Vec3(1.0D, 0.0D, 0.0D);
+        } else {
+            horizontalPerpendicular = horizontalPerpendicular.normalize();
+        }
+
+        RandomSource random = serverLevel.getRandom();
+        double swirlAmplitude = Math.min(1.8D, 0.65D + distance * 0.12D);
+        double secondaryAmplitude = swirlAmplitude * 0.45D;
+        double arcHeight = Math.min(3.5D, 1.15D + distance * 0.22D);
+        int steps = Math.max(16, Mth.ceil(distance * 7.0D));
+        double primaryPhase = random.nextDouble() * Mth.TWO_PI;
+        double secondaryPhase = random.nextDouble() * Mth.TWO_PI;
+
+        for (int step = 0; step <= steps; step++) {
+            double progress = step / (double) steps;
+            Vec3 basePoint = start.lerp(end, progress);
+            double primarySwirl = Math.sin((progress * Mth.TWO_PI * 1.85D) + primaryPhase)
+                    * swirlAmplitude * (1.0D - progress * 0.20D);
+            double secondarySwirl = Math.sin((progress * Mth.TWO_PI * 4.6D) + secondaryPhase)
+                    * secondaryAmplitude * (0.65D + random.nextDouble() * 0.35D);
+            double drift = (random.nextDouble() - 0.5D) * 0.55D;
+            double lift = Math.sin(progress * Math.PI) * arcHeight;
+            double flutter = Math.sin((progress * Mth.TWO_PI * 3.0D) + secondaryPhase) * 0.25D;
+            Vec3 particlePos = basePoint
+                    .add(horizontalPerpendicular.scale(primarySwirl + secondarySwirl + drift))
+                    .add(0.0D, lift + flutter, 0.0D);
+
+            serverLevel.sendParticles(
+                    CoreParticles.LIFE_DRAIN_PARTICLES.get(),
+                    particlePos.x,
+                    particlePos.y,
+                    particlePos.z,
+                    1,
+                    0.02D,
+                    0.02D,
+                    0.02D,
+                    0.005D
+            );
+        }
+        spawnArrivalBurst(serverLevel, end);
+    }
+
+    private void spawnArrivalBurst(ServerLevel serverLevel, Vec3 spawnPos) {
+        serverLevel.sendParticles(
+                CoreParticles.LIFE_DRAIN_PARTICLES.get(),
+                spawnPos.x,
+                spawnPos.y,
+                spawnPos.z,
+                18,
+                0.45D,
+                0.25D,
+                0.45D,
+                0.02D
+        );
     }
 
     private void teleportPlayerToPortal(ServerPlayer player, BlockPos portalPos) {

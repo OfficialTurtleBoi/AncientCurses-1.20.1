@@ -12,6 +12,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.WallTorchBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,6 +25,12 @@ public class SconcedWallTorchBlock extends WallTorchBlock {
     public SconcedWallTorchBlock(Properties pProperties, ParticleOptions pFlameParticle) {
         super(pProperties, pFlameParticle);
     }
+
+    @Override
+    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+        return ModBlocks.SCONCED_TORCH.get().asItem().getDefaultInstance();
+    }
+
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos blockPos,
                                  Player player, InteractionHand hand, BlockHitResult result) {

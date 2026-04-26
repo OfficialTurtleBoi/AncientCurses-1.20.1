@@ -12,7 +12,6 @@ import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketC2S;
 import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.items.DowsingRodInfoPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
-import net.turtleboi.ancientcurses.network.packets.rites.RiteOverlayPacketC2S;
 
 public class ModNetworking {
     private static SimpleChannel INSTANCE;
@@ -46,12 +45,6 @@ public class ModNetworking {
                 .decoder(SyncRiteDataS2C::new)
                 .encoder(SyncRiteDataS2C::toBytes)
                 .consumerMainThread(SyncRiteDataS2C::handle)
-                .add();
-
-        net.messageBuilder(RiteOverlayPacketC2S.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .decoder(RiteOverlayPacketC2S::new)
-                .encoder(RiteOverlayPacketC2S::toBytes)
-                .consumerMainThread(RiteOverlayPacketC2S::handle)
                 .add();
 
         net.messageBuilder(PortalOverlayPacketS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)

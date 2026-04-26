@@ -90,6 +90,28 @@ public class CurseOfGluttonyEffect extends MobEffect {
         }
     }
 
+    public static void clearSpoiledFoodTags(Player player) {
+        if (player == null) {
+            return;
+        }
+
+        clearSpoiledFoodTags(player.getInventory().items);
+        clearSpoiledFoodTags(player.getInventory().offhand);
+    }
+
+    private static void clearSpoiledFoodTags(Iterable<ItemStack> stacks) {
+        for (ItemStack stack : stacks) {
+            if (!stack.isEdible() || !stack.hasTag()) {
+                continue;
+            }
+
+            stack.getTag().remove("SpoilTimer");
+            if (stack.getTag().isEmpty()) {
+                stack.setTag(null);
+            }
+        }
+    }
+
     private int getSpoilTimer(int pAmplifier) {
         int[] spoilTimeValues = {2400, 1200, 600};
         int index = Math.min(pAmplifier, spoilTimeValues.length - 1);

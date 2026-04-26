@@ -6,9 +6,12 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.WallTorchBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.turtleboi.ancientcurses.block.ModBlocks;
 
 import java.util.function.Supplier;
 
@@ -18,6 +21,11 @@ public class SconcedWallCursedTorchBlock extends WallTorchBlock {
     public SconcedWallCursedTorchBlock(Properties properties, Supplier<SimpleParticleType> particleTypeSupplier) {
         super(properties, ParticleTypes.FLAME);
         this.particleTypeSupplier = particleTypeSupplier;
+    }
+
+    @Override
+    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+        return ModBlocks.SCONCED_CURSED_TORCH.get().asItem().getDefaultInstance();
     }
 
     @Override

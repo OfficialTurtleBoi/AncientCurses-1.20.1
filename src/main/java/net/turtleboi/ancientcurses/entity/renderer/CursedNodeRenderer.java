@@ -32,7 +32,16 @@ import static net.turtleboi.turtlecore.client.util.VertexBuilder.vertex;
 public class CursedNodeRenderer extends EntityRenderer<CursedNodeEntity> {
     public static final ModelLayerLocation CURSED_NODE_LAYER = new ModelLayerLocation(new ResourceLocation(AncientCurses.MOD_ID, "cursed_node"), "main");
     private static final ResourceLocation TEXTURE = new ResourceLocation(AncientCurses.MOD_ID, "textures/entity/cursed_node.png");
+    private static final ResourceLocation FLAME_ATLAS_TEXTURE = new ResourceLocation(AncientCurses.MOD_ID, "textures/entity/cursed_fire.png");
     private static final float SIN_45 = (float)Math.sin((Math.PI / 4D));
+    private static final float FLAME_FRAME_COUNT = 64.0f;
+    private static final float FLAME_FRAME_HEIGHT = 1.0f / FLAME_FRAME_COUNT;
+    private static final int START_TINT = 0x32E8EE;
+    private static final int FINAL_TINT_A = 0xED4ACC;
+    private static final int FINAL_TINT_B = 0xFE4AFF;
+    private static final int FINAL_TINT_C = 0xFF51A8;
+    private static final float FINAL_TINT_START = 0.85f;
+    private static final float FINAL_TINT_CYCLE_SPEED = 0.04f;
     private final ModelPart core;
     private final ModelPart shell;
 
@@ -58,8 +67,7 @@ public class CursedNodeRenderer extends EntityRenderer<CursedNodeEntity> {
     }
 
     public @NotNull ResourceLocation getFlatLocation(@NotNull CursedNodeEntity pEntity) {
-        int textureIndex = pEntity.getTextureIndex();
-        return new ResourceLocation(AncientCurses.MOD_ID, "textures/entity/cursed_flame/cursed_fire" + textureIndex + ".png");
+        return FLAME_ATLAS_TEXTURE;
     }
 
     @Override
@@ -70,6 +78,22 @@ public class CursedNodeRenderer extends EntityRenderer<CursedNodeEntity> {
         pPoseStack.pushPose();
         float t = Mth.clamp(pEntity.getProgress() / (float) EmbersRite.feedTicks, 0f, 1f);
         float scale = Mth.lerp(t, 0.5f, 2.0f);
+
+        int tintColor;
+        if (t < FINAL_TINT_START) {
+            float tintT = Mth.clamp(t / FINAL_TINT_START, 0f, 1f);
+            tintColor = lerpColor(tintT, START_TINT, FINAL_TINT_A);
+        } else {
+            float cycleTime = (pEntity.time + pPartialTicks) * FINAL_TINT_CYCLE_SPEED;
+            tintColor = getCyclingFinalTint(cycleTime);
+        }
+
+        float rf = ((tintColor >> 16) & 0xFF) / 255.0f;
+        float gf = ((tintColor >> 8) & 0xFF) / 255.0f;
+        float bf = (tintColor & 0xFF) / 255.0f;
+        int r = (int)(rf * 255f);
+        int g = (int)(gf * 255f);
+        int b = (int)(bf * 255f);
 
         pPoseStack.scale(scale, scale, scale);
         pPoseStack.translate(0.0F, f, 0.0F);
@@ -94,24 +118,30 @@ public class CursedNodeRenderer extends EntityRenderer<CursedNodeEntity> {
             Matrix4f matrix = pose.pose();
             Matrix3f normalMatrix = pose.normal();
             int vertexAlpha = 240;
-            vertex(flameConsumer, matrix, normalMatrix, -0.5f, -0.5f, 0, 0, 0, 255, 255, 255, vertexAlpha);
-            vertex(flameConsumer, matrix, normalMatrix, 0.5f, -0.5f, 0, 1, 0, 255, 255, 255, vertexAlpha);
-            vertex(flameConsumer, matrix, normalMatrix, 0.5f, 0.5f, 0, 1, 1, 255, 255, 255, vertexAlpha);
-            vertex(flameConsumer, matrix, normalMatrix, -0.5f, 0.5f, 0, 0, 1, 255, 255, 255, vertexAlpha);
-            vertex(flameConsumer, matrix, normalMatrix, -0.5f, 0.5f, 0, 0, 1, 255, 255, 255, vertexAlpha);
-            vertex(flameConsumer, matrix, normalMatrix, 0.5f, 0.5f, 0, 1, 1, 255, 255, 255, vertexAlpha);
-            vertex(flameConsumer, matrix, normalMatrix, 0.5f, -0.5f, 0, 1, 0, 255, 255, 255, vertexAlpha);
-            vertex(flameConsumer, matrix, normalMatrix, -0.5f, -0.5f, 0, 0, 0, 255, 255, 255, vertexAlpha);
+            int frameIndex = pEntity.getTextureIndex();
+            float minU = 0.0f;
+            float maxU = 1.0f;
+            float minV = frameIndex * FLAME_FRAME_HEIGHT;
+            float maxV = minV + FLAME_FRAME_HEIGHT;
+
+            vertex(flameConsumer, matrix, normalMatrix, -0.5f, -0.5f, 0, minU, minV, r, g, b, vertexAlpha);
+            vertex(flameConsumer, matrix, normalMatrix, 0.5f, -0.5f, 0, maxU, minV, r, g, b, vertexAlpha);
+            vertex(flameConsumer, matrix, normalMatrix, 0.5f, 0.5f, 0, maxU, maxV, r, g, b, vertexAlpha);
+            vertex(flameConsumer, matrix, normalMatrix, -0.5f, 0.5f, 0, minU, maxV, r, g, b, vertexAlpha);
+            vertex(flameConsumer, matrix, normalMatrix, -0.5f, 0.5f, 0, minU, maxV, r, g, b, vertexAlpha);
+            vertex(flameConsumer, matrix, normalMatrix, 0.5f, 0.5f, 0, maxU, maxV, r, g, b, vertexAlpha);
+            vertex(flameConsumer, matrix, normalMatrix, 0.5f, -0.5f, 0, maxU, minV, r, g, b, vertexAlpha);
+            vertex(flameConsumer, matrix, normalMatrix, -0.5f, -0.5f, 0, minU, minV, r, g, b, vertexAlpha);
             pPoseStack.popPose();
         }
 
         VertexConsumer vertexconsumer = pBuffer.getBuffer(RenderType.entityTranslucentCull(TEXTURE));
         pPoseStack.mulPose(Axis.YP.rotationDegrees(f1));
         pPoseStack.mulPose((new Quaternionf()).setAngleAxis(((float)Math.PI / 3F), SIN_45, 0.0F, SIN_45));
-        this.shell.render(pPoseStack, vertexconsumer, pPackedLight, OverlayTexture.NO_OVERLAY);
+        this.shell.render(pPoseStack, vertexconsumer, pPackedLight, OverlayTexture.NO_OVERLAY, rf, gf, bf, 1.0f);
         pPoseStack.mulPose((new Quaternionf()).setAngleAxis(((float)Math.PI / 3F), SIN_45, 0.0F, SIN_45));
         pPoseStack.mulPose(Axis.YP.rotationDegrees(f1));
-        this.core.render(pPoseStack, vertexconsumer, pPackedLight, OverlayTexture.NO_OVERLAY);
+        this.core.render(pPoseStack, vertexconsumer, pPackedLight, OverlayTexture.NO_OVERLAY, rf, gf, bf, 1.0f);
         pPoseStack.popPose();
         pPoseStack.popPose();
 
@@ -123,5 +153,20 @@ public class CursedNodeRenderer extends EntityRenderer<CursedNodeEntity> {
         float speed = 0.075F;
         float amplitude = 0.03F;
         return Mth.sin(time * speed) * amplitude;
+    }
+
+    private static int lerpColor(float progress, int startColor, int endColor) {
+        int r = Mth.floor(Mth.lerp(progress, (startColor >> 16) & 0xFF, (endColor >> 16) & 0xFF));
+        int g = Mth.floor(Mth.lerp(progress, (startColor >> 8) & 0xFF, (endColor >> 8) & 0xFF));
+        int b = Mth.floor(Mth.lerp(progress, startColor & 0xFF, endColor & 0xFF));
+        return (r << 16) | (g << 8) | b;
+    }
+
+    private static int getCyclingFinalTint(float time) {
+        int[] colors = {FINAL_TINT_A, FINAL_TINT_B, FINAL_TINT_C, FINAL_TINT_A};
+        float cycle = time % 3.0f;
+        int index = (int) cycle;
+        float localT = cycle - index;
+        return lerpColor(localT, colors[index], colors[index + 1]);
     }
 }

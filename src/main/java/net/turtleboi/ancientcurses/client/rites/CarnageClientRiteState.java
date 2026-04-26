@@ -20,12 +20,13 @@ public class CarnageClientRiteState implements ClientRiteState {
     private final long durationElapsed;
     private final long durationTotal;
     private final int totalDegrees;
+    private final int requiredDegrees;
     private final int completedDegrees;
     private final int activeDegreeIndex;
 
     public CarnageClientRiteState(boolean complete, String eliminationTarget, int waveCount, int killsRemaining,
                                   int waveKillTotal, long durationElapsed, long durationTotal,
-                                  int totalDegrees, int completedDegrees, int activeDegreeIndex) {
+                                  int totalDegrees, int requiredDegrees, int completedDegrees, int activeDegreeIndex) {
         this.complete = complete;
         this.eliminationTarget = eliminationTarget;
         this.waveCount = waveCount;
@@ -34,6 +35,7 @@ public class CarnageClientRiteState implements ClientRiteState {
         this.durationElapsed = durationElapsed;
         this.durationTotal = durationTotal;
         this.totalDegrees = totalDegrees;
+        this.requiredDegrees = requiredDegrees;
         this.completedDegrees = completedDegrees;
         this.activeDegreeIndex = activeDegreeIndex;
     }
@@ -48,6 +50,7 @@ public class CarnageClientRiteState implements ClientRiteState {
                 tag.getLong(DURATION_ELAPSED_KEY),
                 tag.getLong(DURATION_TOTAL_KEY),
                 tag.getInt(TOTAL_DEGREES_KEY),
+                tag.contains(REQUIRED_DEGREES_KEY) ? tag.getInt(REQUIRED_DEGREES_KEY) : tag.getInt(TOTAL_DEGREES_KEY),
                 tag.getInt(COMPLETED_DEGREES_KEY),
                 tag.getInt(ACTIVE_DEGREE_INDEX_KEY)
         );
@@ -65,6 +68,9 @@ public class CarnageClientRiteState implements ClientRiteState {
 
     @Override
     public float getProgress() {
+        if (isComplete()) {
+            return 1.0F;
+        }
         if (durationElapsed < durationTotal && durationElapsed != 0 && durationTotal != 0) {
             return Math.min(1.0F, 1.0F - ((float) durationElapsed / (float) durationTotal));
         }
@@ -93,6 +99,11 @@ public class CarnageClientRiteState implements ClientRiteState {
     @Override
     public int getCompletedDegrees() {
         return completedDegrees;
+    }
+
+    @Override
+    public int getRequiredDegrees() {
+        return requiredDegrees;
     }
 
     @Override

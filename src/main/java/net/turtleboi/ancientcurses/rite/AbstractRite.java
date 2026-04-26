@@ -15,6 +15,7 @@ import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.effect.effects.CurseOfGluttonyEffect;
 import net.turtleboi.ancientcurses.entity.entities.CursedPortalEntity;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.network.ModNetworking;
@@ -140,6 +141,10 @@ public abstract class AbstractRite implements Rite {
     }
 
     protected void clearCurseEffects(Player player) {
+        if (getEffect() == ModEffects.CURSE_OF_GLUTTONY.get()) {
+            CurseOfGluttonyEffect.clearSpoiledFoodTags(player);
+        }
+
         List<MobEffect> cursesToRemove = new ArrayList<>();
         for (MobEffectInstance effectInstance : player.getActiveEffects()) {
             MobEffect activeEffect = effectInstance.getEffect();
@@ -170,6 +175,7 @@ public abstract class AbstractRite implements Rite {
     }
 
     protected void finishRite(Player player, boolean spawnReturnPortal, float shakeAmount) {
+        setCompleted(true);
         syncToClient(player);
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearCurseEffect);
         clearCurseEffects(player);
@@ -178,7 +184,6 @@ public abstract class AbstractRite implements Rite {
             CursedPortalEntity.spawnPortalNearPlayer(player, altar.getBlockPos(), altar.getLevel(), altar);
         }
         altar.setPlayerRiteCompleted(player);
-        setCompleted(true);
     }
 
     protected void sendGuidance(ServerPlayer player, BlockPos target) {

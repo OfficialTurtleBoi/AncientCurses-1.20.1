@@ -53,6 +53,7 @@ public class CarnageRite extends AbstractRite {
         this.playerUUID = player.getUUID();
         this.effect = effect;
         this.amplifier = amplifier + 1;
+        setMaxDegrees(getMaxDegreesForTier(this.amplifier));
         this.eliminationTarget = selectRandomTargetMob();
         this.currentDegree = 0;
         this.currentWave = 0;
@@ -90,6 +91,9 @@ public class CarnageRite extends AbstractRite {
     public void loadFromNBT(CompoundTag tag) {
         loadBaseData(tag);
         this.amplifier = tag.getInt(AMPLIFIER_KEY);
+        if (!tag.contains(MAX_DEGREES_KEY)) {
+            setMaxDegrees(getMaxDegreesForTier(this.amplifier));
+        }
         this.currentDegree = tag.getInt(CURRENT_DEGREE_KEY);
         this.currentWave = tag.getInt(CURRENT_WAVE_KEY);
         this.waveDelay = tag.getInt(WAVE_DELAY_KEY);
@@ -121,6 +125,12 @@ public class CarnageRite extends AbstractRite {
     @Override
     public boolean isRiteCompleted(Player player) {
         return getCompletionDegree() >= getMaxDegrees() && activeMobs.isEmpty();
+    }
+
+    @Override
+    public boolean canConcludeAtAltar() {
+        int completionDegree = getCompletionDegree();
+        return completionDegree >= getMinimumCompletionDegrees() && completionDegree < getMaxDegrees();
     }
 
     @Override
@@ -236,6 +246,7 @@ public class CarnageRite extends AbstractRite {
                 waveDelay,
                 200,
                 totalDegrees,
+                getMinimumCompletionDegrees(),
                 completedDegrees,
                 activeDegreeIndex
         ));
@@ -310,16 +321,31 @@ public class CarnageRite extends AbstractRite {
     }
 
     private int getWaveThresholdForDegree(int degreeIndex) {
-        return 1 + (degreeIndex * 2);
+        return degreeIndex + 1;
     }
 
     private boolean isDegreeThresholdWave(int wave) {
-        for (int i = 0; i < getMaxDegrees(); i++) {
-            if (getWaveThresholdForDegree(i) == wave) {
-                return true;
-            }
-        }
-        return false;
+        return wave > 0 && wave <= getMaxDegrees();
+    }
+
+    private int getMinimumCompletionDegrees() {
+        return getMinimumCompletionDegreesForTier(amplifier);
+    }
+
+    private static int getMaxDegreesForTier(int tier) {
+        return switch (Math.max(1, tier)) {
+            case 1 -> 3;
+            case 2 -> 4;
+            default -> 5;
+        };
+    }
+
+    private static int getMinimumCompletionDegreesForTier(int tier) {
+        return switch (Math.max(1, tier)) {
+            case 1 -> 1;
+            case 2 -> 2;
+            default -> 3;
+        };
     }
 
     public record WeightedMob(EntityType<?> mobType, double weight) { }

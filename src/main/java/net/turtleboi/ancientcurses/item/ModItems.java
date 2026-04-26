@@ -5,6 +5,8 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.RecordItem;
+import net.minecraft.world.item.StandingAndWallBlockItem;
+import net.minecraft.core.Direction;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -18,12 +20,6 @@ import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.GoldenFeatherItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemType;
-import net.turtleboi.ancientcurses.item.items.SconcedCursedTorchItem;
-import net.turtleboi.ancientcurses.item.items.SconcedRedstoneTorchItem;
-import net.turtleboi.ancientcurses.item.items.SconcedSoulTorchItem;
-import net.turtleboi.ancientcurses.item.items.SconcedTorchItem;
-import net.turtleboi.ancientcurses.item.items.SconcedUnlitSoulTorchItem;
-import net.turtleboi.ancientcurses.item.items.SconcedUnlitTorchItem;
 import net.turtleboi.ancientcurses.item.items.SoulShardItem;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.turtlecore.item.CoreItems;
@@ -76,22 +72,28 @@ public class ModItems {
             () -> new Item(new Item.Properties().rarity(Rarity.EPIC).stacksTo(16)));
 
     public static final RegistryObject<Item> SCONCED_TORCH_ITEM = ITEMS.register("sconced_torch",
-            () -> new SconcedTorchItem(ModBlocks.SCONCED_TORCH.get(), new Item.Properties()));
+            () -> new StandingAndWallBlockItem(ModBlocks.SCONCED_TORCH.get(),
+                    ModBlocks.SCONCED_WALL_TORCH.get(), new Item.Properties(), Direction.DOWN));
 
     public static final RegistryObject<Item> SCONCED_SOUL_TORCH_ITEM = ITEMS.register("sconced_soul_torch",
-            () -> new SconcedSoulTorchItem(ModBlocks.SCONCED_SOUL_TORCH.get(), new Item.Properties()));
+            () -> new StandingAndWallBlockItem(ModBlocks.SCONCED_SOUL_TORCH.get(),
+                    ModBlocks.SCONCED_WALL_SOUL_TORCH.get(), new Item.Properties(), Direction.DOWN));
 
     public static final RegistryObject<Item> SCONCED_REDSTONE_TORCH_ITEM = ITEMS.register("sconced_redstone_torch",
-            () -> new SconcedRedstoneTorchItem(ModBlocks.SCONCED_REDSTONE_TORCH.get(), new Item.Properties()));
+            () -> new StandingAndWallBlockItem(ModBlocks.SCONCED_REDSTONE_TORCH.get(),
+                    ModBlocks.SCONCED_WALL_REDSTONE_TORCH.get(), new Item.Properties(), Direction.DOWN));
 
     public static final RegistryObject<Item> SCONCED_CURSED_TORCH_ITEM = ITEMS.register("sconced_cursed_torch",
-            () -> new SconcedCursedTorchItem(ModBlocks.SCONCED_CURSED_TORCH.get(), new Item.Properties()));
+            () -> new StandingAndWallBlockItem(ModBlocks.SCONCED_CURSED_TORCH.get(),
+                    ModBlocks.SCONCED_WALL_CURSED_TORCH.get(), new Item.Properties(), Direction.DOWN));
 
     public static final RegistryObject<Item> SCONCED_UNLIT_TORCH_ITEM = ITEMS.register("sconced_unlit_torch",
-            () -> new SconcedUnlitTorchItem(ModBlocks.SCONCED_UNLIT_TORCH.get(), new Item.Properties()));
+            () -> new StandingAndWallBlockItem(ModBlocks.SCONCED_UNLIT_TORCH.get(),
+                    ModBlocks.SCONCED_WALL_UNLIT_TORCH.get(), new Item.Properties(), Direction.DOWN));
 
     public static final RegistryObject<Item> SCONCED_UNLIT_SOUL_TORCH_ITEM = ITEMS.register("sconced_unlit_soul_torch",
-            () -> new SconcedUnlitSoulTorchItem(ModBlocks.SCONCED_UNLIT_SOUL_TORCH.get(), new Item.Properties()));
+            () -> new StandingAndWallBlockItem(ModBlocks.SCONCED_UNLIT_SOUL_TORCH.get(),
+                    ModBlocks.SCONCED_WALL_UNLIT_SOUL_TORCH.get(), new Item.Properties(), Direction.DOWN));
 
     public static final RegistryObject<Item> CURSED_LANTERN = ITEMS.register("cursed_lantern",
             () -> new BlockItem(ModBlocks.CURSED_LANTERN.get(), new Item.Properties()));

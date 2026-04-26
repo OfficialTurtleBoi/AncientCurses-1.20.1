@@ -21,8 +21,6 @@ import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.item.ModItems;
-import net.turtleboi.ancientcurses.network.ModNetworking;
-import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.rite.Rite;
 import net.turtleboi.ancientcurses.rite.util.RiteLocator;
 import net.turtleboi.turtlecore.network.CoreNetworking;
@@ -42,20 +40,22 @@ public final class RewardUtil {
                 .map(PlayerRiteDataCapability::getCurseAmplifier)
                 .orElse(0);
 
-        Rite rite = RiteLocator.findActiveRite(player);
+        Rite rite = altarEntity.getPlayerRite(player.getUUID());
+        if (rite == null) {
+            rite = RiteLocator.findActiveRite(player);
+        }
 
         if (rite == null || altarEntity.hasCollectedReward(player)) {
             return;
         }
 
-        if (player instanceof ServerPlayer serverPlayer) {
+        if (player instanceof ServerPlayer) {
             CoreNetworking.sendToNear(new CameraShakeS2C(0.125F, 1000), player);
             if (altarEntity.hasPendingGemFusion()) {
                 rewardPendingGemFusion(level, player, altarEntity, pos);
             } else {
                 rewardPlayerWithLootTable(level, player, amplifier, rite, pos);
             }
-            ModNetworking.sendToPlayer(SyncRiteDataS2C.none(), serverPlayer);
             player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
                 if (amplifier > 0) {
                     riteData.recordCompletedRiteTier(amplifier);

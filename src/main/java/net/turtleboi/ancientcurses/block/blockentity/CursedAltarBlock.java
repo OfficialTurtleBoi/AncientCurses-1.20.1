@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.server.level.ServerLevel;
 import net.turtleboi.ancientcurses.block.altar.EnvironmentUtil;
 import net.turtleboi.ancientcurses.block.altar.GemUtil;
 import net.turtleboi.ancientcurses.block.altar.RitualUtil;
@@ -28,6 +29,7 @@ import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.rite.Rite;
 import net.turtleboi.ancientcurses.rite.util.RiteLocator;
+import net.turtleboi.ancientcurses.util.AltarSavedData;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -79,6 +81,11 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (state.is(newState.getBlock())) {
+            super.onRemove(state, level, pos, newState, isMoving);
+            return;
+        }
+
         if (!level.isClientSide) {
             BlockEntity blockEntity = level.getBlockEntity(pos);
             if (blockEntity instanceof CursedAltarBlockEntity altarEntity) {
@@ -100,6 +107,10 @@ public class CursedAltarBlock extends BaseEntityBlock {
 
                 altarEntity.releaseDimensionActive();
             }
+
+            if (level instanceof ServerLevel serverLevel) {
+                AltarSavedData.get(serverLevel).removeAltar(pos);
+            }
         }
         super.onRemove(state, level, pos, newState, isMoving);
     }
@@ -119,12 +130,24 @@ public class CursedAltarBlock extends BaseEntityBlock {
             return InteractionResult.FAIL;
         }
 
+        Rite altarRite = altarEntity.getPlayerRite(player.getUUID());
+        boolean riteCompletedAtAltar = altarRite != null && altarRite.isRiteCompleted(player);
+        if (riteCompletedAtAltar && !altarEntity.hasPlayerCompletedRite(player)) {
+            altarEntity.setPlayerRiteCompleted(player);
+        }
+
         InteractionResult playerRiteDataResult = player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA)
                 .map(riteData -> {
                     if (riteData.isPlayerCursed()) {
                         Rite playerRite = RiteLocator.resolveActiveRite(player, riteData);
+                        if (riteCompletedAtAltar || altarEntity.hasPlayerCompletedRite(player)) {
+                            return InteractionResult.PASS;
+                        }
                         if (playerRite == null) {
                             return InteractionResult.FAIL;
+                        }
+                        if (playerRite.isRiteCompleted(player) || altarEntity.hasPlayerCompletedRite(player)) {
+                            return InteractionResult.PASS;
                         }
                         if (RiteUtil.tryConcludeActiveRite(player, playerRite)) {
                             return InteractionResult.SUCCESS;
@@ -146,7 +169,7 @@ public class CursedAltarBlock extends BaseEntityBlock {
             return InteractionResult.FAIL;
         }
 
-        if (altarEntity.hasPlayerCompletedRite(player)){
+        if (altarEntity.hasPlayerCompletedRite(player) || riteCompletedAtAltar){
             RewardUtil.rewardPlayer(player, altarEntity, level, pos);
             if (altarEntity.hasPendingGemFusion()) {
                 return consumeInteraction(level);

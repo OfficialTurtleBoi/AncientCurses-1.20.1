@@ -44,7 +44,6 @@ import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
-import net.turtleboi.ancientcurses.network.packets.rites.RiteOverlayPacketC2S;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import net.turtleboi.ancientcurses.util.ModItemProperties;
 import net.turtleboi.turtlecore.client.data.ScreenEffectsData;
@@ -100,7 +99,6 @@ public class ModClientEvents {
             if (PlayerClientData.hasRite()) {
                 int screenWidth = minecraft.getWindow().getGuiScaledWidth();
                 RiteEventBar.render(event.getGuiGraphics(), (screenWidth - 192) / 2, 11, minecraft);
-                ModNetworking.sendToServer(new RiteOverlayPacketC2S());
             }
 
             if (event.getOverlay() == VanillaGuiOverlay.BOSS_EVENT_PROGRESS.type()) {

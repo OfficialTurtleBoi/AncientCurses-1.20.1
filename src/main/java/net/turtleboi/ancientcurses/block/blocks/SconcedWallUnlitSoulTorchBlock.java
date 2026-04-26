@@ -14,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.WallTorchBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,6 +26,11 @@ import net.turtleboi.ancientcurses.block.ModBlocks;
 public class SconcedWallUnlitSoulTorchBlock extends WallTorchBlock {
     public SconcedWallUnlitSoulTorchBlock(Properties pProperties, ParticleOptions pFlameParticle) {
         super(pProperties, pFlameParticle);
+    }
+
+    @Override
+    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+        return ModBlocks.SCONCED_UNLIT_SOUL_TORCH.get().asItem().getDefaultInstance();
     }
 
     @Override

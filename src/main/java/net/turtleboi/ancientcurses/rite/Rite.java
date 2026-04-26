@@ -79,6 +79,13 @@ public interface Rite {
     default int getCurseEffectDurationTicks(int curseDurationTicks) {
         return MobEffectInstance.INFINITE_DURATION;
     }
+
+    default void onAltarTick(net.minecraft.server.level.ServerLevel level) {
+    }
+
+    default boolean hasPendingAltarWork() {
+        return false;
+    }
 }
 
 

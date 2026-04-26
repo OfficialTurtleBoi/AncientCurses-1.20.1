@@ -11,6 +11,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class CursedNodeEntity extends Entity{
+    private static final int FLAME_FRAME_COUNT = 64;
+    private static final int TICKS_PER_FRAME = 2;
     private static final EntityDataAccessor<Integer> TEXTURE_INDEX = SynchedEntityData.defineId(CursedNodeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> PROGRESS = SynchedEntityData.defineId(CursedNodeEntity.class, EntityDataSerializers.INT);
 
@@ -49,8 +51,7 @@ public class CursedNodeEntity extends Entity{
 
         if (!this.level().isClientSide) {
             textureTickCounter++;
-            int ticksPerFrame = 2;
-            if (textureTickCounter >= ticksPerFrame) {
+            if (textureTickCounter >= TICKS_PER_FRAME) {
                 int newIndex = (this.getTextureIndex() + 1) % getMaxTextureIndex();
                 this.setTextureIndex(newIndex);
                 textureTickCounter = 0;
@@ -85,7 +86,7 @@ public class CursedNodeEntity extends Entity{
     }
 
     public int getMaxTextureIndex() {
-        return 63;
+        return FLAME_FRAME_COUNT;
     }
 
     public void setAltarPos(BlockPos pos) {
