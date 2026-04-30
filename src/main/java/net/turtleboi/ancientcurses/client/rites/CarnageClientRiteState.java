@@ -9,31 +9,34 @@ public class CarnageClientRiteState implements ClientRiteState {
     private static final String WAVE_COUNT_KEY = "WaveCount";
     private static final String KILLS_REMAINING_KEY = "KillsRemaining";
     private static final String WAVE_KILL_TOTAL_KEY = "WaveKillTotal";
-    private static final String DURATION_ELAPSED_KEY = "DurationElapsed";
-    private static final String DURATION_TOTAL_KEY = "DurationTotal";
+    private static final String MAIN_BAR_PROGRESS_KEY = "MainBarProgress";
+    private static final String SUB_BAR_PROGRESS_KEY = "SubBarProgress";
+    private static final String DEGREE_PROGRESS_KEY = "DegreeProgress";
 
     private final boolean complete;
     private final String eliminationTarget;
     private final int waveCount;
     private final int killsRemaining;
     private final int waveKillTotal;
-    private final long durationElapsed;
-    private final long durationTotal;
+    private final float mainBarProgress;
+    private final float subBarProgress;
+    private final float degreeProgress;
     private final int totalDegrees;
     private final int requiredDegrees;
     private final int completedDegrees;
     private final int activeDegreeIndex;
 
     public CarnageClientRiteState(boolean complete, String eliminationTarget, int waveCount, int killsRemaining,
-                                  int waveKillTotal, long durationElapsed, long durationTotal,
+                                  int waveKillTotal, float mainBarProgress, float subBarProgress, float degreeProgress,
                                   int totalDegrees, int requiredDegrees, int completedDegrees, int activeDegreeIndex) {
         this.complete = complete;
         this.eliminationTarget = eliminationTarget;
         this.waveCount = waveCount;
         this.killsRemaining = killsRemaining;
         this.waveKillTotal = waveKillTotal;
-        this.durationElapsed = durationElapsed;
-        this.durationTotal = durationTotal;
+        this.mainBarProgress = mainBarProgress;
+        this.subBarProgress = subBarProgress;
+        this.degreeProgress = degreeProgress;
         this.totalDegrees = totalDegrees;
         this.requiredDegrees = requiredDegrees;
         this.completedDegrees = completedDegrees;
@@ -47,8 +50,9 @@ public class CarnageClientRiteState implements ClientRiteState {
                 tag.getInt(WAVE_COUNT_KEY),
                 tag.getInt(KILLS_REMAINING_KEY),
                 tag.getInt(WAVE_KILL_TOTAL_KEY),
-                tag.getLong(DURATION_ELAPSED_KEY),
-                tag.getLong(DURATION_TOTAL_KEY),
+                tag.getFloat(MAIN_BAR_PROGRESS_KEY),
+                tag.getFloat(SUB_BAR_PROGRESS_KEY),
+                tag.getFloat(DEGREE_PROGRESS_KEY),
                 tag.getInt(TOTAL_DEGREES_KEY),
                 tag.contains(REQUIRED_DEGREES_KEY) ? tag.getInt(REQUIRED_DEGREES_KEY) : tag.getInt(TOTAL_DEGREES_KEY),
                 tag.getInt(COMPLETED_DEGREES_KEY),
@@ -71,13 +75,12 @@ public class CarnageClientRiteState implements ClientRiteState {
         if (isComplete()) {
             return 1.0F;
         }
-        if (durationElapsed < durationTotal && durationElapsed != 0 && durationTotal != 0) {
-            return Math.min(1.0F, 1.0F - ((float) durationElapsed / (float) durationTotal));
-        }
-        if (waveKillTotal <= 0) {
-            return 0.0F;
-        }
-        return Math.min(1.0F, (float) killsRemaining / (float) waveKillTotal);
+        return clampProgress(mainBarProgress);
+    }
+
+    @Override
+    public float getDegreeDisplayProgress() {
+        return clampProgress(degreeProgress);
     }
 
     @Override
@@ -111,6 +114,14 @@ public class CarnageClientRiteState implements ClientRiteState {
         return activeDegreeIndex;
     }
 
+    public boolean shouldShowWaveDelayBar() {
+        return !isComplete();
+    }
+
+    public float getWaveDelayBarProgress() {
+        return clampProgress(subBarProgress);
+    }
+
     @Override
     public CompoundTag toTag() {
         CompoundTag tag = ClientRiteState.super.toTag();
@@ -118,8 +129,13 @@ public class CarnageClientRiteState implements ClientRiteState {
         tag.putInt(WAVE_COUNT_KEY, waveCount);
         tag.putInt(KILLS_REMAINING_KEY, killsRemaining);
         tag.putInt(WAVE_KILL_TOTAL_KEY, waveKillTotal);
-        tag.putLong(DURATION_ELAPSED_KEY, durationElapsed);
-        tag.putLong(DURATION_TOTAL_KEY, durationTotal);
+        tag.putFloat(MAIN_BAR_PROGRESS_KEY, mainBarProgress);
+        tag.putFloat(SUB_BAR_PROGRESS_KEY, subBarProgress);
+        tag.putFloat(DEGREE_PROGRESS_KEY, degreeProgress);
         return tag;
+    }
+
+    private float clampProgress(float progress) {
+        return Math.max(0.0F, Math.min(1.0F, progress));
     }
 }

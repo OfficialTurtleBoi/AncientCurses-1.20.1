@@ -45,6 +45,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.AnvilUpdateEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
@@ -940,21 +941,26 @@ public class ModEvents {
                 MinecraftServer server = player.getServer();
                 if (server == null) return;
 
-                ServerLevel overworld = server.getLevel(Level.OVERWORLD);
-                if (overworld == null) return;
-
                 BlockPos altarPos = riteData.getCurrentAltarPos();
-                if (altarPos == null) {
-                    return;
-                }
+                if (altarPos == null) return;
 
-                BlockEntity blockEntity = overworld.getBlockEntity(altarPos);
-                if (!(blockEntity instanceof CursedAltarBlockEntity altar)) {
-                    return;
-                }
+                ResourceKey<Level> altarDimension = riteData.getAltarDimension();
+                ServerLevel altarLevel = altarDimension != null
+                        ? server.getLevel(altarDimension)
+                        : server.getLevel(Level.OVERWORLD);
+                if (altarLevel == null) return;
+
+                BlockEntity blockEntity = altarLevel.getBlockEntity(altarPos);
+                if (!(blockEntity instanceof CursedAltarBlockEntity altar)) return;
 
                 if (!altar.hasPlayerCompletedRite(player)) {
-                    altar.removePlayerFromRite(player);
+                    Rite activeRite = altar.getPlayerRite(player.getUUID());
+                    if (activeRite != null) {
+                        activeRite.onPlayerDeath(player);
+                    }
+                    if (activeRite == null || !activeRite.hasPendingAltarWork()) {
+                        altar.removePlayerFromRite(player);
+                    }
                 }
 
                 riteData.clearPlayerCurse();
@@ -1059,6 +1065,7 @@ public class ModEvents {
                 int amplifier = prideCurse.getAmplifier();
                 if (event.getDistance() > 1.5F) {
                     event.setDamageMultiplier(1.5F + (0.5F * amplifier));
+                    player.displayClientMessage(Component.literal("Pride goes before a fall!").withStyle(ChatFormatting.RED), true);
                 } else {
                     event.setDamageMultiplier(1.0F);
                 }
@@ -1078,6 +1085,9 @@ public class ModEvents {
             if (prideCurse != null) {
                 event.setAmount(0.0F);
                 event.setCanceled(true);
+                if (!player.level().isClientSide && player.tickCount % 60 == 0) {
+                    player.displayClientMessage(Component.literal("The body will survive!").withStyle(ChatFormatting.RED), true);
+                }
             }
         }
     }
@@ -1108,9 +1118,12 @@ public class ModEvents {
                         if (!player.getInventory().add(newStack)) {
                             player.drop(newStack, false);
                         }
+                        String equipMessage = slot.getType() == EquipmentSlot.Type.ARMOR
+                                ? "Armor is for the lowly!"
+                                : slot == EquipmentSlot.MAINHAND ? "Weapons are for the lowly!" : "Tools are for the lowly!";
+                        player.displayClientMessage(Component.literal(equipMessage).withStyle(ChatFormatting.RED), true);
                     }
                 }
-
             }
         }
     }
@@ -1429,9 +1442,9 @@ public class ModEvents {
                         CoreEffects.STUNNED.get(),
                         20
                 ));
+                player.displayClientMessage(Component.literal("Running is for the pathetic!").withStyle(ChatFormatting.RED), true);
                 if (prideCurse.getAmplifier() >= 1) {
                     player.hurt(player.level().damageSources().generic(), 1.0F);
-                    player.displayClientMessage(Component.literal("Running is for the pathetic!").withStyle(ChatFormatting.RED), true);
                 }
                 player.hurtMarked = true;
             }
@@ -1441,11 +1454,13 @@ public class ModEvents {
                 if (!mainHandItem.isEmpty()) {
                     player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
                     player.drop(mainHandItem, false);
+                    player.displayClientMessage(Component.literal("Weapons are for the lowly!").withStyle(ChatFormatting.RED), true);
                 }
                 ItemStack offHandItem = player.getOffhandItem();
                 if (!offHandItem.isEmpty()) {
                     player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
                     player.drop(offHandItem, false);
+                    player.displayClientMessage(Component.literal("Tools are for the lowly!").withStyle(ChatFormatting.RED), true);
                 }
             }
         }

@@ -45,7 +45,12 @@ public final class RewardUtil {
             rite = RiteLocator.findActiveRite(player);
         }
 
-        if (rite == null || altarEntity.hasCollectedReward(player)) {
+        if (altarEntity.hasCollectedReward(player)) {
+            return;
+        }
+
+        if (rite == null) {
+            altarEntity.markRewardCollected(player);
             return;
         }
 

@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.turtleboi.ancientcurses.AncientCurses;
+import net.turtleboi.ancientcurses.client.rites.CarnageClientRiteState;
 import net.turtleboi.ancientcurses.client.rites.ClientRiteState;
 import net.turtleboi.ancientcurses.client.rites.EmbersClientRiteState;
 
@@ -110,7 +111,18 @@ public class RiteEventBar {
 
     private static void renderSubBar(GuiGraphics guiGraphics, int x, int y) {
         ClientRiteState riteState = PlayerClientData.getActiveRiteState();
-        if (!(riteState instanceof EmbersClientRiteState embersState) || !embersState.shouldShowNodeProgress()) {
+        float progress;
+        if (riteState instanceof EmbersClientRiteState embersState) {
+            if (!embersState.shouldShowNodeProgress()) {
+                return;
+            }
+            progress = embersState.getActiveNodeProgress();
+        } else if (riteState instanceof CarnageClientRiteState carnageState) {
+            if (!carnageState.shouldShowWaveDelayBar()) {
+                return;
+            }
+            progress = carnageState.getWaveDelayBarProgress();
+        } else {
             return;
         }
 
@@ -118,9 +130,10 @@ public class RiteEventBar {
         int subBarY = y + SUB_BAR_Y_OFFSET;
         guiGraphics.blit(RITE_BOSS_BAR, subBarX, subBarY, SUB_BAR_U, SUB_BAR_V, SUB_BAR_WIDTH, SUB_BAR_HEIGHT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
-        float progress = embersState.getActiveNodeProgress();
         int progressWidth = getProgressWidth(progress, SUB_FILL_WIDTH);
-        int fillColor = getSubBarFillColor(progress);
+        int fillColor = (riteState instanceof CarnageClientRiteState)
+                ? MAIN_PROGRESS_COLOR
+                : getSubBarFillColor(progress);
         renderTintedFill(guiGraphics, subBarX + SUB_FILL_X_OFFSET, subBarY + SUB_FILL_Y_OFFSET,
                 SUB_FILL_U, SUB_FILL_V, progressWidth, SUB_FILL_HEIGHT, fillColor);
     }
@@ -193,7 +206,7 @@ public class RiteEventBar {
         float completedDegrees = Mth.clamp(riteState.getCompletedDegrees(), 0, totalDegrees);
         int activeDegreeIndex = riteState.getActiveDegreeIndex();
         float activeDegreeProgress = activeDegreeIndex >= 0 && activeDegreeIndex < totalDegrees
-                ? Mth.clamp(PlayerClientData.getRiteProgress(), 0.0f, 1.0f)
+                ? Mth.clamp(riteState.getDegreeDisplayProgress(), 0.0f, 1.0f)
                 : 0.0f;
         return Mth.clamp((completedDegrees + activeDegreeProgress) / totalDegrees, 0.0f, 1.0f);
     }

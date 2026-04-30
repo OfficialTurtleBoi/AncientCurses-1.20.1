@@ -70,8 +70,8 @@ public class FamineRite extends AbstractRite {
 
     private int calculateRequiredCount(int amplifier) {
         Random random = new Random();
-        int base = random.nextInt(5) + random.nextInt(5);
-        return base * ((amplifier * amplifier) * 2);
+        int base = Math.max(1, random.nextInt(5) + random.nextInt(5));
+        return base * (2 << amplifier);
     }
 
     public boolean isRiteActive() {

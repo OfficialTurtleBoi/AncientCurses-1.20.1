@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -29,7 +30,10 @@ public class CarnageRite extends AbstractRite {
     private static final String CURRENT_DEGREE_KEY = "CurrentDegree";
     private static final String CURRENT_WAVE_KEY = "CurrentWave";
     private static final String WAVE_DELAY_KEY = "WaveDelay";
+    private static final String WAVE_DELAY_TOTAL_KEY = "WaveDelayTotal";
     private static final String WAVE_KILL_TOTAL_KEY = "WaveKillTotal";
+    private static final String REFILL_START_MAIN_PROGRESS_KEY = "RefillStartMainProgress";
+    private static final String REFILL_START_SUB_PROGRESS_KEY = "RefillStartSubProgress";
     private static final String ELIMINATION_TARGET_KEY = "EliminationTarget";
     private static final String ELIMINATION_TARGET_STRING_KEY = "EliminationTargetString";
 
@@ -38,6 +42,9 @@ public class CarnageRite extends AbstractRite {
     private int currentDegree;
     private int currentWave;
     private int waveDelay;
+    private int waveDelayTotal;
+    private float refillStartMainProgress;
+    private float refillStartSubProgress;
 
     private EntityType<?> eliminationTarget;
     private String eliminationTargetString;
@@ -57,7 +64,9 @@ public class CarnageRite extends AbstractRite {
         this.eliminationTarget = selectRandomTargetMob();
         this.currentDegree = 0;
         this.currentWave = 0;
-        this.waveDelay = 200;
+        setWaveDelay(getDefaultWaveDelay());
+        this.refillStartMainProgress = 0.0F;
+        this.refillStartSubProgress = 0.0F;
         if (this.eliminationTarget != null) {
             this.eliminationTargetString = this.eliminationTarget.getDescription().getString();
         }
@@ -80,7 +89,10 @@ public class CarnageRite extends AbstractRite {
         tag.putInt(CURRENT_DEGREE_KEY, currentDegree);
         tag.putInt(CURRENT_WAVE_KEY, currentWave);
         tag.putInt(WAVE_DELAY_KEY, waveDelay);
+        tag.putInt(WAVE_DELAY_TOTAL_KEY, waveDelayTotal);
         tag.putInt(WAVE_KILL_TOTAL_KEY, waveKillTotal);
+        tag.putFloat(REFILL_START_MAIN_PROGRESS_KEY, refillStartMainProgress);
+        tag.putFloat(REFILL_START_SUB_PROGRESS_KEY, refillStartSubProgress);
         if (eliminationTarget != null) {
             tag.putString(ELIMINATION_TARGET_KEY, Objects.requireNonNull(ForgeRegistries.ENTITY_TYPES.getKey(eliminationTarget)).toString());
         }
@@ -97,7 +109,16 @@ public class CarnageRite extends AbstractRite {
         this.currentDegree = tag.getInt(CURRENT_DEGREE_KEY);
         this.currentWave = tag.getInt(CURRENT_WAVE_KEY);
         this.waveDelay = tag.getInt(WAVE_DELAY_KEY);
+        this.waveDelayTotal = tag.contains(WAVE_DELAY_TOTAL_KEY)
+                ? tag.getInt(WAVE_DELAY_TOTAL_KEY)
+                : Math.max(this.waveDelay, getDefaultWaveDelay());
         this.waveKillTotal = tag.getInt(WAVE_KILL_TOTAL_KEY);
+        this.refillStartMainProgress = tag.contains(REFILL_START_MAIN_PROGRESS_KEY)
+                ? tag.getFloat(REFILL_START_MAIN_PROGRESS_KEY)
+                : 0.0F;
+        this.refillStartSubProgress = tag.contains(REFILL_START_SUB_PROGRESS_KEY)
+                ? tag.getFloat(REFILL_START_SUB_PROGRESS_KEY)
+                : 0.0F;
         if (tag.contains(ELIMINATION_TARGET_KEY)) {
             this.eliminationTarget = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(tag.getString(ELIMINATION_TARGET_KEY)));
         }
@@ -179,23 +200,19 @@ public class CarnageRite extends AbstractRite {
                 waveDelay--;
             }
 
-            int targetWave = getWaveThresholdForDegree(currentDegree);
-            if (currentWave < targetWave) {
-                if (waveDelay <= 0 || (activeMobs.isEmpty() && currentWave != 0)) {
-                    if (waveDelay <= 0) {
-                        spawnWave(player);
-                        currentWave++;
-                    }
-
-                    if (activeMobs.isEmpty() && currentWave != 0 && waveDelay > 200) {
-                        waveDelay = 200;
-                    }
+            if (!isWaveActiveForCurrentDegree()) {
+                if (waveDelay <= 0) {
+                    spawnWave(player);
+                    currentWave++;
                 }
-            } else if (currentWave == targetWave && (waveDelay <= 0 || activeMobs.isEmpty())) {
-                if (activeMobs.isEmpty()) {
-                    if (waveDelay > 200) {
-                        waveDelay = 200;
-                    }
+            } else {
+                boolean waveCleared = activeMobs.isEmpty();
+                boolean isOptionalDegree = currentDegree >= getMinimumCompletionDegrees();
+                boolean isFinalDegree = currentDegree == getMaxDegrees() - 1;
+                boolean optionalWaveExpired = isOptionalDegree && !isFinalDegree && waveDelay <= 0;
+
+                if (waveCleared || optionalWaveExpired) {
+                    finishCurrentDegreeWave();
                     currentDegree++;
                     if (getCompletionDegree() >= getMaxDegrees()) {
                         concludeRite(player);
@@ -243,8 +260,9 @@ public class CarnageRite extends AbstractRite {
                 currentWave,
                 activeMobs.size(),
                 waveKillTotal,
-                waveDelay,
-                200,
+                getMainBarProgress(),
+                getSubBarProgress(),
+                getCurrentDegreeWaveProgress(),
                 totalDegrees,
                 getMinimumCompletionDegrees(),
                 completedDegrees,
@@ -305,6 +323,8 @@ public class CarnageRite extends AbstractRite {
             List<Entity> mobsToSpawn = buildWaveMobList(level, mobCount);
             activeMobs.addAll(mobsToSpawn);
             waveKillTotal = activeMobs.size();
+            refillStartMainProgress = 0.0F;
+            refillStartSubProgress = 0.0F;
             CursedPortalEntity.spawnSummoningPortalAtPos(level, altar, portalPos, mobsToSpawn);
             //System.out.println("[CarnageRite] Spawned wave with " + mobCount + " enemies via portal at " + portalPos);
             addWaveDelay((mobsToSpawn.size() + 1) * CursedPortalEntity.spawnDelay);
@@ -313,11 +333,71 @@ public class CarnageRite extends AbstractRite {
     }
 
     private int getDefaultWaveDelay(){
-        return 200 * (4 - amplifier);
+        return switch (Math.max(1, amplifier)) {
+            case 1 -> 240;
+            case 2 -> 140;
+            default -> 60;
+        };
     }
 
     private void addWaveDelay(int delayTicks) {
-        waveDelay = getDefaultWaveDelay() + delayTicks;
+        setWaveDelay(getDefaultWaveDelay() + delayTicks);
+    }
+
+    private void setWaveDelay(int delayTicks) {
+        waveDelay = Math.max(0, delayTicks);
+        waveDelayTotal = waveDelay;
+    }
+
+    private boolean isWaveActiveForCurrentDegree() {
+        return currentWave > currentDegree;
+    }
+
+    private void finishCurrentDegreeWave() {
+        refillStartMainProgress = getCurrentDegreeWaveProgress();
+        refillStartSubProgress = getCurrentDelayProgress();
+        setWaveDelay(getDefaultWaveDelay());
+    }
+
+    private float getMainBarProgress() {
+        if (isRiteCompleted(getPlayer())) {
+            return 1.0F;
+        }
+
+        if (!isWaveActiveForCurrentDegree()) {
+            return Mth.clamp(Mth.lerp(getIntermissionProgress(), refillStartMainProgress, 1.0F), 0.0F, 1.0F);
+        }
+
+        return getCurrentDegreeWaveProgress();
+    }
+
+    private float getSubBarProgress() {
+        if (!isWaveActiveForCurrentDegree()) {
+            return Mth.clamp(Mth.lerp(getIntermissionProgress(), refillStartSubProgress, 1.0F), 0.0F, 1.0F);
+        }
+
+        return getCurrentDelayProgress();
+    }
+
+    private float getCurrentDegreeWaveProgress() {
+        if (waveKillTotal <= 0) {
+            return 0.0F;
+        }
+        return Mth.clamp((float) activeMobs.size() / (float) waveKillTotal, 0.0F, 1.0F);
+    }
+
+    private float getCurrentDelayProgress() {
+        if (waveDelayTotal <= 0) {
+            return 0.0F;
+        }
+        return Mth.clamp((float) waveDelay / (float) waveDelayTotal, 0.0F, 1.0F);
+    }
+
+    private float getIntermissionProgress() {
+        if (waveDelayTotal <= 0) {
+            return 1.0F;
+        }
+        return Mth.clamp(1.0F - ((float) waveDelay / (float) waveDelayTotal), 0.0F, 1.0F);
     }
 
     private int getWaveThresholdForDegree(int degreeIndex) {

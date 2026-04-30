@@ -23,6 +23,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
@@ -44,6 +46,9 @@ import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
 import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
 import net.turtleboi.turtlecore.particle.CoreParticles;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -80,8 +85,8 @@ public class EmbersRite extends AbstractRite {
     private boolean isRestoring = false;
     private List<BlockPos> restoreQueue = new ArrayList<>();
     private int restoreQueueIndex = 0;
-    private static final int CLEAR_PER_TICK = 10;
-    private static final int RESTORE_PER_TICK = 2;
+    private static final int CLEAR_PER_TICK = 20;
+    private static final int RESTORE_PER_TICK = CLEAR_PER_TICK;
     private static final double NODE_RESTORE_MARGIN = 1.0D;
 
     private int currentDegree = 0;
@@ -507,6 +512,20 @@ public class EmbersRite extends AbstractRite {
     }
 
     @Override
+    public void onPlayerDeath(Player player) {
+        if (isRestoring) return;
+        discardActiveNodes();
+        clearPendingNodeClears();
+        isRestoring = true;
+        if (altar.getLevel() instanceof ServerLevel level) {
+            queueEligibleRemainingNodeRestores(level, null);
+            assignRemainingSavedBlocksToNodeSites();
+        }
+        restoreQueue = new ArrayList<>();
+        restoreQueueIndex = 0;
+    }
+
+    @Override
     public void concludeRite(Player player) {
         if (isRestoring) return;
         discardActiveNodes();
@@ -514,7 +533,7 @@ public class EmbersRite extends AbstractRite {
         isRestoring = true;
         this.elapsedTime = this.riteDuration;
         if (altar.getLevel() instanceof ServerLevel level) {
-            queueAllRemainingNodeRestores(level);
+            queueEligibleRemainingNodeRestores(level, player);
             assignRemainingSavedBlocksToNodeSites();
         }
         restoreQueue = new ArrayList<>();
@@ -525,16 +544,22 @@ public class EmbersRite extends AbstractRite {
     @Override
     public void onAltarTick(ServerLevel level) {
         if (isRestoring) {
+            ServerPlayer serverPlayer = getServerPlayer();
+            queueEligibleRemainingNodeRestores(level, serverPlayer);
             if (!pendingNodeRestoreQueues.isEmpty()) {
                 processPendingNodeRestores(level);
                 return;
             }
             if (!savedBlocks.isEmpty()) {
                 assignRemainingSavedBlocksToNodeSites();
+                queueEligibleRemainingNodeRestores(level, serverPlayer);
                 if (!pendingNodeRestoreQueues.isEmpty()) {
                     processPendingNodeRestores(level);
                     return;
                 }
+            }
+            if (hasBlockedNodeRestores(serverPlayer)) {
+                return;
             }
             if (restoreQueue.isEmpty() && !savedBlocks.isEmpty()) {
                 restoreQueue = buildRestoreQueue();
@@ -912,6 +937,7 @@ public class EmbersRite extends AbstractRite {
                         BlockEntity be = level.getBlockEntity(pos);
                         if (be != null) {
                             savedBlockData.put(pos, be.saveWithFullMetadata());
+                            clearBlockEntityInventory(be);
                         }
                     }
                     level.levelEvent(2001, pos, Block.getId(state));
@@ -1058,9 +1084,12 @@ public class EmbersRite extends AbstractRite {
                 && nodeClearIndices.get(nodeIndex) >= nodeClearQueues.get(nodeIndex).size();
     }
 
-    private void queueAllRemainingNodeRestores(ServerLevel level) {
+    private void queueEligibleRemainingNodeRestores(ServerLevel level, Player player) {
         for (int nodeIndex = 0; nodeIndex < nodePositions.size() && nodeIndex < nodeOwnedBlocks.size(); nodeIndex++) {
             if (restoredNodeIndices.contains(nodeIndex) || pendingNodeRestoreQueues.containsKey(nodeIndex)) {
+                continue;
+            }
+            if (player != null && isPlayerWithinNodeClearArea(player, nodePositions.get(nodeIndex))) {
                 continue;
             }
             queueNodeAreaRestore(level, nodeIndex);
@@ -1088,6 +1117,26 @@ public class EmbersRite extends AbstractRite {
         double dx = player.getX() - (nodeCenter.getX() + 0.5D);
         double dz = player.getZ() - (nodeCenter.getZ() + 0.5D);
         return (dx * dx) + (dz * dz) <= clearRadius * clearRadius;
+    }
+
+    private boolean hasBlockedNodeRestores(Player player) {
+        if (player == null) {
+            return false;
+        }
+
+        for (int nodeIndex = 0; nodeIndex < nodePositions.size() && nodeIndex < nodeOwnedBlocks.size(); nodeIndex++) {
+            if (restoredNodeIndices.contains(nodeIndex) || pendingNodeRestoreQueues.containsKey(nodeIndex)) {
+                continue;
+            }
+            if (getSavedBlocksForNode(nodeIndex).isEmpty()) {
+                continue;
+            }
+            if (isPlayerWithinNodeClearArea(player, nodePositions.get(nodeIndex))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void processPendingNodeRestores(ServerLevel level) {
@@ -1135,6 +1184,25 @@ public class EmbersRite extends AbstractRite {
                 be.load(beData);
                 be.setChanged();
             }
+        }
+    }
+
+    private void clearBlockEntityInventory(BlockEntity blockEntity) {
+        if (blockEntity instanceof Container container) {
+            container.clearContent();
+        }
+
+        blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(this::clearItemHandler);
+        blockEntity.setChanged();
+    }
+
+    private void clearItemHandler(IItemHandler itemHandler) {
+        if (!(itemHandler instanceof IItemHandlerModifiable modifiableHandler)) {
+            return;
+        }
+
+        for (int slot = 0; slot < modifiableHandler.getSlots(); slot++) {
+            modifiableHandler.setStackInSlot(slot, ItemStack.EMPTY);
         }
     }
 

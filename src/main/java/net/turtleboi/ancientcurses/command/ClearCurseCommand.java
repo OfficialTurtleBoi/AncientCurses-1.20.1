@@ -15,6 +15,7 @@ import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
+import net.turtleboi.ancientcurses.rite.Rite;
 import net.turtleboi.ancientcurses.rite.util.RiteLocator;
 
 public class ClearCurseCommand {
@@ -31,7 +32,13 @@ public class ClearCurseCommand {
 
         var activeAltar = RiteLocator.findActiveAltar(target);
         if (activeAltar != null) {
-            activeAltar.removePlayerFromRite(target);
+            Rite activeRite = activeAltar.getPlayerRite(target.getUUID());
+            if (activeRite != null) {
+                activeRite.onPlayerDeath(target);
+            }
+            if (activeRite == null || !activeRite.hasPendingAltarWork()) {
+                activeAltar.removePlayerFromRite(target);
+            }
         }
         target.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearPlayerCurse);
         ModNetworking.sendToPlayer(SyncRiteDataS2C.none(), target);

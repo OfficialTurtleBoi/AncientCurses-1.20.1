@@ -86,6 +86,9 @@ public interface Rite {
     default boolean hasPendingAltarWork() {
         return false;
     }
+
+    default void onPlayerDeath(Player player) {
+    }
 }
 
 

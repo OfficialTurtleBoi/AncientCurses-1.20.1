@@ -1,0 +1,32 @@
+{
+  "description": "Movement speed granted when the golden feather wielder lands.",
+  "spell": {
+    "type": "toggle",
+    "power": 1.0,
+    "range": 1.0,
+    "particle": " ",
+    "colorRgb": "#F4D35E",
+    "origin": "caster",
+    "target": "self",
+    "toggleCondition": "on_land",
+    "action_groups": [
+      {
+        "target": "self",
+        "includeSelf": true,
+        "maxTargets": 1,
+        "actions": [
+          {
+            "type": "effects",
+            "defaults": {
+              "durationTicks": 50,
+              "amplifier": 0
+            },
+            "effects": [
+              "minecraft:movement_speed"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -34,6 +34,10 @@ public interface ClientRiteState {
         return Math.min(1, getTotalDegrees());
     }
 
+    default float getDegreeDisplayProgress() {
+        return getProgress();
+    }
+
     default CompoundTag toTag() {
         CompoundTag tag = new CompoundTag();
         tag.putInt(TOTAL_DEGREES_KEY, getTotalDegrees());

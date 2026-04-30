@@ -1,0 +1,27 @@
+{
+  "description": "Launches the golden feather wielder through the air.",
+  "spell": {
+    "type": "instant",
+    "power": 1.0,
+    "range": 1.0,
+    "particle": " ",
+    "colorRgb": "#F4D35E",
+    "origin": "caster",
+    "target": "self",
+    "action_groups": [
+      {
+        "target": "self",
+        "includeSelf": true,
+        "maxTargets": 1,
+        "actions": [
+          {
+            "type": "launch",
+            "horizontal": 2.0,
+            "vertical": 0.9,
+            "direction": "forward"
+          }
+        ]
+      }
+    ]
+  }
+}

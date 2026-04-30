@@ -1,18 +1,19 @@
 {
   "description": "Shockwave released when the golden feather wielder lands.",
   "spell": {
-    "type": "circle",
+    "type": "toggle",
     "power": 2.0,
-    "range": 4.0,
+    "range": 5.0,
     "particle": " ",
     "colorRgb": "#F4D35E",
     "origin": "caster",
     "useFloorParticles": true,
+    "toggleCondition": "on_land",
     "action_groups": [
       {
         "target": "area",
         "filter": "enemies",
-        "radius": 4.0,
+        "radius": 5.0,
         "maxTargets": 16,
         "actions": [
           {

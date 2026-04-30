@@ -49,15 +49,17 @@ public class CursedPortalEntity extends Entity {
     private static final EntityDataAccessor<BlockPos> ALTAR_POS = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.BLOCK_POS);
     private static final EntityDataAccessor<Optional<UUID>> LINKED_PORTAL_UUID = SynchedEntityData.defineId(CursedPortalEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
-    private static int portalLiveTime = 620;
+    private static final int DEFAULT_PORTAL_LIFETIME = 620;
+    private static final int DEFAULT_SUMMONING_PORTAL_LIFETIME = 300;
     private static final double minReturnDistanceSqr = 256.0D;
 
     private static final int teleportCooldown = 100;
     private Map<UUID, Integer> playerCooldowns = new HashMap<>();
 
     public static final int spawnDelay = 20;
-    private static int spawningCooldown = 0;
     private List<Entity> mobsToSpawnList = new ArrayList<>();
+    private int portalLiveTime = DEFAULT_PORTAL_LIFETIME;
+    private int spawningCooldown = 0;
 
     private BlockPos altarPos;
     private CursedPortalEntity linkedPortal;
@@ -256,6 +258,22 @@ public class CursedPortalEntity extends Entity {
 
     public List<Entity> getRemainingMobsToSpawn() {
         return new ArrayList<>(mobsToSpawnList);
+    }
+
+    public void setPortalLiveTime(int portalLiveTime) {
+        this.portalLiveTime = portalLiveTime;
+    }
+
+    public int getPortalLiveTime() {
+        return portalLiveTime;
+    }
+
+    public void setSpawningCooldown(int spawningCooldown) {
+        this.spawningCooldown = spawningCooldown;
+    }
+
+    public int getSpawningCooldown() {
+        return spawningCooldown;
     }
 
     private void spawnMob(Entity spawnedMob) {
@@ -565,7 +583,7 @@ public class CursedPortalEntity extends Entity {
     public static CursedPortalEntity spawnSummoningPortalOnPlayer(Player player, BlockPos altarPos, Level level, Object owner) {
         BlockPos portalPos = player.blockPosition();
         CursedPortalEntity portal = new CursedPortalEntity(ModEntities.CURSED_PORTAL.get(), level);
-        portalLiveTime = 300;
+        portal.setPortalLiveTime(DEFAULT_SUMMONING_PORTAL_LIFETIME);
 
         portal.setPos(portalPos.getX(), portalPos.getY(), portalPos.getZ());
 
@@ -579,14 +597,14 @@ public class CursedPortalEntity extends Entity {
 
     public static CursedPortalEntity spawnSummoningPortalAtPos(Level level, CursedAltarBlockEntity altarBlockEntity, BlockPos portalPos, List<Entity> mobsToSpawn) {
         CursedPortalEntity portal = new CursedPortalEntity(ModEntities.CURSED_PORTAL.get(), level);
-        portalLiveTime = (mobsToSpawn.size() + 1) * spawnDelay;
+        portal.setPortalLiveTime((mobsToSpawn.size() + 1) * spawnDelay);
         portal.setPos(portalPos.getX() + 0.5, portalPos.getY(), portalPos.getZ() + 0.5);
 
         portal.setOwner(altarBlockEntity);
         portal.setAltarPos(altarBlockEntity.getBlockPos());
         portal.setSpawningEnabled(true);
         portal.setMobsToSpawn(mobsToSpawn);
-        spawningCooldown = spawnDelay;
+        portal.setSpawningCooldown(spawnDelay);
         //System.out.println(Component.literal("New summoning portal spawned!"));
         level.addFreshEntity(portal);
         return portal;
@@ -648,6 +666,8 @@ public class CursedPortalEntity extends Entity {
     protected void readAdditionalSaveData(CompoundTag pCompound) {
         this.setTeleportEnabled(pCompound.getBoolean("TeleportEnabled"));
         this.setSpawningEnabled(pCompound.getBoolean("SpawningEnabled"));
+        this.setPortalLiveTime(pCompound.contains("PortalLiveTime") ? pCompound.getInt("PortalLiveTime") : DEFAULT_PORTAL_LIFETIME);
+        this.setSpawningCooldown(pCompound.getInt("SpawningCooldown"));
         if (pCompound.contains("AltarPos")) {
             BlockPos pos = BlockPos.of(pCompound.getLong("AltarPos"));
             this.setAltarPos(pos);
@@ -663,6 +683,9 @@ public class CursedPortalEntity extends Entity {
     @Override
     protected void addAdditionalSaveData(CompoundTag pCompound) {
         pCompound.putBoolean("TeleportEnabled", this.isTeleportEnabled());
+        pCompound.putBoolean("SpawningEnabled", this.isSpawningEnabled());
+        pCompound.putInt("PortalLiveTime", this.getPortalLiveTime());
+        pCompound.putInt("SpawningCooldown", this.getSpawningCooldown());
         if (this.altarPos != null) {
             pCompound.putLong("AltarPos", this.altarPos.asLong());
         }

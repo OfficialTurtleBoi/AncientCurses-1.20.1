@@ -199,6 +199,7 @@ public class PlayerRiteDataCapability {
         this.curseEffect = source.curseEffect;
         this.curseAmplifier = source.curseAmplifier;
         this.currentAltarPos = source.currentAltarPos;
+        this.altarDimension = source.altarDimension;
         this.riteRecords = source.riteRecords;
         this.highestCompletedRiteTier = source.highestCompletedRiteTier;
     }
