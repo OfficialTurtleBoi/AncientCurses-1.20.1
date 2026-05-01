@@ -7,6 +7,62 @@
       }
     ]
   },
+  "curseyou_intro": {
+    "sounds": [
+      {
+        "name": "ancientcurses:curseyou_intro",
+        "stream": true
+      }
+    ]
+  },
+  "curseyou_verse1": {
+    "sounds": [
+      {
+        "name": "ancientcurses:curseyou_verse1",
+        "stream": true
+      }
+    ]
+  },
+  "curseyou_verse2": {
+    "sounds": [
+      {
+        "name": "ancientcurses:curseyou_verse2",
+        "stream": true
+      }
+    ]
+  },
+  "curseyou_chorus1": {
+    "sounds": [
+      {
+        "name": "ancientcurses:curseyou_chorus1",
+        "stream": true
+      }
+    ]
+  },
+  "curseyou_bridge": {
+    "sounds": [
+      {
+        "name": "ancientcurses:curseyou_bridge",
+        "stream": true
+      }
+    ]
+  },
+  "curseyou_chorus2": {
+    "sounds": [
+      {
+        "name": "ancientcurses:curseyou_chorus2",
+        "stream": true
+      }
+    ]
+  },
+  "curseyou_end": {
+    "sounds": [
+      {
+        "name": "ancientcurses:curseyou_end",
+        "stream": true
+      }
+    ]
+  },
   "gem_place": {
     "sounds": [
       {

@@ -15,6 +15,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -27,6 +28,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.*;
+import net.minecraftforge.client.event.sound.PlaySoundEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -39,6 +41,7 @@ import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.client.RiteEventBar;
 import net.turtleboi.ancientcurses.client.renderer.DowsingRodRenderer;
 import net.turtleboi.ancientcurses.client.renderer.FirstBeaconEffectRenderer;
+import net.turtleboi.ancientcurses.client.sound.RiteMusicController;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
@@ -55,6 +58,10 @@ import java.util.Random;
 public class ModClientEvents {
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+
         LocalPlayer player = Minecraft.getInstance().player;
         if (PlayerClientData.getDowsingRodUsed() && player != null && !(player.getMainHandItem().getItem() instanceof DowsingRod)) {
             PlayerClientData.setDowsingRodUsed(false);
@@ -77,6 +84,8 @@ public class ModClientEvents {
                 PlayerClientData.setItemRemainingUseTime(PlayerClientData.getItemRemainingUseTime() - 1);
             }
         }
+
+        RiteMusicController.tick();
     }
 
     @SubscribeEvent
@@ -115,6 +124,25 @@ public class ModClientEvents {
                 renderPurpleOverlay(event.getGuiGraphics());
             }
         }
+    }
+
+    @SubscribeEvent
+    public static void onPlaySound(PlaySoundEvent event) {
+        if (!RiteMusicController.shouldBlockVanillaMusic() || event.getSound() == null) {
+            return;
+        }
+
+        if (event.getSound().getSource() != SoundSource.MUSIC) {
+            return;
+        }
+
+        ResourceLocation soundId = event.getSound().getLocation();
+        if (RiteMusicController.isRiteMusic(soundId)) {
+            return;
+        }
+
+        AncientCurses.LOGGER.info("[RiteMusic] Blocking non-rite music sound={}", soundId);
+        event.setSound(null);
     }
 
 

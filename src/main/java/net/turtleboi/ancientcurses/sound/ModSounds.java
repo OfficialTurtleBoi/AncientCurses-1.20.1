@@ -13,6 +13,13 @@ public class ModSounds {
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, AncientCurses.MOD_ID);
 
     public static final RegistryObject<SoundEvent> DEPRECOPHOBIA = registerSoundEvents("deprecophobia");
+    public static final RegistryObject<SoundEvent> CURSE_YOU_INTRO = registerSoundEvents("curseyou_intro");
+    public static final RegistryObject<SoundEvent> CURSE_YOU_VERSE_1 = registerSoundEvents("curseyou_verse1");
+    public static final RegistryObject<SoundEvent> CURSE_YOU_VERSE_2 = registerSoundEvents("curseyou_verse2");
+    public static final RegistryObject<SoundEvent> CURSE_YOU_CHORUS_1 = registerSoundEvents("curseyou_chorus1");
+    public static final RegistryObject<SoundEvent> CURSE_YOU_BRIDGE = registerSoundEvents("curseyou_bridge");
+    public static final RegistryObject<SoundEvent> CURSE_YOU_CHORUS_2 = registerSoundEvents("curseyou_chorus2");
+    public static final RegistryObject<SoundEvent> CURSE_YOU_END = registerSoundEvents("curseyou_end");
     public static final RegistryObject<SoundEvent> GEM_PLACE = registerSoundEvents("gem_place");
 
     private static RegistryObject<SoundEvent> registerSoundEvents(String name){

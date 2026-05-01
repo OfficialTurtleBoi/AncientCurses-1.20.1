@@ -841,18 +841,31 @@ public class EmbersRite extends AbstractRite {
 
     private BlockPos generateNodePosition(Random random, int nodeIndex, int totalNodes) {
         BlockPos center = altar.getBlockPos();
-        double clearRadius = nodeRadius * 1.5;
-        double minDistance = clearRadius + 4.0;
-        double maxDistance = minDistance + 12.0 + amplifier * 4.0;
+        double minDistance = getNodePlacementMinDistance(totalNodes);
+        double maxDistance = getNodePlacementMaxDistance(totalNodes, minDistance);
         double sectorStart = nodeIndex * (360.0 / totalNodes);
         double randomOffset = random.nextDouble() * (360.0 / totalNodes);
         double degreeOffset = sectorStart + randomOffset;
         double radians = Math.toRadians(degreeOffset);
-        double distance = minDistance + random.nextDouble() * (maxDistance - minDistance);
+        double distanceRoll = amplifier <= 1 ? random.nextDouble() : Math.pow(random.nextDouble(), 0.7D);
+        double distance = Mth.lerp(distanceRoll, minDistance, maxDistance);
 
         int dx = (int) Math.round(Math.cos(radians) * distance);
         int dz = (int) Math.round(Math.sin(radians) * distance);
         return new BlockPos(center.getX() + dx, center.getY(), center.getZ() + dz);
+    }
+
+    private double getNodePlacementMinDistance(int totalNodes) {
+        double clearRadius = getNodeClearRadius();
+        double tierSprawl = Math.max(0, amplifier - 1) * 8.0D;
+        double nodeCountSprawl = Math.max(0, totalNodes - 3) * 2.5D;
+        return clearRadius + 4.0D + tierSprawl + nodeCountSprawl;
+    }
+
+    private double getNodePlacementMaxDistance(int totalNodes, double minDistance) {
+        double tierRange = 12.0D + amplifier * 4.0D;
+        double nodeCountRange = Math.max(0, totalNodes - 3) * 2.0D;
+        return minDistance + tierRange + nodeCountRange;
     }
 
     private CursedNodeEntity spawnCursedNode(ServerLevel level, BlockPos node, int progress, boolean initializeClearData) {
