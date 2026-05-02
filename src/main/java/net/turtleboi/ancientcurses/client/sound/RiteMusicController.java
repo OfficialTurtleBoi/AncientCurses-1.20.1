@@ -23,22 +23,23 @@ public final class RiteMusicController {
     private static final long CURSE_YOU_CHORUS_1_HANDOFF_MS = 40_500L;
     private static final long CURSE_YOU_BRIDGE_HANDOFF_MS = 22_200L;
     private static final long CURSE_YOU_CHORUS_2_HANDOFF_MS = 40_500L;
-    private static final long CURSE_YOU_OUTRO_HANDOFF_MS = 5_000L;
+    private static final long CURSE_YOU_OUTRO_HANDOFF_MS = HANDOFF_ON_SOUND_END;
+    private static final long CURSE_YOU_OUTRO_MAX_PLAY_MS = 5_000L;
 
     private static final SectionTrack INTRO_SECTION =
-            new SectionTrack("intro", ModSounds.CURSE_YOU_INTRO, CURSE_YOU_INTRO_HANDOFF_MS, 0L);
+            new SectionTrack("intro", ModSounds.CURSE_YOU_INTRO, CURSE_YOU_INTRO_HANDOFF_MS, CROSSFADE_MS, HANDOFF_ON_SOUND_END);
     private static final SectionTrack VERSE_1_SECTION =
-            new SectionTrack("verse1", ModSounds.CURSE_YOU_VERSE_1, CURSE_YOU_VERSE_1_HANDOFF_MS, CROSSFADE_MS);
+            new SectionTrack("verse1", ModSounds.CURSE_YOU_VERSE_1, CURSE_YOU_VERSE_1_HANDOFF_MS, CROSSFADE_MS, HANDOFF_ON_SOUND_END);
     private static final SectionTrack CHORUS_1_SECTION =
-            new SectionTrack("chorus1", ModSounds.CURSE_YOU_CHORUS_1, CURSE_YOU_CHORUS_1_HANDOFF_MS, 0L);
+            new SectionTrack("chorus1", ModSounds.CURSE_YOU_CHORUS_1, CURSE_YOU_CHORUS_1_HANDOFF_MS, 0L, HANDOFF_ON_SOUND_END);
     private static final SectionTrack VERSE_2_SECTION =
-            new SectionTrack("verse2", ModSounds.CURSE_YOU_VERSE_2, CURSE_YOU_VERSE_2_HANDOFF_MS, CROSSFADE_MS);
+            new SectionTrack("verse2", ModSounds.CURSE_YOU_VERSE_2, CURSE_YOU_VERSE_2_HANDOFF_MS, CROSSFADE_MS, HANDOFF_ON_SOUND_END);
     private static final SectionTrack BRIDGE_SECTION =
-            new SectionTrack("bridge", ModSounds.CURSE_YOU_BRIDGE, CURSE_YOU_BRIDGE_HANDOFF_MS, CROSSFADE_MS);
+            new SectionTrack("bridge", ModSounds.CURSE_YOU_BRIDGE, CURSE_YOU_BRIDGE_HANDOFF_MS, 0L, HANDOFF_ON_SOUND_END);
     private static final SectionTrack CHORUS_2_SECTION =
-            new SectionTrack("chorus2", ModSounds.CURSE_YOU_CHORUS_2, CURSE_YOU_CHORUS_2_HANDOFF_MS, 0L);
+            new SectionTrack("chorus2", ModSounds.CURSE_YOU_CHORUS_2, CURSE_YOU_CHORUS_2_HANDOFF_MS, 0L, HANDOFF_ON_SOUND_END);
     private static final SectionTrack OUTRO_SECTION =
-            new SectionTrack("outro", ModSounds.CURSE_YOU_END, CURSE_YOU_OUTRO_HANDOFF_MS, 0L);
+            new SectionTrack("outro", ModSounds.CURSE_YOU_END, CURSE_YOU_OUTRO_HANDOFF_MS, 0L, CURSE_YOU_OUTRO_MAX_PLAY_MS);
 
     private static RiteMusicSoundInstance currentSound;
     private static SectionTrack currentTrack;
@@ -52,11 +53,10 @@ public final class RiteMusicController {
     private static boolean lastKnownSoundActive;
     private static boolean currentTrackHandoffTriggered;
     private static int lastCompletedDegrees;
-    private static int lastRequiredDegrees;
     private static int lastActiveDegreeIndex = -1;
     private static float lastProgressSnapshot;
-    private static long currentTrackStartedAtTick;
-    private static LoopPhase nextLoopPhase = LoopPhase.VERSE;
+    private static double currentTrackStartedAtMs;
+    private static LoopPhase nextLoopPhase = LoopPhase.FIRST_VERSE;
 
     private RiteMusicController() {
     }
@@ -76,7 +76,7 @@ public final class RiteMusicController {
 
         if (shouldOwnMusic && !musicOwnershipActive) {
             suppressVanillaMusic(minecraft);
-            AncientCurses.LOGGER.info("[RiteMusic] Took over music for riteId={}", hasRite ? riteState.getRiteId() : currentRiteId);
+            // AncientCurses.LOGGER.info("[RiteMusic] Took over music for riteId={}", hasRite ? riteState.getRiteId() : currentRiteId);
             musicOwnershipActive = true;
         } else if (!shouldOwnMusic) {
             musicOwnershipActive = false;
@@ -88,16 +88,32 @@ public final class RiteMusicController {
             handleActiveRite(riteState);
         }
 
+        previousRiteId = hasRite ? riteState.getRiteId() : "";
+        previousRiteComplete = hasRite && riteState.isComplete();
+    }
+
+    public static void renderTick() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || minecraft.level == null || minecraft.isPaused()) {
+            return;
+        }
+
+        ClientRiteState riteState = PlayerClientData.getActiveRiteState();
+        if (hasReachedTrackStopPoint()) {
+            // AncientCurses.LOGGER.info("[RiteMusic] Stop point reached for track={} at {:.2f}ms, ending track",
+            //         currentTrack != null ? currentTrack.label() : "unknown",
+            //         getElapsedTrackMs());
+            stopCurrentSound();
+            return;
+        }
+
         if (hasReachedTrackHandoff()) {
-            AncientCurses.LOGGER.info("[RiteMusic] Handoff reached for track={} at {} ticks, crossfading now",
-                    currentTrack != null ? currentTrack.label() : "unknown",
-                    getElapsedTrackTicks());
+            // AncientCurses.LOGGER.info("[RiteMusic] Handoff reached for track={} at {:.2f}ms, crossfading now",
+            //         currentTrack != null ? currentTrack.label() : "unknown",
+            //         getElapsedTrackMs());
             currentTrackHandoffTriggered = true;
             crossfadeToNextSection(riteState);
         }
-
-        previousRiteId = hasRite ? riteState.getRiteId() : "";
-        previousRiteComplete = hasRite && riteState.isComplete();
     }
 
     public static void reset() {
@@ -113,19 +129,22 @@ public final class RiteMusicController {
         lastKnownSoundActive = false;
         currentTrackHandoffTriggered = false;
         lastCompletedDegrees = 0;
-        lastRequiredDegrees = 0;
         lastActiveDegreeIndex = -1;
         lastProgressSnapshot = 0.0F;
-        currentTrackStartedAtTick = 0L;
-        nextLoopPhase = LoopPhase.VERSE;
+        currentTrackStartedAtMs = 0.0D;
+        nextLoopPhase = LoopPhase.FIRST_VERSE;
     }
 
     private static void handleNoActiveRite() {
         boolean turningInCompletedRite = previousRiteComplete && previousRiteId != null && !previousRiteId.isBlank();
         if (turningInCompletedRite) {
-            outroQueued = true;
             currentRiteId = previousRiteId;
-            AncientCurses.LOGGER.info("[RiteMusic] Completed rite turned in, queueing outro after current section for riteId={}", currentRiteId);
+            // AncientCurses.LOGGER.info("[RiteMusic] Completed rite turned in, cutting current track and playing outro now for riteId={}", currentRiteId);
+            stopCurrentSound();
+            playSection(SongSection.OUTRO);
+            outroQueued = false;
+            outroStarted = true;
+            return;
         } else if (!outroStarted) {
             reset();
             return;
@@ -157,7 +176,6 @@ public final class RiteMusicController {
         }
 
         lastCompletedDegrees = Math.max(0, riteState.getCompletedDegrees());
-        lastRequiredDegrees = Math.max(0, riteState.getRequiredDegrees());
         lastActiveDegreeIndex = riteState.getActiveDegreeIndex();
         lastProgressSnapshot = Mth.clamp(riteState.getProgress(), 0.0F, 1.0F);
     }
@@ -170,12 +188,11 @@ public final class RiteMusicController {
         outroQueued = false;
         outroStarted = false;
         lastCompletedDegrees = Math.max(0, riteState.getCompletedDegrees());
-        lastRequiredDegrees = Math.max(0, riteState.getRequiredDegrees());
         lastActiveDegreeIndex = riteState.getActiveDegreeIndex();
         lastProgressSnapshot = Mth.clamp(riteState.getProgress(), 0.0F, 1.0F);
-        nextLoopPhase = LoopPhase.VERSE;
-        AncientCurses.LOGGER.info("[RiteMusic] Starting music controller for riteId={}, progress={}, completedDegrees={}, activeDegreeIndex={}",
-                currentRiteId, lastProgressSnapshot, lastCompletedDegrees, lastActiveDegreeIndex);
+        nextLoopPhase = LoopPhase.FIRST_VERSE;
+        // AncientCurses.LOGGER.info("[RiteMusic] Starting music controller for riteId={}, progress={}, completedDegrees={}, activeDegreeIndex={}",
+        //         currentRiteId, lastProgressSnapshot, lastCompletedDegrees, lastActiveDegreeIndex);
     }
 
     private static SongSection chooseNextSection(ClientRiteState riteState) {
@@ -187,18 +204,18 @@ public final class RiteMusicController {
         if (outroQueued) {
             outroQueued = false;
             outroStarted = true;
-            AncientCurses.LOGGER.info("[RiteMusic] Playing queued outro for riteId={}", currentRiteId);
+            // AncientCurses.LOGGER.info("[RiteMusic] Playing queued outro for riteId={}", currentRiteId);
             return SongSection.OUTRO;
         }
 
-        AncientCurses.LOGGER.info("[RiteMusic] Choosing next section from fixed sequence for riteId={}, progress={} -> {}, completedDegrees={} -> {}, activeDegreeIndex={} -> {}",
-                currentRiteId,
-                lastProgressSnapshot,
-                Mth.clamp(riteState.getProgress(), 0.0F, 1.0F),
-                lastCompletedDegrees,
-                riteState.getCompletedDegrees(),
-                lastActiveDegreeIndex,
-                riteState.getActiveDegreeIndex());
+        // AncientCurses.LOGGER.info("[RiteMusic] Choosing next section from fixed sequence for riteId={}, progress={} -> {}, completedDegrees={} -> {}, activeDegreeIndex={} -> {}",
+        //         currentRiteId,
+        //         lastProgressSnapshot,
+        //         Mth.clamp(riteState.getProgress(), 0.0F, 1.0F),
+        //         lastCompletedDegrees,
+        //         riteState.getCompletedDegrees(),
+        //         lastActiveDegreeIndex,
+        //         riteState.getActiveDegreeIndex());
         return SongSection.LOOP;
     }
 
@@ -209,7 +226,7 @@ public final class RiteMusicController {
     private static SectionTrack resolveTrack(SongSection section) {
         return switch (section) {
             case INTRO -> INTRO_SECTION;
-            case LOOP -> nextLoopTrack(lastProgressSnapshot);
+            case LOOP -> nextLoopTrack();
             case OUTRO -> OUTRO_SECTION;
             case NONE -> null;
         };
@@ -222,19 +239,23 @@ public final class RiteMusicController {
 
         SoundManager soundManager = Minecraft.getInstance().getSoundManager();
         currentTrack = track;
-        currentTrackStartedAtTick = getCurrentGameTick();
+        currentTrackStartedAtMs = getCurrentMusicTimeMs();
         currentTrackHandoffTriggered = false;
         currentSound = new RiteMusicSoundInstance(track.sound().get());
-        AncientCurses.LOGGER.info("[RiteMusic] Playing track={} sound={} riteId={} handoffMs={} crossfadeMs={}",
-                track.label(),
-                track.sound().getId(),
-                currentRiteId,
-                track.handoffMs(),
-                track.crossfadeMs());
+        // AncientCurses.LOGGER.info("[RiteMusic] Playing track={} sound={} riteId={} handoffMs={} crossfadeMs={}",
+        //         track.label(),
+        //         track.sound().getId(),
+        //         currentRiteId,
+        //         track.handoffMs(),
+        //         track.crossfadeMs());
         soundManager.play(currentSound);
     }
 
     private static void crossfadeToNextSection(ClientRiteState riteState) {
+        if (currentTrack == OUTRO_SECTION) {
+            return;
+        }
+
         SectionTrack outgoingTrack = currentTrack;
         RiteMusicSoundInstance outgoingSound = currentSound;
         SectionTrack incomingTrack = resolveTrack(chooseNextSection(riteState));
@@ -242,10 +263,10 @@ public final class RiteMusicController {
             return;
         }
 
-        AncientCurses.LOGGER.info("[RiteMusic] Crossfading from track={} to track={} over {}ms",
-                outgoingTrack != null ? outgoingTrack.label() : "unknown",
-                incomingTrack.label(),
-                outgoingTrack != null ? outgoingTrack.crossfadeMs() : 0L);
+        // AncientCurses.LOGGER.info("[RiteMusic] Crossfading from track={} to track={} over {}ms",
+        //         outgoingTrack != null ? outgoingTrack.label() : "unknown",
+        //         incomingTrack.label(),
+        //         outgoingTrack != null ? outgoingTrack.crossfadeMs() : 0L);
 
         if (outgoingSound != null && outgoingTrack != null) {
             outgoingSound.beginFadeOut(outgoingTrack.crossfadeMs());
@@ -254,9 +275,9 @@ public final class RiteMusicController {
         playTrack(incomingTrack);
     }
 
-    private static SectionTrack nextLoopTrack(float progressSnapshot) {
+    private static SectionTrack nextLoopTrack() {
         SectionTrack selectedTrack = switch (nextLoopPhase) {
-            case VERSE -> selectVerseTrack();
+            case FIRST_VERSE -> VERSE_1_SECTION;
             case CHORUS_1 -> CHORUS_1_SECTION;
             case VERSE_2 -> VERSE_2_SECTION;
             case BRIDGE_AFTER_VERSE_2, BRIDGE_AFTER_CHORUS_2 -> BRIDGE_SECTION;
@@ -264,23 +285,15 @@ public final class RiteMusicController {
         };
 
         nextLoopPhase = switch (nextLoopPhase) {
-            case VERSE -> LoopPhase.CHORUS_1;
+            case FIRST_VERSE -> LoopPhase.CHORUS_1;
             case CHORUS_1 -> LoopPhase.VERSE_2;
             case VERSE_2 -> LoopPhase.BRIDGE_AFTER_VERSE_2;
             case BRIDGE_AFTER_VERSE_2 -> LoopPhase.CHORUS_2;
             case CHORUS_2 -> LoopPhase.BRIDGE_AFTER_CHORUS_2;
-            case BRIDGE_AFTER_CHORUS_2 -> LoopPhase.VERSE;
+            case BRIDGE_AFTER_CHORUS_2 -> LoopPhase.VERSE_2;
         };
 
         return selectedTrack;
-    }
-
-    private static SectionTrack selectVerseTrack() {
-        return hasCompletedRequiredDegrees() ? VERSE_2_SECTION : VERSE_1_SECTION;
-    }
-
-    private static boolean hasCompletedRequiredDegrees() {
-        return lastRequiredDegrees > 0 && lastCompletedDegrees >= lastRequiredDegrees;
     }
 
     private static boolean isCurrentSoundActive() {
@@ -289,9 +302,9 @@ public final class RiteMusicController {
 
     private static void stopCurrentSound() {
         if (currentSound != null) {
-            AncientCurses.LOGGER.info("[RiteMusic] Stopping current section track={} riteId={}",
-                    currentTrack != null ? currentTrack.label() : "unknown",
-                    currentRiteId);
+            // AncientCurses.LOGGER.info("[RiteMusic] Stopping current section track={} riteId={}",
+            //         currentTrack != null ? currentTrack.label() : "unknown",
+            //         currentRiteId);
             Minecraft.getInstance().getSoundManager().stop(currentSound);
             currentSound = null;
         }
@@ -314,10 +327,10 @@ public final class RiteMusicController {
     private static void logSoundLifecycle() {
         boolean active = isCurrentSoundActive();
         if (active != lastKnownSoundActive) {
-            AncientCurses.LOGGER.info("[RiteMusic] Sound active changed: active={}, riteId={}, track={}",
-                    active,
-                    currentRiteId,
-                    currentTrack != null ? currentTrack.label() : "none");
+            // AncientCurses.LOGGER.info("[RiteMusic] Sound active changed: active={}, riteId={}, track={}",
+            //         active,
+            //         currentRiteId,
+            //         currentTrack != null ? currentTrack.label() : "none");
             lastKnownSoundActive = active;
         }
     }
@@ -331,27 +344,40 @@ public final class RiteMusicController {
             return false;
         }
 
-        return ticksToMillis(getElapsedTrackTicks()) >= currentTrack.handoffMs();
+        return getElapsedTrackMs() >= currentTrack.handoffMs();
     }
 
-    private static long getCurrentGameTick() {
+    private static boolean hasReachedTrackStopPoint() {
+        if (currentSound == null || currentTrack == null) {
+            return false;
+        }
+
+        if (currentTrack.maxPlayMs() <= HANDOFF_ON_SOUND_END) {
+            return false;
+        }
+
+        return getElapsedTrackMs() >= currentTrack.maxPlayMs();
+    }
+
+    private static double getCurrentMusicTimeMs() {
         Minecraft minecraft = Minecraft.getInstance();
-        return minecraft.level != null ? minecraft.level.getGameTime() : 0L;
+        if (minecraft.level == null) {
+            return 0.0D;
+        }
+
+        double partialTick = minecraft.isPaused() ? 0.0D : minecraft.getFrameTime();
+        return (minecraft.level.getGameTime() + partialTick) * 50.0D;
     }
 
-    private static long getElapsedTrackTicks() {
-        return Math.max(0L, getCurrentGameTick() - currentTrackStartedAtTick);
+    private static double getElapsedTrackMs() {
+        return Math.max(0.0D, getCurrentMusicTimeMs() - currentTrackStartedAtMs);
     }
 
-    private static long ticksToMillis(long ticks) {
-        return ticks * 50L;
-    }
-
-    private record SectionTrack(String label, RegistryObject<SoundEvent> sound, long handoffMs, long crossfadeMs) {
+    private record SectionTrack(String label, RegistryObject<SoundEvent> sound, long handoffMs, long crossfadeMs, long maxPlayMs) {
     }
 
     private enum LoopPhase {
-        VERSE,
+        FIRST_VERSE,
         CHORUS_1,
         VERSE_2,
         BRIDGE_AFTER_VERSE_2,

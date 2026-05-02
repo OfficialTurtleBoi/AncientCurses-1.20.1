@@ -33,10 +33,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteDataCapability;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.client.rites.EmbersClientRiteState;
 import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.entity.entities.CursedNodeEntity;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
+import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.rite.AbstractRite;
@@ -135,6 +138,12 @@ public class EmbersRite extends AbstractRite {
 
     public boolean isRiteActive() {
         return altar.getPlayerRite(playerUUID) != null;
+    }
+
+    @Override
+    public boolean canConcludeAtAltar() {
+        int completionDegree = getCompletionDegree();
+        return completionDegree >= getMinimumCompletionDegrees() && completionDegree < getMaxDegrees();
     }
 
     @Override
@@ -492,6 +501,15 @@ public class EmbersRite extends AbstractRite {
             return;
         }
 
+        if (elapsedTime >= riteDuration) {
+            if (getCompletionDegree() >= getMinimumCompletionDegrees()) {
+                concludeRite(player);
+            } else {
+                failRite(player);
+            }
+            return;
+        }
+
         if (isRiteCompleted(player)) {
             concludeRite(player);
         }
@@ -539,6 +557,29 @@ public class EmbersRite extends AbstractRite {
         restoreQueue = new ArrayList<>();
         restoreQueueIndex = 0;
         finishRite(player, true, 0.125F);
+    }
+
+    private void failRite(Player player) {
+        if (isRestoring) {
+            return;
+        }
+
+        discardActiveNodes();
+        clearPendingNodeClears();
+        isRestoring = true;
+        this.elapsedTime = this.riteDuration;
+        if (altar.getLevel() instanceof ServerLevel level) {
+            queueEligibleRemainingNodeRestores(level, player);
+            assignRemainingSavedBlocksToNodeSites();
+        }
+        restoreQueue = new ArrayList<>();
+        restoreQueueIndex = 0;
+
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearPlayerCurse);
+        clearCurseEffects(player);
+        if (player instanceof ServerPlayer serverPlayer) {
+            ModNetworking.sendToPlayer(SyncRiteDataS2C.none(), serverPlayer);
+        }
     }
 
     @Override
@@ -981,7 +1022,12 @@ public class EmbersRite extends AbstractRite {
         if (restoreQueueIndex >= restoreQueue.size()) {
             savedBlocks.clear();
             savedBlockData.clear();
-            altar.removePlayerRite(playerUUID);
+            isRestoring = false;
+            restoreQueue = new ArrayList<>();
+            restoreQueueIndex = 0;
+            if (!isCompleted()) {
+                altar.removePlayerRite(playerUUID);
+            }
             return;
         }
         int end = Math.min(restoreQueueIndex + RESTORE_PER_TICK, restoreQueue.size());
@@ -1311,6 +1357,18 @@ public class EmbersRite extends AbstractRite {
             }
         }
         return bestIndex;
+    }
+
+    private int getMinimumCompletionDegrees() {
+        return getMinimumCompletionDegreesForTier(amplifier);
+    }
+
+    private static int getMinimumCompletionDegreesForTier(int tier) {
+        return switch (Math.max(1, tier)) {
+            case 1 -> 1;
+            case 2 -> 2;
+            default -> 3;
+        };
     }
 
     private void rebuildNodeOwnedBlocks() {

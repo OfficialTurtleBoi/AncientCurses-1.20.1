@@ -141,7 +141,7 @@ public class ModClientEvents {
             return;
         }
 
-        AncientCurses.LOGGER.info("[RiteMusic] Blocking non-rite music sound={}", soundId);
+        // AncientCurses.LOGGER.info("[RiteMusic] Blocking non-rite music sound={}", soundId);
         event.setSound(null);
     }
 
@@ -265,6 +265,7 @@ public class ModClientEvents {
 
     @SubscribeEvent
     public static void onRenderTick(RenderLevelStageEvent event) {
+        RiteMusicController.renderTick();
         if (ScreenEffectsData.getCameraShakeDuration() > 0) {
             applyShake(event);
         }
