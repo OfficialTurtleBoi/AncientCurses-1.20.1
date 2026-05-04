@@ -52,7 +52,7 @@ public class FamineRite extends AbstractRite {
     }
 
     private Item selectRandomItem() {
-        List<? extends String> configuredItems = AncientCursesConfig.FETCH_TRIAL_ITEMS.get();
+        List<? extends String> configuredItems = AncientCursesConfig.FAMINE_RITE_ITEMS.get();
 
         List<Item> validItems = configuredItems.stream()
                 .map(ResourceLocation::new)

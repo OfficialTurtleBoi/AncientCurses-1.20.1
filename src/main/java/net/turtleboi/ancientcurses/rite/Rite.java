@@ -89,6 +89,12 @@ public interface Rite {
 
     default void onPlayerDeath(Player player) {
     }
+
+    default void onRewardCollected(Player player) {
+    }
+
+    default void onRiteFailed(Player player) {
+    }
 }
 
 

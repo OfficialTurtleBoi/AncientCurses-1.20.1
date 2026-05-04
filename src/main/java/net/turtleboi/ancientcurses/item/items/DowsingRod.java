@@ -25,7 +25,7 @@ import java.util.UUID;
 
 public class DowsingRod extends Item {
     public DowsingRod(Properties properties) {
-        super(properties);
+        super(properties.stacksTo(1));
     }
 
     @Override

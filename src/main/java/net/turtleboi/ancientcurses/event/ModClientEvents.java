@@ -211,8 +211,8 @@ public class ModClientEvents {
         if (level != null) {
             int itemValue = ItemValueMap.getItemValue(itemStack, level);
             int itemStackValue = itemValue * itemStack.getCount();
-            event.getToolTip().add(Component.literal("Item Value: " + itemStackValue));
-            }
+            //event.getToolTip().add(Component.literal("Item Value: " + itemStackValue));
+        }
 
         if (level != null && itemStack.hasTag()) {
             CompoundTag itemTag = itemStack.getTag();

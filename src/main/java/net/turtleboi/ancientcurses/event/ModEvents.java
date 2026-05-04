@@ -957,6 +957,7 @@ public class ModEvents {
                     Rite activeRite = altar.getPlayerRite(player.getUUID());
                     if (activeRite != null) {
                         activeRite.onPlayerDeath(player);
+                        activeRite.onRiteFailed(player);
                     }
                     if (activeRite == null || !activeRite.hasPendingAltarWork()) {
                         altar.removePlayerFromRite(player);
@@ -968,7 +969,6 @@ public class ModEvents {
                     ModNetworking.sendToPlayer(SyncRiteDataS2C.none(), serverPlayer);
                 }
 
-                player.displayClientMessage(Component.literal("The Altars Feed on your soul...").withStyle(ChatFormatting.DARK_RED), true);
             });
         }
 

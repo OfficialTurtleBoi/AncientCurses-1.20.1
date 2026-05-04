@@ -94,28 +94,28 @@ public final class RiteUtil {
     }
 
     private static List<Integer> getWeightedAmplifier(int ritesCompleted) {
-        int thresholdTier2 = AncientCursesConfig.CURSED_TRIAL_TIER2_THRESHOLD.get();
-        int thresholdTier3 = AncientCursesConfig.CURSED_TRIAL_TIER3_THRESHOLD.get();
-        int maxRites = AncientCursesConfig.CURSED_TRIAL_MAX.get();
+        int thresholdTier2 = AncientCursesConfig.CURSED_RITE_TIER2_THRESHOLD.get();
+        int thresholdTier3 = AncientCursesConfig.CURSED_RITE_TIER3_THRESHOLD.get();
+        int maxRites = AncientCursesConfig.CURSED_RITE_MAX.get();
 
         double weight0;
         double weight1;
         double weight2;
 
         if (ritesCompleted < thresholdTier2) {
-            weight0 = AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get();
+            weight0 = AncientCursesConfig.CURSED_RITE_TIER1_CHANCE.get();
             weight1 = 0;
             weight2 = 0;
         } else if (ritesCompleted < thresholdTier3) {
             double factor = (ritesCompleted - thresholdTier2) / (double) (thresholdTier3 - thresholdTier2);
-            weight0 = AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get() * (1.0 - factor);
-            weight1 = AncientCursesConfig.CURSED_TRIAL_TIER2_CHANCE.get() * factor;
+            weight0 = AncientCursesConfig.CURSED_RITE_TIER1_CHANCE.get() * (1.0 - factor);
+            weight1 = AncientCursesConfig.CURSED_RITE_TIER2_CHANCE.get() * factor;
             weight2 = 0;
         } else if (ritesCompleted < maxRites) {
             double factor = (ritesCompleted - thresholdTier3) / (double) (maxRites - thresholdTier3);
-            weight0 = AncientCursesConfig.CURSED_TRIAL_TIER1_CHANCE.get() * (1.0 - factor);
-            weight1 = AncientCursesConfig.CURSED_TRIAL_TIER2_CHANCE.get() * (1.0 - factor);
-            weight2 = AncientCursesConfig.CURSED_TRIAL_TIER3_CHANCE.get() * factor;
+            weight0 = AncientCursesConfig.CURSED_RITE_TIER1_CHANCE.get() * (1.0 - factor);
+            weight1 = AncientCursesConfig.CURSED_RITE_TIER2_CHANCE.get() * (1.0 - factor);
+            weight2 = AncientCursesConfig.CURSED_RITE_TIER3_CHANCE.get() * factor;
         } else {
             weight0 = 0;
             weight1 = 0;

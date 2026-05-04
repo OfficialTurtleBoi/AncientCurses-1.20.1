@@ -430,6 +430,9 @@ public class CursedAltarBlockEntity extends BlockEntity {
             riteData.setRewardCollected(altarPos);
             riteData.clearCurrentAltarPos();
             Rite rite = getPlayerRite(player.getUUID());
+            if (rite != null) {
+                rite.onRewardCollected(player);
+            }
             if (rite != null && rite.isCompleted() && !rite.hasPendingAltarWork()) {
                 removePlayerRite(player.getUUID());
             }

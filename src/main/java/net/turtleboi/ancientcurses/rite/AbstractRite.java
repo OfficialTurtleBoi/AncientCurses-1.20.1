@@ -1,7 +1,9 @@
 package net.turtleboi.ancientcurses.rite;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,6 +30,8 @@ import java.util.List;
 import java.util.UUID;
 
 public abstract class AbstractRite implements Rite {
+    private static final Component GENERIC_FAILURE_MESSAGE = Component.literal("Pathetic... You are not worthy of this rite!")
+            .withStyle(ChatFormatting.DARK_RED);
     protected static final String PLAYER_UUID_KEY = "PlayerUUID";
     protected static final String EFFECT_KEY = "Effect";
     protected static final String COMPLETED_KEY = "Completed";
@@ -172,6 +176,42 @@ public abstract class AbstractRite implements Rite {
                     0.25f
             );
         }
+    }
+
+    protected float getRiteEndShakeAmount() {
+        return 0.125F;
+    }
+
+    protected void playFailureEffects(Player player) {
+        playCompletionEffects(player, getRiteEndShakeAmount());
+        if (player.level() instanceof ServerLevel serverLevel) {
+            serverLevel.playSound(
+                    null,
+                    player.getX(),
+                    player.getY() + 1,
+                    player.getZ(),
+                    SoundEvents.RESPAWN_ANCHOR_DEPLETE.get(),
+                    SoundSource.AMBIENT,
+                    1.0F,
+                    0.5F
+            );
+            serverLevel.playSound(
+                    null,
+                    player.getX(),
+                    player.getY() + 1,
+                    player.getZ(),
+                    SoundEvents.UI_TOAST_CHALLENGE_COMPLETE,
+                    SoundSource.AMBIENT,
+                    1.0F,
+                    1.0F
+            );
+        }
+        player.displayClientMessage(GENERIC_FAILURE_MESSAGE, true);
+    }
+
+    @Override
+    public void onRiteFailed(Player player) {
+        playFailureEffects(player);
     }
 
     protected void finishRite(Player player, boolean spawnReturnPortal, float shakeAmount) {

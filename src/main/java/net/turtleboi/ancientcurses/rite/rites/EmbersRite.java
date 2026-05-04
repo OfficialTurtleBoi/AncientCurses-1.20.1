@@ -62,6 +62,7 @@ public class EmbersRite extends AbstractRite {
     private static final String PORTAL_COOLDOWN_KEY = "PortalCooldown";
     private static final String NODE_RADIUS_KEY = "NodeRadius";
     private static final String CURRENT_DEGREE_KEY = "CurrentDegree";
+    private static final String RESTORE_AFTER_REWARD_KEY = "RestoreAfterReward";
 
     private int amplifier;
 
@@ -86,6 +87,7 @@ public class EmbersRite extends AbstractRite {
     private final Set<BlockPos> clearQueueSet = new HashSet<>();
     private final Set<Integer> restoredNodeIndices = new HashSet<>();
     private boolean isRestoring = false;
+    private boolean restoreAfterReward = false;
     private List<BlockPos> restoreQueue = new ArrayList<>();
     private int restoreQueueIndex = 0;
     private static final int CLEAR_PER_TICK = 20;
@@ -223,6 +225,7 @@ public class EmbersRite extends AbstractRite {
         tag.put("PendingNodeRestoreQueues", pendingNodeRestoreTag);
 
         tag.putBoolean("IsRestoring", isRestoring);
+        tag.putBoolean(RESTORE_AFTER_REWARD_KEY, restoreAfterReward);
 
         if (isRestoring) {
             long[] remainingRestore = new long[restoreQueue.size() - restoreQueueIndex];
@@ -279,8 +282,8 @@ public class EmbersRite extends AbstractRite {
         this.nodeOwnedBlocks.clear();
         this.clearQueueSet.clear();
         ListTag allQueuesTag = tag.getList("NodeClearQueues", Tag.TAG_LONG_ARRAY);
-        for (int n = 0; n < allQueuesTag.size(); n++) {
-            long[] positions = ((LongArrayTag) allQueuesTag.get(n)).getAsLongArray();
+        for (Tag element : allQueuesTag) {
+            long[] positions = ((LongArrayTag) element).getAsLongArray();
             List<BlockPos> queue = new ArrayList<>();
             for (long encoded : positions) {
                 BlockPos pos = BlockPos.of(encoded);
@@ -292,8 +295,8 @@ public class EmbersRite extends AbstractRite {
         }
 
         ListTag nodeOwnedBlocksTag = tag.getList("NodeOwnedBlocks", Tag.TAG_LONG_ARRAY);
-        for (int n = 0; n < nodeOwnedBlocksTag.size(); n++) {
-            long[] positions = ((LongArrayTag) nodeOwnedBlocksTag.get(n)).getAsLongArray();
+        for (Tag item : nodeOwnedBlocksTag) {
+            long[] positions = ((LongArrayTag) item).getAsLongArray();
             List<BlockPos> ownedBlocks = new ArrayList<>();
             for (long encoded : positions) {
                 ownedBlocks.add(BlockPos.of(encoded));
@@ -306,8 +309,8 @@ public class EmbersRite extends AbstractRite {
 
         this.restoredNodeIndices.clear();
         ListTag restoredNodesTag = tag.getList("RestoredNodeIndices", Tag.TAG_INT);
-        for (int i = 0; i < restoredNodesTag.size(); i++) {
-            restoredNodeIndices.add(((IntTag) restoredNodesTag.get(i)).getAsInt());
+        for (Tag value : restoredNodesTag) {
+            restoredNodeIndices.add(((IntTag) value).getAsInt());
         }
 
         this.pendingNodeRestoreQueues.clear();
@@ -325,6 +328,7 @@ public class EmbersRite extends AbstractRite {
         }
 
         this.isRestoring = tag.getBoolean("IsRestoring");
+        this.restoreAfterReward = tag.getBoolean(RESTORE_AFTER_REWARD_KEY);
         this.restoreQueue = new ArrayList<>();
         this.restoreQueueIndex = 0;
         if (isRestoring) {
@@ -531,16 +535,7 @@ public class EmbersRite extends AbstractRite {
 
     @Override
     public void onPlayerDeath(Player player) {
-        if (isRestoring) return;
-        discardActiveNodes();
-        clearPendingNodeClears();
-        isRestoring = true;
-        if (altar.getLevel() instanceof ServerLevel level) {
-            queueEligibleRemainingNodeRestores(level, null);
-            assignRemainingSavedBlocksToNodeSites();
-        }
-        restoreQueue = new ArrayList<>();
-        restoreQueueIndex = 0;
+        beginRestoration(null, false);
     }
 
     @Override
@@ -548,14 +543,7 @@ public class EmbersRite extends AbstractRite {
         if (isRestoring) return;
         discardActiveNodes();
         clearPendingNodeClears();
-        isRestoring = true;
         this.elapsedTime = this.riteDuration;
-        if (altar.getLevel() instanceof ServerLevel level) {
-            queueEligibleRemainingNodeRestores(level, player);
-            assignRemainingSavedBlocksToNodeSites();
-        }
-        restoreQueue = new ArrayList<>();
-        restoreQueueIndex = 0;
         finishRite(player, true, 0.125F);
     }
 
@@ -564,16 +552,9 @@ public class EmbersRite extends AbstractRite {
             return;
         }
 
-        discardActiveNodes();
-        clearPendingNodeClears();
-        isRestoring = true;
         this.elapsedTime = this.riteDuration;
-        if (altar.getLevel() instanceof ServerLevel level) {
-            queueEligibleRemainingNodeRestores(level, player);
-            assignRemainingSavedBlocksToNodeSites();
-        }
-        restoreQueue = new ArrayList<>();
-        restoreQueueIndex = 0;
+        beginRestoration(player, false);
+        onRiteFailed(player);
 
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(PlayerRiteDataCapability::clearPlayerCurse);
         clearCurseEffects(player);
@@ -616,9 +597,16 @@ public class EmbersRite extends AbstractRite {
     @Override
     public boolean hasPendingAltarWork() {
         return !pendingNodeRestoreQueues.isEmpty()
-                || !savedBlocks.isEmpty()
                 || !restoreQueue.isEmpty()
                 || isRestoring;
+    }
+
+    @Override
+    public void onRewardCollected(Player player) {
+        if (!isCompleted()) {
+            return;
+        }
+        beginRestoration(player, true);
     }
 
     @Override
@@ -1023,9 +1011,11 @@ public class EmbersRite extends AbstractRite {
             savedBlocks.clear();
             savedBlockData.clear();
             isRestoring = false;
+            boolean shouldRemoveCompletedRite = restoreAfterReward;
+            restoreAfterReward = false;
             restoreQueue = new ArrayList<>();
             restoreQueueIndex = 0;
-            if (!isCompleted()) {
+            if (!isCompleted() || shouldRemoveCompletedRite) {
                 altar.removePlayerRite(playerUUID);
             }
             return;
@@ -1057,6 +1047,26 @@ public class EmbersRite extends AbstractRite {
         if (nodeIndex >= 0 && nodeIndex < nodePositions.size()) {
             nodeProgress.put(nodePositions.get(nodeIndex), progress);
         }
+    }
+
+    private void beginRestoration(Player player, boolean triggeredByReward) {
+        if (isRestoring) {
+            if (triggeredByReward) {
+                restoreAfterReward = true;
+            }
+            return;
+        }
+
+        discardActiveNodes();
+        clearPendingNodeClears();
+        isRestoring = true;
+        restoreAfterReward = triggeredByReward;
+        if (altar.getLevel() instanceof ServerLevel level) {
+            queueEligibleRemainingNodeRestores(level, player);
+            assignRemainingSavedBlocksToNodeSites();
+        }
+        restoreQueue = new ArrayList<>();
+        restoreQueueIndex = 0;
     }
 
     private int findNodeIndexFor(BlockPos nodePos) {

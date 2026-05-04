@@ -1,10 +1,17 @@
 package net.turtleboi.ancientcurses.rite.rites;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -16,11 +23,18 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
+import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.client.rites.CarnageClientRiteState;
+import net.turtleboi.ancientcurses.config.AncientCursesConfig;
 import net.turtleboi.ancientcurses.entity.entities.CursedPortalEntity;
+import net.turtleboi.ancientcurses.effect.ModEffects;
+import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
+import net.turtleboi.ancientcurses.particle.ModParticleTypes;
 import net.turtleboi.ancientcurses.rite.AbstractRite;
 import net.turtleboi.ancientcurses.rite.ModRites;
+import net.turtleboi.turtlecore.network.CoreNetworking;
+import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -36,6 +50,9 @@ public class CarnageRite extends AbstractRite {
     private static final String REFILL_START_SUB_PROGRESS_KEY = "RefillStartSubProgress";
     private static final String ELIMINATION_TARGET_KEY = "EliminationTarget";
     private static final String ELIMINATION_TARGET_STRING_KEY = "EliminationTargetString";
+    private static final String ACTIVE_MOB_UUIDS_KEY = "ActiveMobUuids";
+    private static final int BOUNDARY_PARTICLE_INTERVAL = 10;
+    private static final double BOUNDARY_WARNING_BAND = 3.0D;
 
     private int amplifier;
 
@@ -51,6 +68,7 @@ public class CarnageRite extends AbstractRite {
     private int waveKillTotal;
 
     private List<Entity> activeMobs = new ArrayList<>();
+    private final Set<UUID> activeMobUuids = new LinkedHashSet<>();
 
     public static final String eliminationCount = "EliminationCount";
     public static final String eliminationRequirement = "EliminationRequirement";
@@ -93,6 +111,13 @@ public class CarnageRite extends AbstractRite {
         tag.putInt(WAVE_KILL_TOTAL_KEY, waveKillTotal);
         tag.putFloat(REFILL_START_MAIN_PROGRESS_KEY, refillStartMainProgress);
         tag.putFloat(REFILL_START_SUB_PROGRESS_KEY, refillStartSubProgress);
+        ListTag activeMobUuidTags = new ListTag();
+        for (UUID activeMobUuid : activeMobUuids) {
+            CompoundTag activeMobTag = new CompoundTag();
+            activeMobTag.putUUID("UUID", activeMobUuid);
+            activeMobUuidTags.add(activeMobTag);
+        }
+        tag.put(ACTIVE_MOB_UUIDS_KEY, activeMobUuidTags);
         if (eliminationTarget != null) {
             tag.putString(ELIMINATION_TARGET_KEY, Objects.requireNonNull(ForgeRegistries.ENTITY_TYPES.getKey(eliminationTarget)).toString());
         }
@@ -119,6 +144,15 @@ public class CarnageRite extends AbstractRite {
         this.refillStartSubProgress = tag.contains(REFILL_START_SUB_PROGRESS_KEY)
                 ? tag.getFloat(REFILL_START_SUB_PROGRESS_KEY)
                 : 0.0F;
+        this.activeMobs.clear();
+        this.activeMobUuids.clear();
+        ListTag activeMobUuidTags = tag.getList(ACTIVE_MOB_UUIDS_KEY, Tag.TAG_COMPOUND);
+        for (int i = 0; i < activeMobUuidTags.size(); i++) {
+            CompoundTag activeMobTag = activeMobUuidTags.getCompound(i);
+            if (activeMobTag.hasUUID("UUID")) {
+                this.activeMobUuids.add(activeMobTag.getUUID("UUID"));
+            }
+        }
         if (tag.contains(ELIMINATION_TARGET_KEY)) {
             this.eliminationTarget = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(tag.getString(ELIMINATION_TARGET_KEY)));
         }
@@ -145,7 +179,7 @@ public class CarnageRite extends AbstractRite {
 
     @Override
     public boolean isRiteCompleted(Player player) {
-        return getCompletionDegree() >= getMaxDegrees() && activeMobs.isEmpty();
+        return getCompletionDegree() >= getMaxDegrees() && activeMobUuids.isEmpty();
     }
 
     @Override
@@ -161,6 +195,7 @@ public class CarnageRite extends AbstractRite {
         }
         if (entity.getType() == eliminationTarget) {
             activeMobs.removeIf(mob -> mob == entity);
+            activeMobUuids.remove(entity.getUUID());
 
             if (isRiteCompleted(player)) {
                 concludeRite(player);
@@ -172,6 +207,15 @@ public class CarnageRite extends AbstractRite {
 
     @Override
     public void onPlayerTick(Player player) {
+        if (player.level() instanceof ServerLevel serverLevel) {
+            renderDistanceBoundary(serverLevel, player);
+            if (isOutsideRiteBoundary(player)) {
+                failForLeavingArena(player);
+                return;
+            }
+        }
+
+        resolveActiveMobs();
         trackProgress(player);
 
         Iterator<Entity> mobIterator = activeMobs.iterator();
@@ -179,6 +223,7 @@ public class CarnageRite extends AbstractRite {
             Entity mob = mobIterator.next();
             if (mob instanceof LivingEntity livingMob) {
                 if (!livingMob.isAlive()) {
+                    activeMobUuids.remove(livingMob.getUUID());
                     mobIterator.remove();
                 } else {
                     if (livingMob instanceof Mob riteMob){
@@ -206,7 +251,7 @@ public class CarnageRite extends AbstractRite {
                     currentWave++;
                 }
             } else {
-                boolean waveCleared = activeMobs.isEmpty();
+                boolean waveCleared = activeMobUuids.isEmpty();
                 boolean isOptionalDegree = currentDegree >= getMinimumCompletionDegrees();
                 boolean isFinalDegree = currentDegree == getMaxDegrees() - 1;
                 boolean optionalWaveExpired = isOptionalDegree && !isFinalDegree && waveDelay <= 0;
@@ -240,6 +285,11 @@ public class CarnageRite extends AbstractRite {
     }
 
     @Override
+    protected float getRiteEndShakeAmount() {
+        return 0.05F;
+    }
+
+    @Override
     public int getCompletionDegree() {
         return Math.min(currentDegree, getMaxDegrees());
     }
@@ -258,7 +308,7 @@ public class CarnageRite extends AbstractRite {
                 isRiteCompleted(player),
                 eliminationTargetString,
                 currentWave,
-                activeMobs.size(),
+                activeMobUuids.size(),
                 waveKillTotal,
                 getMainBarProgress(),
                 getSubBarProgress(),
@@ -300,7 +350,7 @@ public class CarnageRite extends AbstractRite {
                 eliminationTarget.equals(EntityType.VILLAGER)) {
             baseKillCount = baseKillCount * 2;
         }
-        return baseKillCount;
+        return Math.max(1, Mth.ceil(baseKillCount * AncientCursesConfig.CARNAGE_RITE_SPAWN_MULTIPLIER.get()));
     }
 
     private List<Entity> buildWaveMobList(ServerLevel level, int mobCount) {
@@ -322,7 +372,10 @@ public class CarnageRite extends AbstractRite {
             int mobCount = calculateRequiredKillCount(amplifier);
             List<Entity> mobsToSpawn = buildWaveMobList(level, mobCount);
             activeMobs.addAll(mobsToSpawn);
-            waveKillTotal = activeMobs.size();
+            for (Entity mobToSpawn : mobsToSpawn) {
+                activeMobUuids.add(mobToSpawn.getUUID());
+            }
+            waveKillTotal = activeMobUuids.size();
             refillStartMainProgress = 0.0F;
             refillStartSubProgress = 0.0F;
             CursedPortalEntity.spawnSummoningPortalAtPos(level, altar, portalPos, mobsToSpawn);
@@ -383,7 +436,7 @@ public class CarnageRite extends AbstractRite {
         if (waveKillTotal <= 0) {
             return 0.0F;
         }
-        return Mth.clamp((float) activeMobs.size() / (float) waveKillTotal, 0.0F, 1.0F);
+        return Mth.clamp((float) activeMobUuids.size() / (float) waveKillTotal, 0.0F, 1.0F);
     }
 
     private float getCurrentDelayProgress() {
@@ -412,6 +465,99 @@ public class CarnageRite extends AbstractRite {
         return getMinimumCompletionDegreesForTier(amplifier);
     }
 
+    private double getMaxRiteDistance() {
+        return switch (Math.max(1, amplifier)) {
+            case 1 -> 18.0D;
+            case 2 -> 24.0D;
+            default -> 30.0D;
+        };
+    }
+
+    private boolean isOutsideRiteBoundary(Player player) {
+        return getHorizontalDistanceSqrToAltar(player) > getMaxRiteDistance() * getMaxRiteDistance();
+    }
+
+    private void renderDistanceBoundary(ServerLevel level, Player player) {
+        if (!(player instanceof ServerPlayer serverPlayer) || player.tickCount % BOUNDARY_PARTICLE_INTERVAL != 0) {
+            return;
+        }
+
+        double maxDistance = getMaxRiteDistance();
+        double horizontalDistance = Math.sqrt(getHorizontalDistanceSqrToAltar(player));
+        if (horizontalDistance < maxDistance - BOUNDARY_WARNING_BAND) {
+            return;
+        }
+
+        double cx = altar.getBlockPos().getX() + 0.5D;
+        double cz = altar.getBlockPos().getZ() + 0.5D;
+        int baseY = altar.getBlockPos().getY();
+        int particleCount = Math.max(24, Mth.ceil(maxDistance * 8.0D));
+
+        for (int i = 0; i < particleCount; i++) {
+            double angle = Mth.TWO_PI * i / particleCount;
+            double px = cx + Math.cos(angle) * maxDistance;
+            double pz = cz + Math.sin(angle) * maxDistance;
+            Double py = findBoundaryParticleY(level, baseY, px, pz, maxDistance);
+            if (py == null) {
+                continue;
+            }
+
+            CoreNetworking.sendToNear(new SendParticlesS2C(
+                    ModParticleTypes.CURSED_FLAME_PARTICLE.get(),
+                    px, py, pz,
+                    0, 0.1D, 0
+            ), serverPlayer);
+        }
+    }
+
+    private Double findBoundaryParticleY(ServerLevel level, int baseY, double particleX, double particleZ, double radius) {
+        int ix = Mth.floor(particleX);
+        int iz = Mth.floor(particleZ);
+        int yBottom = Math.max(baseY - Mth.ceil(radius), level.getMinBuildHeight());
+        int yTop = Math.min(baseY + Mth.ceil(radius), level.getMaxBuildHeight() - 1);
+
+        for (int y = baseY; y >= yBottom; y--) {
+            if (level.getBlockState(new BlockPos(ix, y, iz)).isSolid()) {
+                return (double) (y + 1);
+            }
+        }
+
+        for (int y = baseY + 1; y <= yTop; y++) {
+            BlockPos checkPos = new BlockPos(ix, y, iz);
+            if (level.getBlockState(checkPos).isSolid() && !level.getBlockState(checkPos.above()).isSolid()) {
+                return (double) (y + 1);
+            }
+        }
+
+        return null;
+    }
+
+    private double getHorizontalDistanceSqrToAltar(Player player) {
+        double dx = player.getX() - (altar.getBlockPos().getX() + 0.5D);
+        double dz = player.getZ() - (altar.getBlockPos().getZ() + 0.5D);
+        return (dx * dx) + (dz * dz);
+    }
+
+    private void failForLeavingArena(Player player) {
+        altar.removePlayerFromRite(player);
+        player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> riteData.clearPlayerCurse());
+
+        if (player instanceof ServerPlayer serverPlayer) {
+            ModNetworking.sendToPlayer(SyncRiteDataS2C.none(), serverPlayer);
+        }
+
+        for (MobEffectInstance effectInstance : new ArrayList<>(player.getActiveEffects())) {
+            MobEffect effect = effectInstance.getEffect();
+            if (ModEffects.isCurseEffect(effect)) {
+                player.removeEffect(effect);
+            }
+        }
+
+        if (player.level() instanceof ServerLevel serverLevel) {
+            onRiteFailed(player);
+        }
+    }
+
     private static int getMaxDegreesForTier(int tier) {
         return switch (Math.max(1, tier)) {
             case 1 -> 3;
@@ -426,6 +572,26 @@ public class CarnageRite extends AbstractRite {
             case 2 -> 2;
             default -> 3;
         };
+    }
+
+    private void resolveActiveMobs() {
+        activeMobs.clear();
+        if (!(altar.getLevel() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        Iterator<UUID> trackedMobIterator = activeMobUuids.iterator();
+        while (trackedMobIterator.hasNext()) {
+            UUID trackedMobUuid = trackedMobIterator.next();
+            Entity trackedMob = serverLevel.getEntity(trackedMobUuid);
+            if (trackedMob instanceof LivingEntity livingMob) {
+                if (!livingMob.isAlive()) {
+                    trackedMobIterator.remove();
+                } else {
+                    activeMobs.add(trackedMob);
+                }
+            }
+        }
     }
 
     public record WeightedMob(EntityType<?> mobType, double weight) { }

@@ -5,6 +5,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -54,6 +56,9 @@ public class CursedPortalEntity extends Entity {
     private static final double minReturnDistanceSqr = 256.0D;
 
     private static final int teleportCooldown = 100;
+    private static final String OWNER_ENTITY_UUID_KEY = "OwnerEntityUUID";
+    private static final String OWNER_BLOCK_POS_KEY = "OwnerBlockPos";
+    private static final String QUEUED_MOBS_KEY = "QueuedMobs";
     private Map<UUID, Integer> playerCooldowns = new HashMap<>();
 
     public static final int spawnDelay = 20;
@@ -64,6 +69,8 @@ public class CursedPortalEntity extends Entity {
     private BlockPos altarPos;
     private CursedPortalEntity linkedPortal;
     private Object owner;
+    private UUID ownerEntityUuid;
+    private BlockPos ownerBlockPos;
     private int textureTickCounter = 0;
     protected int age;
 
@@ -146,8 +153,7 @@ public class CursedPortalEntity extends Entity {
                 this.discard();
             }
 
-            if
-             (getOwner() == null){
+            if (getOwner() == null && !hasOwnerReference()) {
                 this.discard();
             }
         }
@@ -156,11 +162,51 @@ public class CursedPortalEntity extends Entity {
     public void setOwner(Object pOwner) {
         if (pOwner instanceof Entity || pOwner instanceof BlockEntity) {
             this.owner = pOwner;
+            if (pOwner instanceof Entity entityOwner) {
+                this.ownerEntityUuid = entityOwner.getUUID();
+                this.ownerBlockPos = null;
+            } else if (pOwner instanceof BlockEntity blockEntityOwner) {
+                this.ownerBlockPos = blockEntityOwner.getBlockPos();
+                this.ownerEntityUuid = null;
+            }
         }
     }
 
     public Object getOwner() {
+        if (this.owner instanceof Entity entityOwner && entityOwner.isRemoved()) {
+            this.owner = null;
+        } else if (this.owner instanceof BlockEntity blockEntityOwner && blockEntityOwner.isRemoved()) {
+            this.owner = null;
+        }
+        tryRestoreOwner();
         return this.owner;
+    }
+
+    private boolean hasOwnerReference() {
+        return this.owner != null || this.ownerEntityUuid != null || this.ownerBlockPos != null || this.altarPos != null;
+    }
+
+    private void tryRestoreOwner() {
+        if (this.owner != null || this.level().isClientSide) {
+            return;
+        }
+
+        if (this.ownerEntityUuid != null && this.level() instanceof ServerLevel serverLevel) {
+            Entity entityOwner = serverLevel.getEntity(this.ownerEntityUuid);
+            if (entityOwner != null) {
+                this.owner = entityOwner;
+                return;
+            }
+        }
+
+        BlockPos blockOwnerPos = this.ownerBlockPos != null ? this.ownerBlockPos : this.altarPos;
+        if (blockOwnerPos != null && this.level().isLoaded(blockOwnerPos)) {
+            BlockEntity blockEntityOwner = this.level().getBlockEntity(blockOwnerPos);
+            if (blockEntityOwner != null) {
+                this.owner = blockEntityOwner;
+                this.ownerBlockPos = blockOwnerPos;
+            }
+        }
     }
 
     private void spawnPortalParticles() {
@@ -557,6 +603,7 @@ public class CursedPortalEntity extends Entity {
 
     public void setAltarPos(BlockPos pos) {
         this.altarPos = pos;
+        this.entityData.set(ALTAR_POS, pos != null ? pos : BlockPos.ZERO);
     }
 
     public static CursedPortalEntity spawnPortalNearPlayer(Player player, BlockPos altarPos, Level level, Object owner) {
@@ -668,16 +715,31 @@ public class CursedPortalEntity extends Entity {
         this.setSpawningEnabled(pCompound.getBoolean("SpawningEnabled"));
         this.setPortalLiveTime(pCompound.contains("PortalLiveTime") ? pCompound.getInt("PortalLiveTime") : DEFAULT_PORTAL_LIFETIME);
         this.setSpawningCooldown(pCompound.getInt("SpawningCooldown"));
+        this.owner = null;
+        this.ownerEntityUuid = pCompound.hasUUID(OWNER_ENTITY_UUID_KEY) ? pCompound.getUUID(OWNER_ENTITY_UUID_KEY) : null;
         if (pCompound.contains("AltarPos")) {
             BlockPos pos = BlockPos.of(pCompound.getLong("AltarPos"));
             this.setAltarPos(pos);
         }
+        this.ownerBlockPos = pCompound.contains(OWNER_BLOCK_POS_KEY) ? BlockPos.of(pCompound.getLong(OWNER_BLOCK_POS_KEY)) : this.altarPos;
         if (pCompound.hasUUID("LinkedPortalUUID")) {
             UUID uuid = pCompound.getUUID("LinkedPortalUUID");
             this.entityData.set(LINKED_PORTAL_UUID, Optional.of(uuid));
         } else {
             this.entityData.set(LINKED_PORTAL_UUID, Optional.empty());
         }
+        this.linkedPortal = null;
+        this.mobsToSpawnList.clear();
+        if (pCompound.contains(QUEUED_MOBS_KEY, Tag.TAG_LIST) && this.level() instanceof ServerLevel serverLevel) {
+            ListTag queuedMobs = pCompound.getList(QUEUED_MOBS_KEY, Tag.TAG_COMPOUND);
+            for (int i = 0; i < queuedMobs.size(); i++) {
+                Entity queuedMob = EntityType.loadEntityRecursive(queuedMobs.getCompound(i), serverLevel, entity -> entity);
+                if (queuedMob != null) {
+                    this.mobsToSpawnList.add(queuedMob);
+                }
+            }
+        }
+        tryRestoreOwner();
     }
 
     @Override
@@ -689,8 +751,24 @@ public class CursedPortalEntity extends Entity {
         if (this.altarPos != null) {
             pCompound.putLong("AltarPos", this.altarPos.asLong());
         }
+        if (this.ownerEntityUuid != null) {
+            pCompound.putUUID(OWNER_ENTITY_UUID_KEY, this.ownerEntityUuid);
+        }
+        if (this.ownerBlockPos != null) {
+            pCompound.putLong(OWNER_BLOCK_POS_KEY, this.ownerBlockPos.asLong());
+        }
         Optional<UUID> linkedPortalUUID = this.entityData.get(LINKED_PORTAL_UUID);
         linkedPortalUUID.ifPresent(uuid -> pCompound.putUUID("LinkedPortalUUID", uuid));
+        if (!this.mobsToSpawnList.isEmpty()) {
+            ListTag queuedMobs = new ListTag();
+            for (Entity mobToSpawn : this.mobsToSpawnList) {
+                CompoundTag mobTag = new CompoundTag();
+                if (mobToSpawn.save(mobTag)) {
+                    queuedMobs.add(mobTag);
+                }
+            }
+            pCompound.put(QUEUED_MOBS_KEY, queuedMobs);
+        }
     }
 
     @Override
