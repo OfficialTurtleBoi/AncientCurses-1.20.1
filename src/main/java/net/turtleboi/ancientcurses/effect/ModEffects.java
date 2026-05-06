@@ -74,6 +74,9 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> ELEMENTAL_CONVERGENCE = MOB_EFFECTS.register("elemental_convergence",
             () -> new ElementalConvergenceEffect(MobEffectCategory.BENEFICIAL, 1665999));
 
+    public static final RegistryObject<MobEffect> ENRICHMENT = MOB_EFFECTS.register("enrichment",
+            () -> new EnrichmentEffect(MobEffectCategory.BENEFICIAL, 16765763));
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

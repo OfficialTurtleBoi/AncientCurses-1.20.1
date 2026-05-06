@@ -2,16 +2,21 @@ package net.turtleboi.ancientcurses.util;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.item.items.GoldenFeatherItem;
+import net.turtleboi.ancientcurses.item.items.SoulCompassItem;
+
+import java.util.Comparator;
+import java.util.Optional;
 
 @OnlyIn(Dist.CLIENT)
 public class ModItemProperties {
@@ -20,24 +25,41 @@ public class ModItemProperties {
                     (itemStack, clientLevel, livingEntity, i) ->
                             GoldenFeatherItem.canDash(itemStack) ? 0.0F : 1.0F);
 
-            ItemProperties.register(ModItems.GOLDEN_AMULET.get(), new ResourceLocation(AncientCurses.MOD_ID, "main_gem"),
-                    (ItemStack stack, ClientLevel level, LivingEntity entity, int seed) -> {
-                        CompoundTag tag = stack.getTag();
-                        if (tag != null && tag.contains("MainGem")) {
-                            ItemStack mainGemStack = ItemStack.of(tag.getCompound("MainGem"));
-                            if (!mainGemStack.isEmpty()) {
-                                if (mainGemStack.getItem() == ModItems.PERFECT_AMETHYST.get() || mainGemStack.getItem() == ModItems.POLISHED_AMETHYST.get()) return 1.0F;
-                                if (mainGemStack.getItem() == ModItems.PERFECT_DIAMOND.get() || mainGemStack.getItem() == ModItems.POLISHED_DIAMOND.get()) return 2.0F;
-                                if (mainGemStack.getItem() == ModItems.PERFECT_EMERALD.get() || mainGemStack.getItem() == ModItems.POLISHED_EMERALD.get()) return 3.0F;
-                                if (mainGemStack.getItem() == ModItems.PERFECT_RUBY.get() || mainGemStack.getItem() == ModItems.POLISHED_RUBY.get()) return 4.0F;
-                                if (mainGemStack.getItem() == ModItems.PERFECT_SAPPHIRE.get() || mainGemStack.getItem() == ModItems.POLISHED_SAPPHIRE.get()) return 5.0F;
-                                if (mainGemStack.getItem() == ModItems.PERFECT_TOPAZ.get() || mainGemStack.getItem() == ModItems.POLISHED_TOPAZ.get()) return 6.0F;
-                                if (mainGemStack.getItem() == ModItems.ANCIENT_ALEXANDRITE.get()) return 7.0F;
-                                if (mainGemStack.getItem() == ModItems.ANCIENT_BISMUTH.get()) return 8.0F;
-                                if (mainGemStack.getItem() == ModItems.ANCIENT_CHRYSOBERYL.get()) return 9.0F;
-                            }
-                        }
-                        return 0.0F;
-            });
+            ItemProperties.register(ModItems.SOUL_COMPASS.get(), new ResourceLocation("angle"),
+                    ModItemProperties::getSoulCompassAngle);
+    }
+
+    private static float getSoulCompassAngle(ItemStack stack, ClientLevel level, LivingEntity holder, int seed) {
+        if (level == null || holder == null) {
+            return 0.0F;
+        }
+
+        Optional<EntityType<?>> trackedType = SoulCompassItem.getTrackedEntityType(stack);
+        if (trackedType.isEmpty()) {
+            return getErraticAngle(level, seed);
+        }
+
+        AABB searchArea = holder.getBoundingBox().inflate(128.0D);
+        Optional<LivingEntity> nearestTarget = level.getEntitiesOfClass(LivingEntity.class, searchArea,
+                        entity -> entity != holder
+                                && entity.isAlive()
+                                && entity.getType() == trackedType.get())
+                .stream()
+                .min(Comparator.comparingDouble(holder::distanceToSqr));
+
+        if (nearestTarget.isEmpty()) {
+            return getErraticAngle(level, seed);
+        }
+
+        double xOffset = nearestTarget.get().getX() - holder.getX();
+        double zOffset = nearestTarget.get().getZ() - holder.getZ();
+        double targetAngle = Math.atan2(zOffset, xOffset) / (Math.PI * 2.0D);
+        double holderYaw = Mth.positiveModulo(holder.getVisualRotationYInDegrees() / 360.0D, 1.0D);
+        double compassAngle = 0.5D - (holderYaw - 0.25D - targetAngle);
+        return (float) Mth.positiveModulo(compassAngle + 0.5D, 1.0D);
+    }
+
+    private static float getErraticAngle(ClientLevel level, int seed) {
+        return (float) Mth.positiveModulo(((level.getGameTime() + seed) % 20) / 20.0D, 1.0D);
     }
 }

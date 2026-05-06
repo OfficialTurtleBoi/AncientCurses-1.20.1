@@ -9,6 +9,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.loot.LootDataType;
@@ -25,6 +26,7 @@ import net.turtleboi.ancientcurses.rite.Rite;
 import net.turtleboi.ancientcurses.rite.util.RiteLocator;
 import net.turtleboi.turtlecore.network.CoreNetworking;
 import net.turtleboi.turtlecore.network.packet.util.CameraShakeS2C;
+import net.minecraftforge.registries.RegistryObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +34,31 @@ import java.util.List;
 import java.util.Random;
 
 public final class RewardUtil {
+    private static final float[] ARTIFACT_DROP_CHANCES = {
+            0.02F,
+            0.05F,
+            0.10F
+    };
+
+    private static final List<RegistryObject<Item>> ARTIFACT_REWARDS = List.of(
+            ModItems.FIRST_BEACON,
+            ModItems.ICE_SPARK,
+            ModItems.PLAGUE_IDOL,
+            ModItems.VOODOO_DOLL,
+            ModItems.GOLDEN_FEATHER,
+            ModItems.FATHOMLESS_CAULDRON,
+            ModItems.HOLLOW_LANTERN,
+            ModItems.BONE_FLUTE,
+            ModItems.ECHO_STONE,
+            ModItems.GILDED_TOME,
+            ModItems.SOUL_COMPASS,
+            ModItems.EXODUS_TOTEM,
+            ModItems.CRYSTAL_BALL,
+            ModItems.BLOODPRICE_SIGIL,
+            ModItems.THORN_CROWN,
+            ModItems.RUINATION_BRAND
+    );
+
     private RewardUtil() {
     }
 
@@ -119,6 +146,7 @@ public final class RewardUtil {
 
         addGemLoot(serverLevel, player, adjustedAmplifier, random, totalGeneratedLoot);
         addCursedSoulShardLoot(amplifier, rite, random, totalGeneratedLoot);
+        addArtifactLoot(adjustedAmplifier, random, totalGeneratedLoot);
 
         for (ItemStack item : totalGeneratedLoot) {
             if (!item.isEmpty()) {
@@ -183,6 +211,21 @@ public final class RewardUtil {
             totalGeneratedLoot.add(new ItemStack(ModItems.CURSED_SOUL_SHARD.get()));
         }
     }
+
+    private static void addArtifactLoot(int adjustedAmplifier, Random random, List<ItemStack> totalGeneratedLoot) {
+        if (ARTIFACT_REWARDS.isEmpty()) {
+            return;
+        }
+
+        int amplifierIndex = Math.max(0, Math.min(adjustedAmplifier, ARTIFACT_DROP_CHANCES.length - 1));
+        if (random.nextFloat() >= ARTIFACT_DROP_CHANCES[amplifierIndex]) {
+            return;
+        }
+
+        RegistryObject<Item> artifact = ARTIFACT_REWARDS.get(random.nextInt(ARTIFACT_REWARDS.size()));
+        totalGeneratedLoot.add(new ItemStack(artifact.get()));
+    }
+
     public static void ejectItemsTowardPlayer(Level level, BlockPos pos, Player player, List<ItemStack> items) {
         for (ItemStack item : items) {
             if (item.isEmpty()) {
