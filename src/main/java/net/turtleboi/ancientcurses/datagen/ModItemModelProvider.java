@@ -53,11 +53,48 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.SMOKY_QUARTZ);
         simpleItem(ModItems.SOUL_SHARD);
         simpleItem(ModItems.CURSED_SOUL_SHARD);
+        simpleItem(ModItems.ICE_SPARK);
+        simpleItem(ModItems.PLAGUE_IDOL);
+        simpleItem(ModItems.VOODOO_DOLL);
+        simpleItem(ModItems.FATHOMLESS_CAULDRON);
+        simpleItem(ModItems.HOLLOW_LANTERN);
+        simpleItem(ModItems.BONE_FLUTE);
+        simpleItem(ModItems.ECHO_STONE);
+        simpleItem(ModItems.GILDED_TOME);
+        compassItem(ModItems.SOUL_COMPASS);
+        simpleItem(ModItems.EXODUS_TOTEM);
+        simpleItem(ModItems.CRYSTAL_BALL);
+        simpleItem(ModItems.BLOODPRICE_SIGIL);
+        simpleItem(ModItems.THORN_CROWN);
+        simpleItem(ModItems.RUINATION_BRAND);
     }
 
     private ItemModelBuilder simpleItem(RegistryObject<Item> item) {
         return withExistingParent(item.getId().getPath(),
                 new ResourceLocation("item/generated")).texture("layer0",
                 new ResourceLocation(AncientCurses.MOD_ID,"item/" + item.getId().getPath()));
+    }
+
+    private ItemModelBuilder compassItem(RegistryObject<Item> item) {
+        for (int i = 0; i < 32; i++) {
+            String frameName = String.format("%s_%02d", item.getId().getPath(), i);
+            String vanillaTextureName = String.format("item/compass_%02d", i);
+            withExistingParent(frameName, new ResourceLocation("item/generated"))
+                    .texture("layer0", new ResourceLocation("minecraft", vanillaTextureName));
+        }
+
+        ItemModelBuilder model = withExistingParent(item.getId().getPath(),
+                new ResourceLocation("item/generated")).texture("layer0",
+                new ResourceLocation("minecraft", "item/compass_16"));
+
+        for (int i = 0; i < 32; i++) {
+            String modelName = String.format("item/%s_%02d", item.getId().getPath(), i);
+            model.override()
+                    .predicate(new ResourceLocation("angle"), i / 32.0F)
+                    .model(getExistingFile(new ResourceLocation(AncientCurses.MOD_ID, modelName)))
+                    .end();
+        }
+
+        return model;
     }
 }

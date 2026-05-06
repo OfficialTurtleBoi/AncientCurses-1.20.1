@@ -17,6 +17,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -66,11 +67,16 @@ import net.turtleboi.ancientcurses.block.entity.CursedAltarBlockEntity;
 import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.*;
+import net.turtleboi.ancientcurses.item.items.BoneFluteItem;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
+import net.turtleboi.ancientcurses.item.items.ExodusTotemItem;
 import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
+import net.turtleboi.ancientcurses.item.items.GildedTomeItem;
 import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
+import net.turtleboi.ancientcurses.item.items.SoulCompassItem;
 import net.turtleboi.ancientcurses.item.items.SoulShardItem;
+import net.turtleboi.ancientcurses.entity.entities.items.ThrownIceSpark;
 import net.turtleboi.ancientcurses.item.items.util.GemBonusUtil;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
@@ -234,6 +240,8 @@ public class ModEvents {
         Level level = entity.level();
 
         if (entity instanceof Mob mob && !level.isClientSide) {
+            BoneFluteItem.tickCharmedMob(mob);
+
             for (Player player : level.players()) {
                 if (mob instanceof Monster monster) {
                     MobEffectInstance lustCurse = monster.getEffect(ModEffects.CURSE_OF_OBESSSION.get());
@@ -274,6 +282,10 @@ public class ModEvents {
     public static void onEntityAttack(LivingAttackEvent event) {
         DamageSource source = event.getSource();
         if (source.getEntity() instanceof Player player) {
+            if (BoneFluteItem.isCharmedBy(event.getEntity(), player)) {
+                BoneFluteItem.clearCharm(event.getEntity());
+            }
+
             //ENVY CURSE EFFECT
             MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
             if (envyCurse!=null) {
@@ -527,6 +539,12 @@ public class ModEvents {
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void RightClickItemuseOnBlock(PlayerInteractEvent.RightClickBlock event){
         Player player = event.getEntity();
+        if (ExodusTotemItem.bindToLodestone(player, event.getHand(), player.level().getBlockState(event.getPos()), event.getPos())) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+            return;
+        }
+
         MobEffectInstance envyCurse = player.getEffect(ModEffects.CURSE_OF_ENVY.get());
         if (envyCurse!=null) {
             double itemDropOnUseChance = CurseOfEnvyEffect.getItemDropOnUseChance(envyCurse.getAmplifier());
@@ -767,6 +785,10 @@ public class ModEvents {
                     }
                 }
             }
+
+            if (!event.isCanceled() && event.getAmount() > 0.0F) {
+                ExodusTotemItem.cancelChannel(player);
+            }
         } else if (attacker instanceof Player player){
             ItemStack amulet = getActiveAmulet(player);
 
@@ -892,6 +914,7 @@ public class ModEvents {
 
         if (source instanceof ServerPlayer player) {
             chargeOffhandSoulShard(player, entity);
+            attuneOffhandSoulCompass(player, entity);
 
             player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
                 if (riteData.isPlayerCursed()) {
@@ -1002,6 +1025,13 @@ public class ModEvents {
 
         if (SoulShardItem.isCharged(offhandStack)) {
             player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.8F, 0.8F);
+        }
+    }
+
+    private static void attuneOffhandSoulCompass(ServerPlayer player, LivingEntity defeatedEntity) {
+        ItemStack offhandStack = player.getOffhandItem();
+        if (offhandStack.getItem() instanceof SoulCompassItem) {
+            SoulCompassItem.attuneTo(offhandStack, defeatedEntity);
         }
     }
 
@@ -1346,6 +1376,11 @@ public class ModEvents {
 
     private static boolean isItemEnchantable(ItemStack stack) {
         return stack.getItem().isEnchantable(stack);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerXpChange(PlayerXpEvent.XpChange event) {
+        event.setAmount(GildedTomeItem.adjustXpPickup(event.getEntity(), event.getAmount()));
     }
 
     @SubscribeEvent

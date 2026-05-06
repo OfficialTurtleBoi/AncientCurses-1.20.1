@@ -30,6 +30,7 @@ import net.turtleboi.ancientcurses.particle.custom.CursedParticle;
 import net.turtleboi.ancientcurses.particle.custom.GoldenFeatherParticle;
 import net.turtleboi.ancientcurses.screen.LapidaristTableContainerScreen;
 import net.turtleboi.ancientcurses.screen.ModMenuTypes;
+import net.turtleboi.ancientcurses.util.ModItemProperties;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ModClientBusEvents {
@@ -38,6 +39,7 @@ public class ModClientBusEvents {
         EntityRenderers.register(ModEntities.CURSED_PORTAL.get(), CursedPortalRenderer::new);
         EntityRenderers.register(ModEntities.CURSED_NODE.get(), CursedNodeRenderer::new);
         EntityRenderers.register(ModEntities.CURSED_PEARL.get(), ThrownItemRenderer::new);
+        EntityRenderers.register(ModEntities.ICE_SPARK.get(), ThrownItemRenderer::new);
         MenuScreens.register(ModMenuTypes.LAPIDARIST_MENU.get(), LapidaristTableContainerScreen::new);
 
         event.enqueueWork(() -> ItemProperties.register(ModItems.GOLDEN_AMULET.get(), new ResourceLocation(AncientCurses.MOD_ID, "main_gem"),
@@ -51,6 +53,7 @@ public class ModClientBusEvents {
                     }
                     return 0.0F;
                 }));
+        event.enqueueWork(ModItemProperties::addCustomItemProperties);
     }
 
     @SubscribeEvent

@@ -39,6 +39,7 @@ public class ModLanguageProvider extends CoreLanguageProvider {
         addSimpleNameEffect(ModEffects.FORTUNES_FAVOR);
         addSimpleNameEffect(ModEffects.FRENZIED_BLOWS);
         addSimpleNameEffect(ModEffects.LIFEBLOOM);
+        addSimpleNameEffect(ModEffects.ENRICHMENT);
 
         addSimpleNameEnchant(ModEnchantments.SOARING);
         addSimpleNameEnchant(ModEnchantments.TAILWIND);
@@ -91,8 +92,40 @@ public class ModLanguageProvider extends CoreLanguageProvider {
         addSimpleItemName(ModItems.GOLDEN_FEATHER);
         addSimpleItemName(ModItems.DOWSING_ROD);
         addSimpleItemName(ModItems.FIRST_BEACON);
+        addSimpleItemName(ModItems.ICE_SPARK);
+        addSimpleItemName(ModItems.PLAGUE_IDOL);
+        addSimpleItemName(ModItems.VOODOO_DOLL);
+        addSimpleItemName(ModItems.FATHOMLESS_CAULDRON);
+        addSimpleItemName(ModItems.HOLLOW_LANTERN);
+        addSimpleItemName(ModItems.BONE_FLUTE);
+        addSimpleItemName(ModItems.ECHO_STONE);
+        addSimpleItemName(ModItems.GILDED_TOME);
+        addSimpleItemName(ModItems.SOUL_COMPASS);
+        addSimpleItemName(ModItems.EXODUS_TOTEM);
+        addSimpleItemName(ModItems.CRYSTAL_BALL);
+        addSimpleItemName(ModItems.BLOODPRICE_SIGIL);
+        addSimpleItemName(ModItems.THORN_CROWN);
+        addSimpleItemName(ModItems.RUINATION_BRAND);
+        add("item.ancientcurses.ice_spark.tooltip", "Right-click to throw. Right-click again to recall the deployed spark.");
+        add("item.ancientcurses.ice_spark.deployed", "Deployed");
+        add("item.ancientcurses.hollow_lantern.tooltip", "Pulses when hidden things are close. Right-click to reveal nearby entities.");
+        add("item.ancientcurses.hollow_lantern.no_entities", "The dark gives nothing back.");
+        add("item.ancientcurses.echo_stone.tooltip", "Right-click to rewind to your last saved echo.");
+        add("item.ancientcurses.echo_stone.no_snapshot", "No echo answers.");
+        add("item.ancientcurses.bone_flute.tooltip", "Right-click to briefly charm nearby undead.");
+        add("item.ancientcurses.bone_flute.no_charm", "The dead refuse the song.");
+        add("item.ancientcurses.gilded_tome.tooltip", "Right-click to release banked XP. Sneak right-click to trigger Enrichment.");
+        add("item.ancientcurses.gilded_tome.banked", "Banked XP: %s");
+        add("item.ancientcurses.gilded_tome.enriched", "The gilded pages brighten.");
+        add("item.ancientcurses.gilded_tome.empty", "The tome is empty.");
+        add("item.ancientcurses.soul_compass.tracking", "Tracking: %s");
+        add("item.ancientcurses.soul_compass.unattuned", "Unattuned");
+        add("item.ancientcurses.exodus_totem.unbound", "Unbound");
+        add("item.ancientcurses.exodus_totem.bound", "Bound to %s, %s, %s");
+        add("item.ancientcurses.exodus_totem.bound_message", "The totem remembers this lodestone.");
 
         add(ModEntities.CURSED_PEARL.get(), "Cursed Pearl");
+        add(ModEntities.ICE_SPARK.get(), "Ice Spark");
         add(ModEntities.CURSED_NODE.get(), "Cursed Node");
         add(ModEntities.CURSED_PORTAL.get(), "Cursed Portal");
 

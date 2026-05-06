@@ -13,13 +13,20 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.ModBlocks;
+import net.turtleboi.ancientcurses.item.items.BoneFluteItem;
 import net.turtleboi.ancientcurses.item.items.CursedPearlItem;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
+import net.turtleboi.ancientcurses.item.items.EchoStoneItem;
+import net.turtleboi.ancientcurses.item.items.ExodusTotemItem;
 import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
+import net.turtleboi.ancientcurses.item.items.GildedTomeItem;
 import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.GoldenFeatherItem;
+import net.turtleboi.ancientcurses.item.items.HollowLanternItem;
+import net.turtleboi.ancientcurses.item.items.IceSparkItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemType;
+import net.turtleboi.ancientcurses.item.items.SoulCompassItem;
 import net.turtleboi.ancientcurses.item.items.SoulShardItem;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.turtlecore.item.CoreItems;
@@ -109,6 +116,48 @@ public class ModItems {
 
     public static final RegistryObject<Item> FIRST_BEACON = ITEMS.register("first_beacon",
             () -> new FirstBeaconItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1).durability(600)));
+
+    public static final RegistryObject<Item> ICE_SPARK = ITEMS.register("ice_spark",
+            () -> new IceSparkItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> PLAGUE_IDOL = ITEMS.register("plague_idol",
+            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> VOODOO_DOLL = ITEMS.register("voodoo_doll",
+            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> FATHOMLESS_CAULDRON = ITEMS.register("fathomless_cauldron",
+            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> HOLLOW_LANTERN = ITEMS.register("hollow_lantern",
+            () -> new HollowLanternItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> BONE_FLUTE = ITEMS.register("bone_flute",
+            () -> new BoneFluteItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> ECHO_STONE = ITEMS.register("echo_stone",
+            () -> new EchoStoneItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> GILDED_TOME = ITEMS.register("gilded_tome",
+            () -> new GildedTomeItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> SOUL_COMPASS = ITEMS.register("soul_compass",
+            () -> new SoulCompassItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> EXODUS_TOTEM = ITEMS.register("exodus_totem",
+            () -> new ExodusTotemItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> CRYSTAL_BALL = ITEMS.register("crystal_ball",
+            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> BLOODPRICE_SIGIL = ITEMS.register("bloodprice_sigil",
+            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> THORN_CROWN = ITEMS.register("thorn_crown",
+            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+
+    public static final RegistryObject<Item> RUINATION_BRAND = ITEMS.register("ruination_brand",
+            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
 
     private static RegistryObject<Item> registerGem(PreciousGemType gemType, Rarity rarity) {
         return ITEMS.register(gemType.getItemName(),

@@ -11,6 +11,7 @@ import net.turtleboi.ancientcurses.entity.entities.AncientWraithEntity;
 import net.turtleboi.ancientcurses.entity.entities.CursedNodeEntity;
 import net.turtleboi.ancientcurses.entity.entities.CursedPortalEntity;
 import net.turtleboi.ancientcurses.entity.entities.items.ThrownCursedPearl;
+import net.turtleboi.ancientcurses.entity.entities.items.ThrownIceSpark;
 
 public class ModEntities {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
@@ -31,6 +32,13 @@ public class ModEntities {
                     .sized(0.25F, 0.25F)
                     .clientTrackingRange(10)
                     .build("cursed_pearl"));
+
+    public static final RegistryObject<EntityType<ThrownIceSpark>> ICE_SPARK =
+            ENTITY_TYPES.register("ice_spark" , () -> EntityType.Builder.<ThrownIceSpark>of(ThrownIceSpark::new, MobCategory.MISC)
+                    .sized(0.35F, 0.35F)
+                    .clientTrackingRange(10)
+                    .updateInterval(2)
+                    .build("ice_spark"));
 
     public static final RegistryObject<EntityType<CursedNodeEntity>> CURSED_NODE =
             ENTITY_TYPES.register("cursed_node" , () -> EntityType.Builder.of(CursedNodeEntity::new, MobCategory.MISC)
