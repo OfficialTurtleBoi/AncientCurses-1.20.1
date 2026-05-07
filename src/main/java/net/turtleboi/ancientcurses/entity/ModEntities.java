@@ -10,6 +10,8 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.entity.entities.AncientWraithEntity;
 import net.turtleboi.ancientcurses.entity.entities.CursedNodeEntity;
 import net.turtleboi.ancientcurses.entity.entities.CursedPortalEntity;
+import net.turtleboi.ancientcurses.entity.entities.PlagueIdolEntity;
+import net.turtleboi.ancientcurses.entity.entities.VoodooSoulEntity;
 import net.turtleboi.ancientcurses.entity.entities.items.ThrownCursedPearl;
 import net.turtleboi.ancientcurses.entity.entities.items.ThrownIceSpark;
 
@@ -39,6 +41,18 @@ public class ModEntities {
                     .clientTrackingRange(10)
                     .updateInterval(2)
                     .build("ice_spark"));
+
+    public static final RegistryObject<EntityType<PlagueIdolEntity>> PLAGUE_IDOL =
+            ENTITY_TYPES.register("plague_idol" , () -> EntityType.Builder.<PlagueIdolEntity>of(PlagueIdolEntity::new, MobCategory.MISC)
+                    .sized(0.6F, 0.8F)
+                    .clientTrackingRange(10)
+                    .build("plague_idol"));
+
+    public static final RegistryObject<EntityType<VoodooSoulEntity>> VOODOO_SOUL =
+            ENTITY_TYPES.register("voodoo_soul" , () -> EntityType.Builder.<VoodooSoulEntity>of(VoodooSoulEntity::new, MobCategory.MONSTER)
+                    .sized(0.5F, 1.125F)
+                    .clientTrackingRange(10)
+                    .build("voodoo_soul"));
 
     public static final RegistryObject<EntityType<CursedNodeEntity>> CURSED_NODE =
             ENTITY_TYPES.register("cursed_node" , () -> EntityType.Builder.of(CursedNodeEntity::new, MobCategory.MISC)

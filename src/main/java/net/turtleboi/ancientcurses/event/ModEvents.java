@@ -76,8 +76,8 @@ import net.turtleboi.ancientcurses.item.items.GildedTomeItem;
 import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.SoulCompassItem;
 import net.turtleboi.ancientcurses.item.items.SoulShardItem;
-import net.turtleboi.ancientcurses.entity.entities.items.ThrownIceSpark;
 import net.turtleboi.ancientcurses.item.items.util.GemBonusUtil;
+import net.turtleboi.ancientcurses.entity.entities.VoodooSoulEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
@@ -238,6 +238,8 @@ public class ModEvents {
     public static void onLivingUpdate(LivingEvent.LivingTickEvent event) {
         LivingEntity entity = event.getEntity();
         Level level = entity.level();
+
+        VoodooSoulEntity.tickArmorFracture(entity);
 
         if (entity instanceof Mob mob && !level.isClientSide) {
             BoneFluteItem.tickCharmedMob(mob);
@@ -635,6 +637,10 @@ public class ModEvents {
     public static void onEntityHurt(LivingDamageEvent event) {
         Entity attacker = event.getSource().getEntity();
         Entity target = event.getEntity();
+
+        if (!target.level().isClientSide() && target instanceof VoodooSoulEntity soul && event.getAmount() > 0.0F) {
+            soul.mirrorDamageToBody(event.getAmount());
+        }
 
         //System.out.println(Component.literal(target.getName() + "hit!")); //debug code
         if (target instanceof Player player) {
