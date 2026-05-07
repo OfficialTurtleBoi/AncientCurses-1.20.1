@@ -24,10 +24,12 @@ import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.GoldenFeatherItem;
 import net.turtleboi.ancientcurses.item.items.HollowLanternItem;
 import net.turtleboi.ancientcurses.item.items.IceSparkItem;
+import net.turtleboi.ancientcurses.item.items.PlagueIdolItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemType;
 import net.turtleboi.ancientcurses.item.items.SoulCompassItem;
 import net.turtleboi.ancientcurses.item.items.SoulShardItem;
+import net.turtleboi.ancientcurses.item.items.VoodooDollItem;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.turtlecore.item.CoreItems;
 
@@ -121,10 +123,10 @@ public class ModItems {
             () -> new IceSparkItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
 
     public static final RegistryObject<Item> PLAGUE_IDOL = ITEMS.register("plague_idol",
-            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+            () -> new PlagueIdolItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1).durability(160)));
 
     public static final RegistryObject<Item> VOODOO_DOLL = ITEMS.register("voodoo_doll",
-            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+            () -> new VoodooDollItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
 
     public static final RegistryObject<Item> FATHOMLESS_CAULDRON = ITEMS.register("fathomless_cauldron",
             () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));

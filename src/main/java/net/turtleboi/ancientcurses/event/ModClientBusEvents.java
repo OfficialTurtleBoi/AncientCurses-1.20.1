@@ -19,9 +19,14 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.block.entity.renderer.CursedAltarRenderer;
 import net.turtleboi.ancientcurses.entity.ModEntities;
+import net.turtleboi.ancientcurses.entity.model.AncientWraithModel;
 import net.turtleboi.ancientcurses.entity.model.CursedPortalModel;
+import net.turtleboi.ancientcurses.entity.renderer.AncientWraithRenderer;
 import net.turtleboi.ancientcurses.entity.renderer.CursedNodeRenderer;
 import net.turtleboi.ancientcurses.entity.renderer.CursedPortalRenderer;
+import net.turtleboi.ancientcurses.entity.renderer.IceSparkRenderer;
+import net.turtleboi.ancientcurses.entity.renderer.PlagueIdolRenderer;
+import net.turtleboi.ancientcurses.entity.renderer.VoodooSoulRenderer;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.particle.ModParticleTypes;
@@ -38,8 +43,11 @@ public class ModClientBusEvents {
     public static void onClientSetup(FMLClientSetupEvent event) {
         EntityRenderers.register(ModEntities.CURSED_PORTAL.get(), CursedPortalRenderer::new);
         EntityRenderers.register(ModEntities.CURSED_NODE.get(), CursedNodeRenderer::new);
+        EntityRenderers.register(ModEntities.ANCIENT_WRAITH.get(), AncientWraithRenderer::new);
         EntityRenderers.register(ModEntities.CURSED_PEARL.get(), ThrownItemRenderer::new);
-        EntityRenderers.register(ModEntities.ICE_SPARK.get(), ThrownItemRenderer::new);
+        EntityRenderers.register(ModEntities.ICE_SPARK.get(), IceSparkRenderer::new);
+        EntityRenderers.register(ModEntities.PLAGUE_IDOL.get(), PlagueIdolRenderer::new);
+        EntityRenderers.register(ModEntities.VOODOO_SOUL.get(), VoodooSoulRenderer::new);
         MenuScreens.register(ModMenuTypes.LAPIDARIST_MENU.get(), LapidaristTableContainerScreen::new);
 
         event.enqueueWork(() -> ItemProperties.register(ModItems.GOLDEN_AMULET.get(), new ResourceLocation(AncientCurses.MOD_ID, "main_gem"),
@@ -60,6 +68,7 @@ public class ModClientBusEvents {
     public static void registerLayer(EntityRenderersEvent.RegisterLayerDefinitions event){
         event.registerLayerDefinition(CursedPortalModel.CURSED_PORTAL_LAYER, CursedPortalModel::createBodyLayer);
         event.registerLayerDefinition(CursedNodeRenderer.CURSED_NODE_LAYER, CursedNodeRenderer::createBodyLayer);
+        event.registerLayerDefinition(AncientWraithModel.ANCIENT_WRAITH_LAYER, AncientWraithModel::createBodyLayer);
     }
 
     @SubscribeEvent

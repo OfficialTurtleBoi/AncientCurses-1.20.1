@@ -108,6 +108,8 @@ public class ModLanguageProvider extends CoreLanguageProvider {
         addSimpleItemName(ModItems.RUINATION_BRAND);
         add("item.ancientcurses.ice_spark.tooltip", "Right-click to throw. Right-click again to recall the deployed spark.");
         add("item.ancientcurses.ice_spark.deployed", "Deployed");
+        add("item.ancientcurses.plague_idol.tooltip", "Place to spread harmful effects between nearby mobs.");
+        add("item.ancientcurses.voodoo_doll.tooltip", "Right-click a mob to pull its soul loose.");
         add("item.ancientcurses.hollow_lantern.tooltip", "Pulses when hidden things are close. Right-click to reveal nearby entities.");
         add("item.ancientcurses.hollow_lantern.no_entities", "The dark gives nothing back.");
         add("item.ancientcurses.echo_stone.tooltip", "Right-click to rewind to your last saved echo.");
@@ -126,6 +128,8 @@ public class ModLanguageProvider extends CoreLanguageProvider {
 
         add(ModEntities.CURSED_PEARL.get(), "Cursed Pearl");
         add(ModEntities.ICE_SPARK.get(), "Ice Spark");
+        add(ModEntities.PLAGUE_IDOL.get(), "Plague Idol");
+        add(ModEntities.VOODOO_SOUL.get(), "Voodoo Soul");
         add(ModEntities.CURSED_NODE.get(), "Cursed Node");
         add(ModEntities.CURSED_PORTAL.get(), "Cursed Portal");
 
