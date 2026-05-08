@@ -102,6 +102,10 @@ public class ModEvents {
     @SubscribeEvent
     public static void onPlayerJoinWorld(PlayerEvent.PlayerLoggedInEvent event) {
         Player player = event.getEntity();
+        if (player instanceof ServerPlayer serverPlayer) {
+            syncVoodooSoulsToPlayer(serverPlayer);
+        }
+
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
             if (riteData.isPlayerCursed()) {
                 Rite activeRite = RiteLocator.resolveActiveRite(player, riteData);
@@ -140,6 +144,10 @@ public class ModEvents {
     @SubscribeEvent
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         Player player = event.getEntity();
+        if (player instanceof ServerPlayer serverPlayer) {
+            syncVoodooSoulsToPlayer(serverPlayer);
+        }
+
         player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
             Rite playerRite = RiteLocator.resolveActiveRite(player, riteData);
             if (playerRite != null && playerRite.shouldClearOnPlayerExit()) {
@@ -240,6 +248,8 @@ public class ModEvents {
         Level level = entity.level();
 
         VoodooSoulEntity.tickArmorFracture(entity);
+        VoodooSoulEntity.tickLinkedBody(entity);
+        VoodooSoulEntity.tickSoulClone(entity);
 
         if (entity instanceof Mob mob && !level.isClientSide) {
             BoneFluteItem.tickCharmedMob(mob);
@@ -511,7 +521,21 @@ public class ModEvents {
     }
 
     @SubscribeEvent
+    public static void onPlayerStartTracking(PlayerEvent.StartTracking event) {
+        if (event.getEntity() instanceof ServerPlayer serverPlayer
+                && event.getTarget() instanceof LivingEntity livingEntity
+                && VoodooSoulEntity.isSoulClone(livingEntity)) {
+            VoodooSoulEntity.syncSoulCloneToPlayer(livingEntity, serverPlayer, true);
+        }
+    }
+
+    @SubscribeEvent
     public static void onLivingDrops(LivingDropsEvent event) {
+        if (VoodooSoulEntity.isSoulClone(event.getEntity())) {
+            event.setCanceled(true);
+            return;
+        }
+
         if (event.getEntity() instanceof Mob mob) {
             if (mob.getPersistentData().getBoolean(CursedAltarBlockEntity.CURSED_SPAWN)) {
                 event.setCanceled(true);
@@ -535,6 +559,13 @@ public class ModEvents {
                     itemEntity.setItem(multiplied);
                 }
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingExperienceDrop(LivingExperienceDropEvent event) {
+        if (VoodooSoulEntity.isSoulClone(event.getEntity())) {
+            event.setDroppedExperience(0);
         }
     }
 
@@ -638,8 +669,9 @@ public class ModEvents {
         Entity attacker = event.getSource().getEntity();
         Entity target = event.getEntity();
 
-        if (!target.level().isClientSide() && target instanceof VoodooSoulEntity soul && event.getAmount() > 0.0F) {
-            soul.mirrorDamageToBody(event.getAmount());
+        if (!target.level().isClientSide() && target instanceof LivingEntity livingTarget
+                && VoodooSoulEntity.isSoulClone(livingTarget) && event.getAmount() > 0.0F) {
+            VoodooSoulEntity.mirrorSoulDamageToBody(livingTarget, event.getAmount());
         }
 
         //System.out.println(Component.literal(target.getName() + "hit!")); //debug code
@@ -890,6 +922,10 @@ public class ModEvents {
         Level level = entity.level();
         Entity source = event.getSource().getEntity();
 
+        if (!level.isClientSide() && VoodooSoulEntity.isSoulClone(entity)) {
+            VoodooSoulEntity.handleSoulDeath(entity);
+        }
+
         if (source instanceof Player player) {
             MobEffectInstance wrathCurse = player.getEffect(ModEffects.CURSE_OF_WRATH.get());
             if (wrathCurse != null && wrathCurse.getAmplifier() >= 2) {
@@ -1050,6 +1086,10 @@ public class ModEvents {
         Entity entity = event.getEntity();
         Level level = entity.level();
         if (level instanceof ServerLevel serverLevel) {
+            if (entity instanceof LivingEntity livingEntity && VoodooSoulEntity.isSoulClone(livingEntity)) {
+                VoodooSoulEntity.syncSoulCloneToClients(livingEntity, true);
+            }
+
             if (entity instanceof Slime childSlime) {
                 long currentTick = serverLevel.getGameTime();
                 BlockPos joiningPosition = entity.blockPosition();
@@ -1067,6 +1107,21 @@ public class ModEvents {
                     if (distanceSquared <= matchRadiusSquared) {
                         childSlime.getPersistentData().putBoolean(CursedAltarBlockEntity.CURSED_SPAWN, true);
                     }
+                }
+            }
+        }
+    }
+
+    private static void syncVoodooSoulsToPlayer(ServerPlayer player) {
+        MinecraftServer server = player.getServer();
+        if (server == null) {
+            return;
+        }
+
+        for (ServerLevel level : server.getAllLevels()) {
+            for (Entity entity : level.getAllEntities()) {
+                if (entity instanceof LivingEntity livingEntity && VoodooSoulEntity.isSoulClone(livingEntity)) {
+                    VoodooSoulEntity.syncSoulCloneToPlayer(livingEntity, player, true);
                 }
             }
         }

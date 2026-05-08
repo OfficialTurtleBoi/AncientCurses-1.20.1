@@ -1,6 +1,9 @@
 package net.turtleboi.ancientcurses.entity.entities;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,6 +46,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class PlagueIdolEntity extends PathfinderMob {
+    private static final EntityDataAccessor<Integer> EYE_PULSE_TICKS = SynchedEntityData.defineId(PlagueIdolEntity.class, EntityDataSerializers.INT);
     private static final String AGE_TAG = "Age";
     private static final String OWNER_TAG = "Owner";
     private static final String ITEM_DAMAGE_TAG = "ItemDamage";
@@ -53,6 +57,9 @@ public class PlagueIdolEntity extends PathfinderMob {
     private static final String TRACKING_SOURCE_DURATION_TAG = "SourceDuration";
     private static final int PULSE_INTERVAL_TICKS = 20;
     private static final int AURA_DURATION_TICKS = 20;
+    private static final int EYE_PULSE_RAMP_TICKS = 4;
+    private static final int EYE_PULSE_FADE_TICKS = 8;
+    private static final int EYE_PULSE_DURATION_TICKS = AURA_DURATION_TICKS + EYE_PULSE_FADE_TICKS;
     private static final int AURA_QUEUE_DELAY_TICKS = 10;
     private static final int AURA_PULSES = 1;
     private static final double SPREAD_RADIUS = 7.0D;
@@ -78,6 +85,7 @@ public class PlagueIdolEntity extends PathfinderMob {
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
+        entityData.define(EYE_PULSE_TICKS, 0);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -97,6 +105,7 @@ public class PlagueIdolEntity extends PathfinderMob {
             return;
         }
 
+        tickEyePulse();
         processPendingPulseRequests();
 
         if (age % PULSE_INTERVAL_TICKS == 0) {
@@ -208,6 +217,33 @@ public class PlagueIdolEntity extends PathfinderMob {
 
     public void setItemDamage(int itemDamage) {
         this.itemDamage = Math.max(0, itemDamage);
+    }
+
+    public float getEyePulseIntensity(float partialTick) {
+        int pulseTicks = entityData.get(EYE_PULSE_TICKS);
+        if (pulseTicks <= 0) {
+            return 0.0F;
+        }
+
+        float elapsed = EYE_PULSE_DURATION_TICKS - pulseTicks + partialTick;
+        if (elapsed < EYE_PULSE_RAMP_TICKS) {
+            float rampProgress = Mth.clamp(elapsed / (float) EYE_PULSE_RAMP_TICKS, 0.0F, 1.0F);
+            return Mth.clamp((float) Math.pow(rampProgress, 3.0D), 0.0F, 1.0F);
+        }
+
+        if (elapsed <= AURA_DURATION_TICKS) {
+            return 1.0F;
+        }
+
+        float fadeProgress = Mth.clamp((elapsed - AURA_DURATION_TICKS) / (float) EYE_PULSE_FADE_TICKS, 0.0F, 1.0F);
+        return Mth.clamp((float) Math.pow(1.0F - fadeProgress, 2.0D), 0.0F, 1.0F);
+    }
+
+    private void tickEyePulse() {
+        int pulseTicks = entityData.get(EYE_PULSE_TICKS);
+        if (pulseTicks > 0) {
+            entityData.set(EYE_PULSE_TICKS, pulseTicks - 1);
+        }
     }
 
     private ItemStack createReturnedStack() {
@@ -413,6 +449,7 @@ public class PlagueIdolEntity extends PathfinderMob {
     }
 
     private void doEffectPulse(ServerLevel serverLevel, int effectColor) {
+        entityData.set(EYE_PULSE_TICKS, EYE_PULSE_DURATION_TICKS);
         CoreNetworking.sendToNear(
                 new PulseAuraS2CPacket(
                         getId(),

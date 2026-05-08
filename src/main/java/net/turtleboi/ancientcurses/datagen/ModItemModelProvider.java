@@ -54,7 +54,6 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.SOUL_SHARD);
         simpleItem(ModItems.CURSED_SOUL_SHARD);
         simpleItem(ModItems.ICE_SPARK);
-        simpleItem(ModItems.PLAGUE_IDOL);
         simpleItem(ModItems.VOODOO_DOLL);
         simpleItem(ModItems.FATHOMLESS_CAULDRON);
         simpleItem(ModItems.HOLLOW_LANTERN);

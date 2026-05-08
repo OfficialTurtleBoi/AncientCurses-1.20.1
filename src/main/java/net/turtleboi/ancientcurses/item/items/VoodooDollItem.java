@@ -1,6 +1,7 @@
 package net.turtleboi.ancientcurses.item.items;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -10,27 +11,24 @@ import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.entity.entities.VoodooSoulEntity;
+import net.turtleboi.turtlecore.util.TargetingUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class VoodooDollItem extends Item {
-    private static final double TARGET_RANGE = 25.0D;
-    private static final int COOLDOWN_TICKS = 20 * 60;
+    private static final int COOLDOWN_TICKS = 1 * 60;
     private static final float SOUL_HEALTH_SCALE = 0.4F;
 
     public VoodooDollItem(Properties properties) {
@@ -44,7 +42,7 @@ public class VoodooDollItem extends Item {
             return InteractionResultHolder.fail(stack);
         }
 
-        LivingEntity target = findTarget(level, player);
+        LivingEntity target = findTarget(player);
         if (target == null) {
             return InteractionResultHolder.fail(stack);
         }
@@ -92,18 +90,32 @@ public class VoodooDollItem extends Item {
             return false;
         }
 
-        VoodooSoulEntity soul = ModEntities.VOODOO_SOUL.get().create(level);
-        if (soul == null) {
+        Entity soulEntity = target.getType().create(level);
+        if (!(soulEntity instanceof Mob soul)) {
             return false;
         }
 
+        copyBodyData(target, soul);
         float soulHealth = Math.max(1.0F, target.getMaxHealth() * SOUL_HEALTH_SCALE);
-        soul.setPos(target.getX(), target.getY() + target.getBbHeight() * 0.5D, target.getZ());
-        soul.setOwner(player);
-        soul.setOriginalBody(target);
-        soul.setSoulHealth(soulHealth);
+        VoodooSoulEntity.markSoulClone(soul, player, target);
+        VoodooSoulEntity.setSoulHealth(soul, soulHealth);
+        soul.setPos(target.getX(), target.getY(), target.getZ());
+        soul.xo = soul.getX();
+        soul.yo = soul.getY();
+        soul.zo = soul.getZ();
+        soul.setYRot(target.getYRot());
+        soul.setXRot(target.getXRot());
+        soul.yRotO = target.yRotO;
+        soul.xRotO = target.xRotO;
+        soul.setDeltaMovement(Vec3.ZERO);
+        soul.setNoGravity(true);
+        soul.setNoAi(true);
+        soul.setTarget(player);
+        clearArmorEquipment(soul);
         level.addFreshEntity(soul);
+        VoodooSoulEntity.beginSoulTravel(soul, player);
         target.getPersistentData().putUUID(VoodooSoulEntity.ACTIVE_SOUL_TAG, soul.getUUID());
+        VoodooSoulEntity.syncSoulCloneToClients(soul, true);
 
         level.playSound(null, target.blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.HOSTILE, 1.0F, 0.7F);
         level.playSound(null, player.blockPosition(), SoundEvents.WOOL_HIT, SoundSource.PLAYERS, 0.8F, 0.6F);
@@ -111,29 +123,56 @@ public class VoodooDollItem extends Item {
     }
 
     @Nullable
-    private static LivingEntity findTarget(Level level, Player player) {
-        Vec3 eye = player.getEyePosition();
-        Vec3 look = player.getLookAngle();
-        Vec3 end = eye.add(look.scale(TARGET_RANGE));
-        AABB searchBox = player.getBoundingBox().expandTowards(look.scale(TARGET_RANGE)).inflate(1.0D);
-        EntityHitResult hitResult = ProjectileUtil.getEntityHitResult(
-                level,
-                player,
-                eye,
-                end,
-                searchBox,
-                entity -> isValidTarget(player, entity));
-        if (hitResult != null && hitResult.getEntity() instanceof LivingEntity livingEntity) {
-            return livingEntity;
-        }
-        return null;
+    private static LivingEntity findTarget(Player player) {
+        LivingEntity target = TargetingUtils.getTarget(player);
+        return isValidTarget(target) ? target : null;
     }
 
-    private static boolean isValidTarget(Player player, Entity entity) {
-        return entity instanceof Mob mob
-                && mob.isAlive()
-                //&& mob != player
-                && !mob.isSpectator()
-                && player.hasLineOfSight(mob);
+    private static boolean isValidTarget(@Nullable LivingEntity entity) {
+        return entity instanceof Mob mob && mob.isAlive() && !mob.isSpectator();
+    }
+
+    private static void copyBodyData(LivingEntity body, Mob soul) {
+        CompoundTag bodyTag = new CompoundTag();
+        body.saveWithoutId(bodyTag);
+        scrubCopiedSoulData(bodyTag);
+        soul.load(bodyTag);
+    }
+
+    private static void scrubCopiedSoulData(CompoundTag bodyTag) {
+        bodyTag.remove("UUID");
+        bodyTag.remove("Pos");
+        bodyTag.remove("Motion");
+        bodyTag.remove("Rotation");
+        bodyTag.remove("Health");
+        bodyTag.remove("AbsorptionAmount");
+        bodyTag.remove("active_effects");
+        bodyTag.remove("ActiveEffects");
+        bodyTag.remove("Attributes");
+        bodyTag.remove("DeathTime");
+        bodyTag.remove("HurtTime");
+        bodyTag.remove("HurtByTimestamp");
+        bodyTag.remove("FallDistance");
+        bodyTag.remove("Fire");
+        bodyTag.remove("ForgeCaps");
+        bodyTag.remove("ForgeData");
+        bodyTag.remove("ForcedAge");
+        bodyTag.remove("HurtBy");
+        bodyTag.remove("Leash");
+        bodyTag.remove("NoAI");
+        bodyTag.remove("NoGravity");
+        bodyTag.remove("OnGround");
+        bodyTag.remove("Passengers");
+    }
+
+    private static void clearArmorEquipment(Mob soul) {
+        soul.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
+        soul.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+        soul.setItemSlot(EquipmentSlot.LEGS, ItemStack.EMPTY);
+        soul.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+        soul.setDropChance(EquipmentSlot.HEAD, 0.0F);
+        soul.setDropChance(EquipmentSlot.CHEST, 0.0F);
+        soul.setDropChance(EquipmentSlot.LEGS, 0.0F);
+        soul.setDropChance(EquipmentSlot.FEET, 0.0F);
     }
 }

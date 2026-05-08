@@ -10,6 +10,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -39,6 +40,7 @@ import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.client.ModRenderTypes;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.client.RiteEventBar;
+import net.turtleboi.ancientcurses.client.VoodooSoulClientData;
 import net.turtleboi.ancientcurses.client.renderer.DowsingRodRenderer;
 import net.turtleboi.ancientcurses.client.renderer.FirstBeaconEffectRenderer;
 import net.turtleboi.ancientcurses.client.sound.RiteMusicController;
@@ -50,12 +52,19 @@ import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import net.turtleboi.ancientcurses.util.ModItemProperties;
 import net.turtleboi.turtlecore.client.data.ScreenEffectsData;
+import net.turtleboi.turtlecore.client.util.TintingVertexConsumer;
 import org.joml.Matrix4f;
 
 import java.util.Random;
 
 @Mod.EventBusSubscriber(modid = AncientCurses.MOD_ID, value = Dist.CLIENT)
 public class ModClientEvents {
+    private static final float VOODOO_SOUL_RED = 0.15F;
+    private static final float VOODOO_SOUL_GREEN = 1.0F;
+    private static final float VOODOO_SOUL_BLUE = 0.9F;
+    private static final float VOODOO_SOUL_ALPHA = 0.55F;
+    private static boolean renderingVoodooSoul;
+
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) {
@@ -146,6 +155,54 @@ public class ModClientEvents {
     }
 
 
+
+    @SubscribeEvent
+    public static void onRenderLivingPre(RenderLivingEvent.Pre<?, ?> event) {
+        if (!VoodooSoulClientData.isSoulClone(event.getEntity().getUUID()) || renderingVoodooSoul) {
+            return;
+        }
+
+        renderVoodooSoul(event);
+        event.setCanceled(true);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void renderVoodooSoul(RenderLivingEvent.Pre event) {
+        renderingVoodooSoul = true;
+        int hurtTime = event.getEntity().hurtTime;
+        int deathTime = event.getEntity().deathTime;
+        try {
+            event.getEntity().hurtTime = 0;
+            event.getEntity().deathTime = 0;
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            event.getRenderer().render(
+                    event.getEntity(),
+                    event.getEntity().getYRot(),
+                    event.getPartialTick(),
+                    event.getPoseStack(),
+                    new VoodooSoulBuffer(event.getMultiBufferSource(),
+                            event.getRenderer().getTextureLocation(event.getEntity())),
+                    event.getPackedLight());
+        } finally {
+            event.getEntity().hurtTime = hurtTime;
+            event.getEntity().deathTime = deathTime;
+            RenderSystem.disableBlend();
+            renderingVoodooSoul = false;
+        }
+    }
+
+    private record VoodooSoulBuffer(MultiBufferSource delegate, ResourceLocation texture) implements MultiBufferSource {
+        @Override
+        public VertexConsumer getBuffer(RenderType renderType) {
+            return new TintingVertexConsumer(
+                    delegate.getBuffer(RenderType.entityTranslucentEmissive(texture)),
+                    VOODOO_SOUL_RED,
+                    VOODOO_SOUL_GREEN,
+                    VOODOO_SOUL_BLUE,
+                    VOODOO_SOUL_ALPHA);
+        }
+    }
 
     @SubscribeEvent
     public static void onRenderFirstPerson(RenderHandEvent event) {

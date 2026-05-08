@@ -11,6 +11,7 @@ import net.turtleboi.ancientcurses.network.packets.*;
 import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketC2S;
 import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.items.DowsingRodInfoPacketS2C;
+import net.turtleboi.ancientcurses.network.packets.items.VoodooSoulSyncS2C;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 
 public class ModNetworking {
@@ -75,6 +76,12 @@ public class ModNetworking {
                 .decoder(DowsingRodInfoPacketS2C::new)
                 .encoder(DowsingRodInfoPacketS2C::toBytes)
                 .consumerMainThread(DowsingRodInfoPacketS2C::handle)
+                .add();
+
+        net.messageBuilder(VoodooSoulSyncS2C.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(VoodooSoulSyncS2C::new)
+                .encoder(VoodooSoulSyncS2C::toBytes)
+                .consumerMainThread(VoodooSoulSyncS2C::handle)
                 .add();
     }
 

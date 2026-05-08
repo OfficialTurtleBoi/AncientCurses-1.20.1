@@ -44,7 +44,7 @@ public class ModEntities {
 
     public static final RegistryObject<EntityType<PlagueIdolEntity>> PLAGUE_IDOL =
             ENTITY_TYPES.register("plague_idol" , () -> EntityType.Builder.<PlagueIdolEntity>of(PlagueIdolEntity::new, MobCategory.MISC)
-                    .sized(0.6F, 0.8F)
+                    .sized(0.625F, 0.375F)
                     .clientTrackingRange(10)
                     .build("plague_idol"));
 
