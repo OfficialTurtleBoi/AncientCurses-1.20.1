@@ -4,6 +4,8 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -42,63 +44,53 @@ public class FirstBeaconItem extends Item {
     @Override
     public void onUseTick(Level pLevel, LivingEntity pLivingEntity, ItemStack pItemStack, int pRemainingUseDuration) {
         super.onUseTick(pLevel, pLivingEntity, pItemStack, pRemainingUseDuration);
-        if (pLivingEntity instanceof Player pPlayer) {
-            Vec3 lookVec = pPlayer.getLookAngle();
-            Vec3 startVec = pPlayer.getEyePosition(1.0f);
-            float chargeProgress = Math.min(1.0f, (float) (getUseDuration(pItemStack) - pRemainingUseDuration) / chargeRate);
-            Vec3 endVec = startVec.add(lookVec.scale(range));
+        if (!(pLivingEntity instanceof Player pPlayer)) return;
 
-            HitResult result = TargetingUtils.rayTraceClosest(pPlayer, startVec, endVec);
-            double hitDistance = startVec.distanceTo(result.getLocation());
+        Vec3 lookVec = pPlayer.getLookAngle();
+        Vec3 startVec = pPlayer.getEyePosition(1.0f);
+        int ticksElapsed = getUseDuration(pItemStack) - pRemainingUseDuration;
+        float chargeProgress = Math.min(1.0f, (float) ticksElapsed / chargeRate);
+        Vec3 endVec = startVec.add(lookVec.scale(range));
 
-            if (pPlayer instanceof ServerPlayer serverPlayer) {
-                ModNetworking.sendToPlayer(new BeaconInfoPacketS2C(
-                        getUseDuration(pItemStack),
-                        pRemainingUseDuration,
-                        hitDistance,
-                        true
-                ), serverPlayer);
+        HitResult result = TargetingUtils.rayTraceClosest(pPlayer, startVec, endVec);
+        double hitDistance = startVec.distanceTo(result.getLocation());
+
+        if (pPlayer instanceof ServerPlayer serverPlayer) {
+            ModNetworking.sendToPlayer(new BeaconInfoPacketS2C(
+                    getUseDuration(pItemStack), pRemainingUseDuration, hitDistance, true
+            ), serverPlayer);
+        }
+
+        if (chargeProgress > 0.35f) {
+            if (pLevel.isClientSide()) {
+                pLevel.addParticle(ParticleTypes.CLOUD,
+                        result.getLocation().x, result.getLocation().y, result.getLocation().z,
+                        0, 0.1, 0);
+                return;
             }
 
-            if(chargeProgress > 0.35f) {
-                if (pLevel.isClientSide()) {
-                    pLevel.addParticle(
-                            ParticleTypes.CLOUD,
-                            result.getLocation().x,
-                            result.getLocation().y,
-                            result.getLocation().z,
-                            0,
-                            0.1,
-                            0);
-                    return;
-                }
+            // Movement slowdown: amp 0 at 35% charge, amp 2 at 100%, no HUD icon/particles
+            int slownessAmp = (int) ((chargeProgress - 0.35f) / 0.325f);
+            pPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, slownessAmp, false, false, false));
 
+            // Damage and durability every 5 ticks → 4 hits/sec, 2.5×progress per hit = 10 DPS at max charge
+            if (ticksElapsed % 5 == 0) {
                 List<EntityHitResult> hitResults = TargetingUtils.rayTraceEntities(pPlayer, startVec, endVec);
                 if (!hitResults.isEmpty()) {
-                    float baseDamage = 10.0f * chargeProgress;
+                    float baseDamage = 2.5f * chargeProgress;
                     for (int i = 0; i < hitResults.size(); i++) {
                         EntityHitResult hit = hitResults.get(i);
                         if (hit.getEntity() instanceof LivingEntity targetEntity) {
-                            float damageMultiplier = 1.0f - (i * 0.05f);
-                            damageMultiplier = Math.max(0, damageMultiplier);
-
-                            float adjustedDamage = baseDamage * damageMultiplier;
-                            //System.out.println("Hurting " + targetEntity + " with " + adjustedDamage + " damage (multiplier: " + damageMultiplier + ")");
-                            targetEntity.hurt(pPlayer.level().damageSources().magic(), adjustedDamage);
+                            float damageMultiplier = Math.max(0f, 1.0f - (i * 0.05f));
+                            targetEntity.hurt(pPlayer.level().damageSources().magic(), baseDamage * damageMultiplier);
                         }
                     }
                 }
-
                 pItemStack.hurtAndBreak(1, pPlayer, (p_41300_) -> {
                     if (pPlayer instanceof ServerPlayer serverPlayer) {
                         ModNetworking.sendToPlayer(new BeaconInfoPacketS2C(
-                                getUseDuration(pItemStack),
-                                40,
-                                0,
-                                false
-                        ), serverPlayer);
+                                getUseDuration(pItemStack), 40, 0, false), serverPlayer);
                     }
-
                     p_41300_.broadcastBreakEvent(pLivingEntity.getUsedItemHand());
                 });
             }

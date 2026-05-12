@@ -65,13 +65,24 @@ public class ModClientEvents {
     private static final float VOODOO_SOUL_ALPHA = 0.55F;
     private static boolean renderingVoodooSoul;
 
+    // Beacon turning clamp — saved at START phase, clamped at END phase
+    private static float savedYaw;
+    private static float savedPitch;
+
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
+        LocalPlayer player = Minecraft.getInstance().player;
+
+        if (event.phase == TickEvent.Phase.START) {
+            // Save rotation before Minecraft processes mouse input this tick
+            if (player != null) {
+                savedYaw   = player.getYRot();
+                savedPitch = player.getXRot();
+            }
             return;
         }
 
-        LocalPlayer player = Minecraft.getInstance().player;
+        // END phase — mouse input has already been applied
         if (PlayerClientData.getDowsingRodUsed() && player != null && !(player.getMainHandItem().getItem() instanceof DowsingRod)) {
             PlayerClientData.setDowsingRodUsed(false);
             PlayerClientData.setDowsingRodUsedTime(-1);
@@ -94,7 +105,35 @@ public class ModClientEvents {
             }
         }
 
+        if (player != null) {
+            applyBeaconTurnClamp(player);
+        }
+
         RiteMusicController.tick();
+    }
+
+    private static void applyBeaconTurnClamp(LocalPlayer player) {
+        boolean holdingBeacon = player.getMainHandItem().getItem() instanceof FirstBeaconItem
+                || player.getOffhandItem().getItem() instanceof FirstBeaconItem;
+        if (!holdingBeacon || !player.isUsingItem()) return;
+
+        int remainingUseTime = PlayerClientData.getItemRemainingUseTime();
+        int maxDuration      = PlayerClientData.getItemMaxDurationTicks();
+        if (maxDuration <= 0 || remainingUseTime <= 0) return;
+
+        float ticksElapsed = maxDuration - remainingUseTime;
+        float progress = Math.min(1.0f, ticksElapsed / FirstBeaconItem.chargeRate);
+        if (progress <= 0.35f) return;
+
+        // Max turn per tick: 8° at beam threshold, 1.5° at full charge
+        float beamFactor = (progress - 0.35f) / 0.65f;
+        float maxTurnDeg = Mth.lerp(beamFactor, 8.0f, 1.5f);
+
+        float yawDelta   = Mth.wrapDegrees(player.getYRot() - savedYaw);
+        float pitchDelta = player.getXRot() - savedPitch;
+
+        player.setYRot(savedYaw + Mth.clamp(yawDelta,   -maxTurnDeg, maxTurnDeg));
+        player.setXRot(savedPitch + Mth.clamp(pitchDelta, -maxTurnDeg, maxTurnDeg));
     }
 
     @SubscribeEvent

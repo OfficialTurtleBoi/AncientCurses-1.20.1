@@ -29,7 +29,6 @@ import java.util.List;
 
 public class VoodooDollItem extends Item {
     private static final int COOLDOWN_TICKS = 1 * 60;
-    private static final float SOUL_HEALTH_SCALE = 0.4F;
 
     public VoodooDollItem(Properties properties) {
         super(properties);
@@ -96,7 +95,7 @@ public class VoodooDollItem extends Item {
         }
 
         copyBodyData(target, soul);
-        float soulHealth = Math.max(1.0F, target.getMaxHealth() * SOUL_HEALTH_SCALE);
+        float soulHealth = VoodooSoulEntity.computeSoulHealth(target);
         VoodooSoulEntity.markSoulClone(soul, player, target);
         VoodooSoulEntity.setSoulHealth(soul, soulHealth);
         soul.setPos(target.getX(), target.getY(), target.getZ());

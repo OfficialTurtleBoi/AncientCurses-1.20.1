@@ -26,6 +26,7 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -62,6 +63,30 @@ public class VoodooSoulEntity extends AncientWraithEntity {
     private static final int SOUL_DEATH_SLOW_AMPLIFIER = 2;
     private static final int SOUL_DEATH_WEAKNESS_AMPLIFIER = 1;
 
+    // Boss-detection threshold (max health at or above this is treated as boss-tier)
+    public static final float BOSS_HEALTH_THRESHOLD = 100.0F;
+
+    // Health scaling: 40% normal, 20% for boss-tier, hard-capped per tier
+    public static final float NORMAL_SOUL_HEALTH_SCALE = 0.40F;
+    public static final float BOSS_SOUL_HEALTH_SCALE   = 0.20F;
+    private static final float NORMAL_SOUL_HEALTH_CAP  = 80.0F;
+    private static final float BOSS_SOUL_HEALTH_CAP    = 50.0F;
+
+    // Movement-speed scaling from body base value
+    private static final double SOUL_SPEED_SCALE       = 0.70;
+    private static final double NORMAL_SOUL_SPEED_CAP  = 0.52;
+    private static final double BOSS_SOUL_SPEED_CAP    = 0.28;
+
+    // Attack-damage scaling from body base value
+    private static final double SOUL_ATTACK_SCALE      = 0.60;
+    private static final double NORMAL_SOUL_ATTACK_CAP = 12.0;
+    private static final double BOSS_SOUL_ATTACK_CAP   = 8.0;
+
+    // NBT keys for attributes captured at extract time
+    private static final String BODY_SPEED_TAG   = "AncientCursesVoodooBodySpeed";
+    private static final String BODY_ATTACK_TAG  = "AncientCursesVoodooBodyAttack";
+    private static final String BODY_IS_BOSS_TAG = "AncientCursesVoodooBodyIsBoss";
+
     @Nullable
     private UUID ownerUUID;
     @Nullable
@@ -79,20 +104,21 @@ public class VoodooSoulEntity extends AncientWraithEntity {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.15D, true));
+        goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.3D, true));
         goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
         goalSelector.addGoal(8, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 8.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.32D)
+                .add(Attributes.MAX_HEALTH, 20.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.34D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(Attributes.ATTACK_DAMAGE, 3.0D)
-                .add(Attributes.ATTACK_SPEED, 1.6D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 0.05D);
+                .add(Attributes.ATTACK_DAMAGE, 4.0D)
+                .add(Attributes.ATTACK_SPEED, 2.0D)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.0D);
     }
 
     @Override
@@ -261,7 +287,56 @@ public class VoodooSoulEntity extends AncientWraithEntity {
         data.putBoolean(RETURNING_TAG, false);
         data.putInt(RETURN_TICKS_TAG, 0);
         data.putFloat(MIRRORED_DAMAGE_TAG, 0.0F);
+
+        boolean isBoss = body.getMaxHealth() >= BOSS_HEALTH_THRESHOLD;
+        data.putBoolean(BODY_IS_BOSS_TAG, isBoss);
+
+        AttributeInstance speedAttr = body.getAttribute(Attributes.MOVEMENT_SPEED);
+        double bodySpeed = speedAttr != null ? speedAttr.getBaseValue() : 0.25;
+        double scaledSpeed = bodySpeed * SOUL_SPEED_SCALE;
+        scaledSpeed = isBoss ? Math.min(scaledSpeed, BOSS_SOUL_SPEED_CAP) : Math.min(scaledSpeed, NORMAL_SOUL_SPEED_CAP);
+        data.putDouble(BODY_SPEED_TAG, Math.max(0.18, scaledSpeed));
+
+        AttributeInstance attackAttr = body.getAttribute(Attributes.ATTACK_DAMAGE);
+        double bodyAttack = attackAttr != null ? attackAttr.getBaseValue() : 3.0;
+        double scaledAttack = bodyAttack * SOUL_ATTACK_SCALE;
+        scaledAttack = isBoss ? Math.min(scaledAttack, BOSS_SOUL_ATTACK_CAP) : Math.min(scaledAttack, NORMAL_SOUL_ATTACK_CAP);
+        data.putDouble(BODY_ATTACK_TAG, Math.max(2.0, scaledAttack));
+
         soul.setPersistenceRequired();
+    }
+
+    /**
+     * Returns the scaled soul health for the given body, applying boss-tier capping.
+     * Call this instead of the inline 40% scale in the item.
+     */
+    public static float computeSoulHealth(LivingEntity body) {
+        boolean isBoss = body.getMaxHealth() >= BOSS_HEALTH_THRESHOLD;
+        float scale = isBoss ? BOSS_SOUL_HEALTH_SCALE : NORMAL_SOUL_HEALTH_SCALE;
+        float cap   = isBoss ? BOSS_SOUL_HEALTH_CAP  : NORMAL_SOUL_HEALTH_CAP;
+        return Math.min(cap, Math.max(1.0F, body.getMaxHealth() * scale));
+    }
+
+    /**
+     * Reads the speed and attack-damage values stored by markSoulClone and writes them
+     * into the soul entity's attribute instances. Safe to call on any mob with SOUL_CLONE_TAG.
+     */
+    public static void applySoulAttributes(LivingEntity soul) {
+        CompoundTag data = soul.getPersistentData();
+
+        if (data.contains(BODY_SPEED_TAG)) {
+            AttributeInstance attr = soul.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (attr != null) {
+                attr.setBaseValue(data.getDouble(BODY_SPEED_TAG));
+            }
+        }
+
+        if (data.contains(BODY_ATTACK_TAG)) {
+            AttributeInstance attr = soul.getAttribute(Attributes.ATTACK_DAMAGE);
+            if (attr != null) {
+                attr.setBaseValue(data.getDouble(BODY_ATTACK_TAG));
+            }
+        }
     }
 
     public static void syncSoulCloneToClients(LivingEntity soul, boolean active) {
@@ -332,6 +407,7 @@ public class VoodooSoulEntity extends AncientWraithEntity {
                 data.putBoolean(ACTIVATED_TAG, true);
                 soul.setNoGravity(false);
                 soul.setDeltaMovement(Vec3.ZERO);
+                applySoulAttributes(soul);
                 if (soul instanceof Mob mob) {
                     mob.setNoAi(false);
                     mob.setTarget(owner);
@@ -354,7 +430,10 @@ public class VoodooSoulEntity extends AncientWraithEntity {
         soul.setNoGravity(false);
         if (soul instanceof Mob mob) {
             mob.setNoAi(false);
-            mob.setTarget(owner);
+            // Retarget every second, or immediately if the current target has gone
+            if (soul.tickCount % 20 == 0 || mob.getTarget() == null || !mob.getTarget().isAlive()) {
+                mob.setTarget(owner);
+            }
         }
         if (soul.tickCount % 20 == 0) {
             body.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, BODY_SLOW_DURATION_TICKS,
@@ -560,6 +639,7 @@ public class VoodooSoulEntity extends AncientWraithEntity {
         if (activationTicks >= TRAVEL_TICKS || toTarget.lengthSqr() < 0.35D) {
             activated = true;
             setNoGravity(false);
+            applySoulAttributes(this);
             setTarget(owner);
             level().playSound(null, blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.HOSTILE, 0.8F, 1.6F);
         }
