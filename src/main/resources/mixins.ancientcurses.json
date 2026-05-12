@@ -9,6 +9,9 @@
     "SlimeMixin",
     "SlotAccessorMixin"
   ],
+  "client": [
+    "PlayerModelMixin"
+  ],
   "server": [],
   "injectors": {
     "defaultRequire": 1

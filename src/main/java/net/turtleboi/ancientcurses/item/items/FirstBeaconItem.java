@@ -2,6 +2,7 @@ package net.turtleboi.ancientcurses.item.items;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -15,6 +16,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
+import net.turtleboi.ancientcurses.event.ModClientEvents;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
 import net.turtleboi.turtlecore.util.TargetingUtils;
@@ -46,7 +48,12 @@ public class FirstBeaconItem extends Item {
         super.onUseTick(pLevel, pLivingEntity, pItemStack, pRemainingUseDuration);
         if (!(pLivingEntity instanceof Player pPlayer)) return;
 
-        Vec3 lookVec = pPlayer.getLookAngle();
+        Vec3 lookVec;
+        if (pLevel.isClientSide()) {
+            lookVec = getClientLookVector(pPlayer);
+        } else {
+            lookVec = pPlayer.getLookAngle();
+        }
         Vec3 startVec = pPlayer.getEyePosition(1.0f);
         int ticksElapsed = getUseDuration(pItemStack) - pRemainingUseDuration;
         float chargeProgress = Math.min(1.0f, (float) ticksElapsed / chargeRate);
@@ -69,11 +76,9 @@ public class FirstBeaconItem extends Item {
                 return;
             }
 
-            // Movement slowdown: amp 0 at 35% charge, amp 2 at 100%, no HUD icon/particles
             int slownessAmp = (int) ((chargeProgress - 0.35f) / 0.325f);
             pPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, slownessAmp, false, false, false));
 
-            // Damage and durability every 5 ticks → 4 hits/sec, 2.5×progress per hit = 10 DPS at max charge
             if (ticksElapsed % 5 == 0) {
                 List<EntityHitResult> hitResults = TargetingUtils.rayTraceEntities(pPlayer, startVec, endVec);
                 if (!hitResults.isEmpty()) {
@@ -122,5 +127,22 @@ public class FirstBeaconItem extends Item {
     @Override
     public int getUseDuration(ItemStack pItemStack) {
         return pItemStack.getMaxDamage();
+    }
+
+    private static Vec3 getClientLookVector(Player player) {
+        float limitedYaw = ModClientEvents.getBeaconLimitedYaw();
+        float limitedPitch = ModClientEvents.getBeaconLimitedPitch();
+        if (Float.isNaN(limitedYaw)) {
+            return player.getLookAngle();
+        }
+
+        float pitchRadians = limitedPitch * (float)(Math.PI / 180.0);
+        float yawRadians = -limitedYaw * (float)(Math.PI / 180.0);
+        float cosPitch = Mth.cos(pitchRadians);
+        return new Vec3(
+                Mth.sin(yawRadians) * cosPitch,
+                -Mth.sin(pitchRadians),
+                Mth.cos(yawRadians) * cosPitch
+        );
     }
 }

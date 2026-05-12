@@ -2,6 +2,7 @@ package net.turtleboi.ancientcurses.event;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
+import net.minecraft.client.CameraType;
 import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -11,6 +12,7 @@ import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -65,24 +67,48 @@ public class ModClientEvents {
     private static final float VOODOO_SOUL_ALPHA = 0.55F;
     private static boolean renderingVoodooSoul;
 
-    // Beacon turning clamp — saved at START phase, clamped at END phase
-    private static float savedYaw;
-    private static float savedPitch;
+    private static float beaconSavedRightArmXRot;
+    private static float beaconSavedRightArmYRot;
+    private static float beaconSavedLeftArmXRot;
+    private static float beaconSavedLeftArmYRot;
+    private static boolean beaconArmPoseActive;
+
+    private static float beaconLimitedYaw = Float.NaN;
+    private static float beaconLimitedPitch = Float.NaN;
+    private static long beaconFrameNanos = 0L;
+
+    public static float getBeaconLimitedYaw() {
+        return beaconLimitedYaw;
+    }
+
+    public static float getBeaconLimitedPitch() {
+        return beaconLimitedPitch;
+    }
+
+    public static boolean isBeaconArmPoseActive() {
+        return beaconArmPoseActive;
+    }
 
     @SubscribeEvent
+    public static void onComputeCameraAngles(ViewportEvent.ComputeCameraAngles event) {
+        if (Float.isNaN(beaconLimitedYaw)) {
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.options.getCameraType() == CameraType.FIRST_PERSON) {
+            event.setYaw(beaconLimitedYaw);
+            event.setPitch(beaconLimitedPitch);
+        }
+    }
+
+@SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         LocalPlayer player = Minecraft.getInstance().player;
 
         if (event.phase == TickEvent.Phase.START) {
-            // Save rotation before Minecraft processes mouse input this tick
-            if (player != null) {
-                savedYaw   = player.getYRot();
-                savedPitch = player.getXRot();
-            }
             return;
         }
 
-        // END phase — mouse input has already been applied
         if (PlayerClientData.getDowsingRodUsed() && player != null && !(player.getMainHandItem().getItem() instanceof DowsingRod)) {
             PlayerClientData.setDowsingRodUsed(false);
             PlayerClientData.setDowsingRodUsedTime(-1);
@@ -105,38 +131,82 @@ public class ModClientEvents {
             }
         }
 
-        if (player != null) {
-            applyBeaconTurnClamp(player);
-        }
-
         RiteMusicController.tick();
     }
 
-    private static void applyBeaconTurnClamp(LocalPlayer player) {
+    @SubscribeEvent
+    public static void onRenderTick(TickEvent.RenderTickEvent event) {
+        if (event.phase != TickEvent.Phase.START) {
+            return;
+        }
+
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+
+        if (player == null) {
+            beaconLimitedYaw = Float.NaN;
+            beaconLimitedPitch = Float.NaN;
+            beaconFrameNanos = 0L;
+            return;
+        }
+
         boolean holdingBeacon = player.getMainHandItem().getItem() instanceof FirstBeaconItem
                 || player.getOffhandItem().getItem() instanceof FirstBeaconItem;
-        if (!holdingBeacon || !player.isUsingItem()) return;
+
+        if (!holdingBeacon || !player.isUsingItem()) {
+            beaconLimitedYaw = Float.NaN;
+            beaconLimitedPitch = Float.NaN;
+            beaconFrameNanos = 0L;
+            return;
+        }
 
         int remainingUseTime = PlayerClientData.getItemRemainingUseTime();
-        int maxDuration      = PlayerClientData.getItemMaxDurationTicks();
-        if (maxDuration <= 0 || remainingUseTime <= 0) return;
+        int maxDuration = PlayerClientData.getItemMaxDurationTicks();
+        if (maxDuration <= 0 || remainingUseTime <= 0) {
+            beaconLimitedYaw = Float.NaN;
+            beaconLimitedPitch = Float.NaN;
+            beaconFrameNanos = 0L;
+            return;
+        }
 
         float ticksElapsed = maxDuration - remainingUseTime;
         float progress = Math.min(1.0f, ticksElapsed / FirstBeaconItem.chargeRate);
-        if (progress <= 0.35f) return;
+        if (progress <= 0.35f) {
+            beaconLimitedYaw = player.getYRot();
+            beaconLimitedPitch = player.getXRot();
+            beaconFrameNanos = 0L;
+            return;
+        }
 
-        // Max turn per tick: 8° at beam threshold, 1.5° at full charge
-        float beamFactor = (progress - 0.35f) / 0.65f;
-        float maxTurnDeg = Mth.lerp(beamFactor, 8.0f, 1.5f);
+        long now = System.nanoTime();
+        float elapsedTicks = beaconFrameNanos > 0L
+                ? Mth.clamp((now - beaconFrameNanos) / 50_000_000f, 0.001f, 2f)
+                : (1f / 20f);
+        beaconFrameNanos = now;
 
-        float yawDelta   = Mth.wrapDegrees(player.getYRot() - savedYaw);
-        float pitchDelta = player.getXRot() - savedPitch;
+        float beamProgressFactor = (progress - 0.35f) / 0.65f;
+        float maxTurnDegrees = Mth.lerp(beamProgressFactor, 8.0f, 1.5f);
+        float maxDegreesPerFrame = maxTurnDegrees * elapsedTicks;
 
-        player.setYRot(savedYaw + Mth.clamp(yawDelta,   -maxTurnDeg, maxTurnDeg));
-        player.setXRot(savedPitch + Mth.clamp(pitchDelta, -maxTurnDeg, maxTurnDeg));
+        if (Float.isNaN(beaconLimitedYaw)) {
+            beaconLimitedYaw = player.getYRot();
+            beaconLimitedPitch = player.getXRot();
+        }
+
+        float yawDelta = Mth.wrapDegrees(player.getYRot() - beaconLimitedYaw);
+        float pitchDelta = player.getXRot() - beaconLimitedPitch;
+
+        beaconLimitedYaw += Mth.clamp(yawDelta, -maxDegreesPerFrame, maxDegreesPerFrame);
+        beaconLimitedPitch += Mth.clamp(pitchDelta, -maxDegreesPerFrame, maxDegreesPerFrame);
+        beaconLimitedPitch = Mth.clamp(beaconLimitedPitch, -90f, 90f);
+
+        player.setYRot(beaconLimitedYaw);
+        player.setXRot(beaconLimitedPitch);
+        player.yRotO = beaconLimitedYaw;
+        player.xRotO = beaconLimitedPitch;
     }
 
-    @SubscribeEvent
+@SubscribeEvent
     public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
         Player player = Minecraft.getInstance().player;
         Minecraft minecraft = Minecraft.getInstance();
@@ -189,7 +259,6 @@ public class ModClientEvents {
             return;
         }
 
-        // AncientCurses.LOGGER.info("[RiteMusic] Blocking non-rite music sound={}", soundId);
         event.setSound(null);
     }
 
@@ -293,8 +362,6 @@ public class ModClientEvents {
     @SubscribeEvent
     public static void onCustomizeBossEventProgress(CustomizeGuiOverlayEvent.BossEventProgress event) {
         if (PlayerClientData.hasRite()) {
-            int originalY = event.getY();
-            //event.setY(originalY + 9 + 5);
             event.setIncrement(event.getIncrement() + 9 + 5);
         }
     }
@@ -307,7 +374,6 @@ public class ModClientEvents {
         if (level != null) {
             int itemValue = ItemValueMap.getItemValue(itemStack, level);
             int itemStackValue = itemValue * itemStack.getCount();
-            //event.getToolTip().add(Component.literal("Item Value: " + itemStackValue));
         }
 
         if (level != null && itemStack.hasTag()) {
@@ -347,7 +413,30 @@ public class ModClientEvents {
 
 
     @SubscribeEvent
+    public static void onRenderPlayerPre(RenderPlayerEvent.Pre event) {
+        Player player = event.getEntity();
+        if (!player.isUsingItem() || !(player.getUseItem().getItem() instanceof FirstBeaconItem)) {
+            return;
+        }
+        PlayerModel<?> model = event.getRenderer().getModel();
+        beaconSavedRightArmXRot = model.rightArm.xRot;
+        beaconSavedRightArmYRot = model.rightArm.yRot;
+        beaconSavedLeftArmXRot = model.leftArm.xRot;
+        beaconSavedLeftArmYRot = model.leftArm.yRot;
+        beaconArmPoseActive = true;
+    }
+
+    @SubscribeEvent
     public static void onRenderPlayerPost(RenderPlayerEvent.Post event) {
+        if (beaconArmPoseActive) {
+            PlayerModel<?> model = event.getRenderer().getModel();
+            model.rightArm.xRot = beaconSavedRightArmXRot;
+            model.rightArm.yRot = beaconSavedRightArmYRot;
+            model.leftArm.xRot = beaconSavedLeftArmXRot;
+            model.leftArm.yRot = beaconSavedLeftArmYRot;
+            beaconArmPoseActive = false;
+        }
+
         Minecraft minecraft = Minecraft.getInstance();
         Player player = event.getEntity();
         PoseStack poseStack = event.getPoseStack();
@@ -393,7 +482,6 @@ public class ModClientEvents {
         double offsetX = (random.nextDouble() - 0.5) * 2 * currentIntensity;
         double offsetY = (random.nextDouble() - 0.5) * 2 * currentIntensity;
 
-        // Apply the shake by translating the MatrixStack
         PoseStack poseStack = event.getPoseStack();
         poseStack.translate(offsetX, offsetY, 0.0);
     }
@@ -430,9 +518,7 @@ public class ModClientEvents {
     }
 
     private static void renderPinkOverlay(GuiGraphics guiGraphics) {
-        //System.out.println(Component.literal(String.valueOf(PlayerClientData.isLusted()))); //debug code
         if (PlayerClientData.isObsessed()) {
-            //System.out.println(Component.literal("Pink screen!")); //debug code
             RenderSystem.disableDepthTest();
             RenderSystem.depthMask(false);
             RenderSystem.enableBlend();
@@ -449,9 +535,7 @@ public class ModClientEvents {
     }
 
     private static void renderPurpleOverlay(GuiGraphics guiGraphics) {
-        //System.out.println(Component.literal(String.valueOf(PlayerClientData.isVoid()))); //debug code
         if (PlayerClientData.isSingularity()) {
-            //System.out.println(Component.literal("Purple screen!")); //debug code
             RenderSystem.disableDepthTest();
             RenderSystem.depthMask(false);
             RenderSystem.enableBlend();
@@ -472,7 +556,6 @@ public class ModClientEvents {
         int currentLifetime = PlayerClientData.getSingularityTimer();
 
         if (totalLifetime <= 0 || currentLifetime <= 0 || currentLifetime > totalLifetime) {
-            //System.out.println("Invalid lifetime values, skipping rendering."); //debug code
             return;
         }
 

@@ -34,9 +34,9 @@ import java.util.Map;
 import java.util.Objects;
 
 public class GoldenFeatherItem extends Item {
-    private static final String AIRBORNE_TAG     = "GoldenFeatherAirborne";
-    private static final String HEAT_TAG         = "GoldenFeatherHeat";
-    private static final String OVERHEAT_TAG     = "GoldenFeatherOverheated";
+    private static final String AIRBORNE_TAG = "GoldenFeatherAirborne";
+    private static final String HEAT_TAG = "GoldenFeatherHeat";
+    private static final String OVERHEAT_TAG = "GoldenFeatherOverheated";
     private static final String LANDING_HEAT_TAG = "GoldenFeatherLandingHeat";
 
     private static final ResourceLocation LAUNCH_SPELL_ID =
@@ -46,25 +46,19 @@ public class GoldenFeatherItem extends Item {
     private static final ResourceLocation ZEPHYR_RUSH_SPELL_ID =
             new ResourceLocation(AncientCurses.MOD_ID, "golden_feather_zephyr_rush");
 
-    private static final float BASE_SHOCKWAVE_RADIUS      = 5.0F;
+    private static final float BASE_SHOCKWAVE_RADIUS = 5.0F;
     private static final float SHOCKWAVE_RADIUS_PER_LEVEL = 0.75F;
-    private static final float BASE_SHOCKWAVE_POWER       = 2.0F;
-    private static final float SHOCKWAVE_POWER_PER_LEVEL  = 1.0F;
+    private static final float BASE_SHOCKWAVE_POWER = 2.0F;
+    private static final float SHOCKWAVE_POWER_PER_LEVEL = 1.0F;
 
-    // Heat mechanics
-    // Base rate fills heat in ~45 ticks (≈2.25 s); each Soaring level slows buildup
-    private static final float HEAT_RATE_BASE                        = 0.022f;
-    private static final float HEAT_RATE_REDUCTION_PER_SOARING       = 0.003f;
-    // Passive decay while idle — full cool from max in ~27 s
-    private static final float HEAT_DECAY_RATE                       = 0.006f;
-    // Boost: Soaring and heat both scale the launch velocity multiplicatively
-    private static final float HEAT_BOOST_MULTIPLIER                 = 0.6f;
-    // Overheat cooldown base 6 s; each Soaring level trims 1 s
-    private static final int   OVERHEAT_COOLDOWN_BASE                = 120;
-    private static final int   OVERHEAT_COOLDOWN_REDUCTION_PER_SOARING = 20;
-    // Seismic shockwave ignites targets when boost heat was above this threshold
-    private static final float SEISMIC_IGNITE_HEAT_THRESHOLD         = 0.6f;
-    private static final int   SEISMIC_IGNITE_SECONDS                = 4;
+    private static final float HEAT_RATE_BASE = 0.022f;
+    private static final float HEAT_RATE_REDUCTION_PER_SOARING = 0.003f;
+    private static final float HEAT_DECAY_RATE = 0.006f;
+    private static final float HEAT_BOOST_MULTIPLIER = 0.6f;
+    private static final int OVERHEAT_COOLDOWN_BASE = 120;
+    private static final int OVERHEAT_COOLDOWN_REDUCTION_PER_SOARING = 20;
+    private static final float SEISMIC_IGNITE_HEAT_THRESHOLD = 0.6f;
+    private static final int SEISMIC_IGNITE_SECONDS = 4;
 
     public GoldenFeatherItem(Properties pProperties) {
         super(pProperties);
@@ -86,7 +80,6 @@ public class GoldenFeatherItem extends Item {
         CompoundTag tag = pStack.getOrCreateTag();
         int soaringLevel = pStack.getEnchantmentLevel(ModEnchantments.SOARING.get());
 
-        // Build heat — Soaring slows the rate, making overheat harder to trigger
         float heat = tag.getFloat(HEAT_TAG);
         float heatRate = Math.max(0.01f, HEAT_RATE_BASE - soaringLevel * HEAT_RATE_REDUCTION_PER_SOARING);
         heat = Math.min(1.0f, heat + heatRate);
@@ -94,11 +87,10 @@ public class GoldenFeatherItem extends Item {
 
         if (heat >= 1.0f) {
             tag.putBoolean(OVERHEAT_TAG, true);
-            pPlayer.stopUsingItem(); // triggers releaseUsing with overheat flag set
+            pPlayer.stopUsingItem();
             return;
         }
 
-        // Particle count scales with heat (hotter = more particles)
         int particleCount = 3 + (int) (heat * 6);
         for (int j = 0; j < particleCount; j++) {
             pLevel.addParticle(ModParticleTypes.GOLDEN_FEATHER_PARTICLE.get(),
@@ -130,7 +122,6 @@ public class GoldenFeatherItem extends Item {
         pPlayer.awardStat(Stats.ITEM_USED.get(this));
 
         if (overheated) {
-            // Soaring reduces the overheat penalty — reward skilled heat management
             int cooldown = Math.max(40, OVERHEAT_COOLDOWN_BASE - soaringLevel * OVERHEAT_COOLDOWN_REDUCTION_PER_SOARING);
             pPlayer.getCooldowns().addCooldown(this, cooldown);
         } else {
@@ -147,7 +138,7 @@ public class GoldenFeatherItem extends Item {
 
     @Override
     public int getUseDuration(@NotNull ItemStack pStack) {
-        return 72000; // Heat overheat or player release are the only stops
+        return 72000;
     }
 
     public static boolean canDash(ItemStack pGoldenFeatherStack) {
@@ -159,7 +150,6 @@ public class GoldenFeatherItem extends Item {
         if (pEntity instanceof Player pPlayer) {
             CompoundTag tag = pStack.getOrCreateTag();
 
-            // Decay heat while not actively using this feather
             boolean isBeingUsed = pPlayer.isUsingItem() && pPlayer.getUseItem().getItem() == this;
             if (!isBeingUsed) {
                 float heat = tag.getFloat(HEAT_TAG);
@@ -184,7 +174,6 @@ public class GoldenFeatherItem extends Item {
                         disarmLandingSpells(serverPlayer);
                     }
 
-                    // Seismic ignite — if boost heat was above threshold, set nearby targets on fire
                     int seismicLevel = pStack.getEnchantmentLevel(ModEnchantments.SEISMIC.get());
                     float landingHeat = tag.getFloat(LANDING_HEAT_TAG);
                     if (!pLevel.isClientSide() && seismicLevel > 0 && landingHeat >= SEISMIC_IGNITE_HEAT_THRESHOLD) {
@@ -208,7 +197,7 @@ public class GoldenFeatherItem extends Item {
     }
 
     private static void armLandingSpells(ServerPlayer serverPlayer, ItemStack itemStack, float heat) {
-        int seismicLevel    = itemStack.getEnchantmentLevel(ModEnchantments.SEISMIC.get());
+        int seismicLevel = itemStack.getEnchantmentLevel(ModEnchantments.SEISMIC.get());
         int zephyrRushLevel = itemStack.getEnchantmentLevel(ModEnchantments.ZEPHYR_RUSH.get());
 
         disarmLandingSpells(serverPlayer);
@@ -227,7 +216,6 @@ public class GoldenFeatherItem extends Item {
             }
         }
 
-        // Store heat at boost time so inventoryTick can check ignite threshold on landing
         itemStack.getOrCreateTag().putFloat(LANDING_HEAT_TAG, heat);
     }
 

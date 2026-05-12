@@ -21,6 +21,9 @@ import org.joml.Matrix4f;
 public class FirstBeaconEffectRenderer {
     public static final ResourceLocation ARCANE_AURA_TEXTURE = new ResourceLocation("turtlecore", "textures/spell_effects/arcane_circle.png");
 
+    private static final float ARM_SIDE_OFFSET_BLOCKS = 1.0f;
+    private static final float ARM_VERTICAL_OFFSET_BLOCKS = 0.5f;
+
     public void renderThirdPerson(MultiBufferSource bufferSource, PoseStack poseStack, LivingEntity livingEntity, float partialTicks) {
         poseStack.pushPose();
         float ticksElapsed = livingEntity.tickCount;
@@ -74,8 +77,6 @@ public class FirstBeaconEffectRenderer {
         poseStack.mulPose(Axis.YP.rotationDegrees(-rotationAngle));
         poseStack.mulPose(Axis.XP.rotationDegrees(-90));
         poseStack.scale(scale, scale, scale);
-
-        //ArcaneCircleRenderer.renderArcaneCircle(bufferSource, poseStack, vertexAlpha);
 
         poseStack.popPose();
     }
@@ -141,22 +142,27 @@ public class FirstBeaconEffectRenderer {
                 tiltOffset = -5;
             }
 
+            float handSign = (float) Math.signum(handOffset);
+            float aimYaw = (float) Math.toDegrees(Math.atan2(-handSign * ARM_SIDE_OFFSET_BLOCKS, FirstBeaconItem.range));
+            float aimPitch = (float) Math.toDegrees(Math.atan2(ARM_VERTICAL_OFFSET_BLOCKS, FirstBeaconItem.range));
+
             poseStack.translate(handOffset, -0.5, -2);
             poseStack.scale(0.5F, 0.5F, 0.5F);
-            //poseStack.mulPose(Axis.YP.rotationDegrees(-livingEntity.getYRot()));
+            poseStack.mulPose(Axis.YP.rotationDegrees(aimYaw));
+            poseStack.mulPose(Axis.XP.rotationDegrees(aimPitch));
             poseStack.mulPose(Axis.YP.rotationDegrees(tiltOffset));
             poseStack.mulPose(Axis.XP.rotationDegrees(2.5F));
             poseStack.mulPose(Axis.ZP.rotationDegrees(-rotationAngle));
             poseStack.scale(scale, scale, scale);
 
             renderArcaneCircle(bufferSource, poseStack, vertexAlpha, ARCANE_AURA_TEXTURE);
-            renderBeam(bufferSource, poseStack, 164, progress, hitDistance);
+            renderBeam(bufferSource, poseStack, 164, progress, hitDistance, scale);
 
             poseStack.popPose();
         }
     }
 
-    public static void renderBeam(MultiBufferSource bufferSource, PoseStack poseStack, int vertexAlpha, float progress, double hitDistance) {
+    public static void renderBeam(MultiBufferSource bufferSource, PoseStack poseStack, int vertexAlpha, float progress, double hitDistance, float scale) {
         VertexConsumer beamEndConsumer = bufferSource.getBuffer(RenderType.entityTranslucentEmissive(
                 new ResourceLocation(AncientCurses.MOD_ID, "textures/spell_effects/beacon_beam_end.png")));
         VertexConsumer originalConsumer = bufferSource.getBuffer(RenderType.entityTranslucentEmissive(
@@ -168,7 +174,7 @@ public class FirstBeaconEffectRenderer {
 
         float nearFace = -1.0F;
 
-        float farFace = getFarFace(progress, hitDistance);
+        float farFace = getFarFace(progress, hitDistance, scale);
 
         float faceScale;
         if (progress < 0.25f) {
@@ -218,27 +224,26 @@ public class FirstBeaconEffectRenderer {
         VertexBuilder.vertex(repeatingConsumer, matrix, normalMatrix, -faceScale, -faceScale, nearFace, 0.0F, 0.0F, 255, 255, 255, vertexAlpha);
     }
 
-    private static float getFarFace(float progress, double hitDistance) {
+    private static float getFarFace(float progress, double hitDistance, float scale) {
         float farFace;
         float maxFarFace;
+        double effectiveDistance = Math.min(hitDistance, 16.0);
 
-        if (hitDistance <= 4.0f) {
-            maxFarFace = (float) (4.0f + (hitDistance / 4.0f) * (64.0f - 4.0f));
+        if (effectiveDistance <= 4.0f) {
+            maxFarFace = (float) (4.0f + (effectiveDistance / 4.0f) * (64.0f - 4.0f));
         } else {
-            float clampedDistance = (float) Math.min(hitDistance, 64.0f);
-            maxFarFace = 64.0f + ((clampedDistance - 4.0f) / 60.0f) * (256.0f - 64.0f);
+            maxFarFace = 64.0f + ((float) ((effectiveDistance - 4.0f) / 60.0f)) * (256.0f - 64.0f);
         }
 
-
         if (progress <= 0.25f) {
-            float scale = progress / 0.25f;
-            farFace = scale * 16.0f;
+            float factor = progress / 0.25f;
+            farFace = factor * 16.0f;
         } else if (progress <= 0.3f) {
-            float scale = (progress - 0.25f) / 0.05f;
-            farFace = 16.0f - scale * (16.0f - 0.5f);
+            float factor = (progress - 0.25f) / 0.05f;
+            farFace = 16.0f - factor * (16.0f - 0.5f);
         } else if (progress <= 0.35f) {
-            float scale = (progress - 0.3f) / 0.05f;
-            farFace = 0.5f + scale * (maxFarFace - 0.5f);
+            float factor = (progress - 0.3f) / 0.05f;
+            farFace = 0.5f + factor * (maxFarFace - 0.5f);
         } else {
             farFace = maxFarFace;
         }

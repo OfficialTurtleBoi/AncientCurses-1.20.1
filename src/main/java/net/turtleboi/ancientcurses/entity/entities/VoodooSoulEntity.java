@@ -63,28 +63,23 @@ public class VoodooSoulEntity extends AncientWraithEntity {
     private static final int SOUL_DEATH_SLOW_AMPLIFIER = 2;
     private static final int SOUL_DEATH_WEAKNESS_AMPLIFIER = 1;
 
-    // Boss-detection threshold (max health at or above this is treated as boss-tier)
     public static final float BOSS_HEALTH_THRESHOLD = 100.0F;
 
-    // Health scaling: 40% normal, 20% for boss-tier, hard-capped per tier
     public static final float NORMAL_SOUL_HEALTH_SCALE = 0.40F;
-    public static final float BOSS_SOUL_HEALTH_SCALE   = 0.20F;
-    private static final float NORMAL_SOUL_HEALTH_CAP  = 80.0F;
-    private static final float BOSS_SOUL_HEALTH_CAP    = 50.0F;
+    public static final float BOSS_SOUL_HEALTH_SCALE = 0.20F;
+    private static final float NORMAL_SOUL_HEALTH_CAP = 80.0F;
+    private static final float BOSS_SOUL_HEALTH_CAP = 50.0F;
 
-    // Movement-speed scaling from body base value
-    private static final double SOUL_SPEED_SCALE       = 0.70;
-    private static final double NORMAL_SOUL_SPEED_CAP  = 0.52;
-    private static final double BOSS_SOUL_SPEED_CAP    = 0.28;
+    private static final double SOUL_SPEED_SCALE = 0.70;
+    private static final double NORMAL_SOUL_SPEED_CAP = 0.52;
+    private static final double BOSS_SOUL_SPEED_CAP = 0.28;
 
-    // Attack-damage scaling from body base value
-    private static final double SOUL_ATTACK_SCALE      = 0.60;
+    private static final double SOUL_ATTACK_SCALE = 0.60;
     private static final double NORMAL_SOUL_ATTACK_CAP = 12.0;
-    private static final double BOSS_SOUL_ATTACK_CAP   = 8.0;
+    private static final double BOSS_SOUL_ATTACK_CAP = 8.0;
 
-    // NBT keys for attributes captured at extract time
-    private static final String BODY_SPEED_TAG   = "AncientCursesVoodooBodySpeed";
-    private static final String BODY_ATTACK_TAG  = "AncientCursesVoodooBodyAttack";
+    private static final String BODY_SPEED_TAG = "AncientCursesVoodooBodySpeed";
+    private static final String BODY_ATTACK_TAG = "AncientCursesVoodooBodyAttack";
     private static final String BODY_IS_BOSS_TAG = "AncientCursesVoodooBodyIsBoss";
 
     @Nullable
@@ -306,21 +301,13 @@ public class VoodooSoulEntity extends AncientWraithEntity {
         soul.setPersistenceRequired();
     }
 
-    /**
-     * Returns the scaled soul health for the given body, applying boss-tier capping.
-     * Call this instead of the inline 40% scale in the item.
-     */
     public static float computeSoulHealth(LivingEntity body) {
         boolean isBoss = body.getMaxHealth() >= BOSS_HEALTH_THRESHOLD;
         float scale = isBoss ? BOSS_SOUL_HEALTH_SCALE : NORMAL_SOUL_HEALTH_SCALE;
-        float cap   = isBoss ? BOSS_SOUL_HEALTH_CAP  : NORMAL_SOUL_HEALTH_CAP;
+        float cap = isBoss ? BOSS_SOUL_HEALTH_CAP : NORMAL_SOUL_HEALTH_CAP;
         return Math.min(cap, Math.max(1.0F, body.getMaxHealth() * scale));
     }
 
-    /**
-     * Reads the speed and attack-damage values stored by markSoulClone and writes them
-     * into the soul entity's attribute instances. Safe to call on any mob with SOUL_CLONE_TAG.
-     */
     public static void applySoulAttributes(LivingEntity soul) {
         CompoundTag data = soul.getPersistentData();
 
@@ -430,7 +417,6 @@ public class VoodooSoulEntity extends AncientWraithEntity {
         soul.setNoGravity(false);
         if (soul instanceof Mob mob) {
             mob.setNoAi(false);
-            // Retarget every second, or immediately if the current target has gone
             if (soul.tickCount % 20 == 0 || mob.getTarget() == null || !mob.getTarget().isAlive()) {
                 mob.setTarget(owner);
             }
