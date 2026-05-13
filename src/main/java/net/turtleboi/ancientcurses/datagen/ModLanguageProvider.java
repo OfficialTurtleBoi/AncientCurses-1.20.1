@@ -106,6 +106,11 @@ public class ModLanguageProvider extends CoreLanguageProvider {
         addSimpleItemName(ModItems.BLOODPRICE_SIGIL);
         addSimpleItemName(ModItems.THORN_CROWN);
         addSimpleItemName(ModItems.RUINATION_BRAND);
+        add("item.ancientcurses.fathomless_cauldron.tooltip", "Holds up to 4 potions (16 uses each). Add gunpowder to throw splash, or dragon's breath for lingering.");
+        add("item.ancientcurses.fathomless_cauldron.potion_entry", "%s (%s uses)");
+        add("item.ancientcurses.fathomless_cauldron.gunpowder", "Gunpowder: %s");
+        add("item.ancientcurses.fathomless_cauldron.dragons_breath", "Dragon's Breath: %s");
+        add("item.ancientcurses.fathomless_cauldron.empty", "The cauldron is empty.");
         add("item.ancientcurses.ice_spark.tooltip", "Right-click to throw. Right-click again to recall the deployed spark.");
         add("item.ancientcurses.ice_spark.deployed", "Deployed");
         add("item.ancientcurses.plague_idol.tooltip", "Place to spread harmful effects between nearby mobs.");
@@ -126,6 +131,7 @@ public class ModLanguageProvider extends CoreLanguageProvider {
         add("item.ancientcurses.exodus_totem.bound", "Bound to %s, %s, %s");
         add("item.ancientcurses.exodus_totem.bound_message", "The totem remembers this lodestone.");
 
+        add(ModEntities.CAULDRON_POTION.get(), "Cauldron Potion");
         add(ModEntities.CURSED_PEARL.get(), "Cursed Pearl");
         add(ModEntities.ICE_SPARK.get(), "Ice Spark");
         add(ModEntities.PLAGUE_IDOL.get(), "Plague Idol");

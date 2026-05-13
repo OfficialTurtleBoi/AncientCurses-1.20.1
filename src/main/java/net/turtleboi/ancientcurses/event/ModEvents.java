@@ -79,6 +79,7 @@ import net.turtleboi.ancientcurses.item.items.SoulShardItem;
 import net.turtleboi.ancientcurses.item.items.util.GemBonusUtil;
 import net.turtleboi.ancientcurses.entity.entities.VoodooSoulEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.PlayerKeyStateCache;
 import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.rites.SyncRiteDataS2C;
 import net.turtleboi.ancientcurses.rite.*;
@@ -209,6 +210,7 @@ public class ModEvents {
         Player player = event.getEntity();
         if (player instanceof ServerPlayer serverPlayer) {
             DowsingRod.UseState.clearWithoutPacket(serverPlayer);
+            PlayerKeyStateCache.remove(serverPlayer.getUUID());
         }
 
         player.reviveCaps();

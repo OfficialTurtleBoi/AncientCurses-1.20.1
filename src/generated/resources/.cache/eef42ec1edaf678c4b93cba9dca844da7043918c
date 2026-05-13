@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-06T12:27:04.5607267	Item Models: ancientcurses
+// 1.20.1	2026-05-13T09:45:24.6082758	Item Models: ancientcurses
 c259e04cfd455124bbe16bcae46bef82eb223f0a assets/ancientcurses/models/item/ancient_alexandrite.json
 88cf4211890a0d1e9c58b4accd605061eb521cb3 assets/ancientcurses/models/item/ancient_bismuth.json
 5c626940676a1a23241b8db4cd269b5783223ccb assets/ancientcurses/models/item/ancient_chrysoberyl.json
@@ -17,7 +17,8 @@ e30d36a0f643cb233e5e64e75ebbb2fa93d607df assets/ancientcurses/models/item/crysta
 0fed935a1fcbf99ef67ccd8e815513c8471d6081 assets/ancientcurses/models/item/dowsing_rod.json
 4f07f8086a58990830243c4a532ca17966270729 assets/ancientcurses/models/item/echo_stone.json
 b51b93351779fc23a5aaed59ec3e7ef53beef51f assets/ancientcurses/models/item/exodus_totem.json
-e7d074ee2d05b1e1e8e3b6deb2503e54dedad4f4 assets/ancientcurses/models/item/fathomless_cauldron.json
+652d38607b4619702577f3910bf6b646df64dc92 assets/ancientcurses/models/item/fathomless_cauldron.json
+204ca2366538a52162b7cbc0ef1e91e81565eee5 assets/ancientcurses/models/item/fathomless_cauldron_filled.json
 33321ac191e74d584eb59ed31c3876fd64505c5d assets/ancientcurses/models/item/gilded_tome.json
 73a362d04acc4dc6cdf7093c8fc813c6673f624b assets/ancientcurses/models/item/hollow_lantern.json
 6ce23201c25595cef729417aeca8dd8976d7fe99 assets/ancientcurses/models/item/ice_spark.json
@@ -27,7 +28,6 @@ a7660ac71bb0c9aba59acddaf29a2538fd912448 assets/ancientcurses/models/item/perfec
 79866320ad9f7a7a379454b0e56033c180cd4504 assets/ancientcurses/models/item/perfect_ruby.json
 7bec58013e8f2f562e34aa4a1bce144d361f2452 assets/ancientcurses/models/item/perfect_sapphire.json
 fd32767e0bcd9defaa8e7da92dc542c14e761d32 assets/ancientcurses/models/item/perfect_topaz.json
-23aa70f37a689c38492f86256c8e44513ad9734b assets/ancientcurses/models/item/plague_idol.json
 d34897627248d0f38c9868f53b2630eb0471f6c4 assets/ancientcurses/models/item/polished_amethyst.json
 c2475accbf2d321769a30295de8654dd0e4afdde assets/ancientcurses/models/item/polished_diamond.json
 08afb43a7952c2caf0887ee0118045d9de5ad3fb assets/ancientcurses/models/item/polished_emerald.json

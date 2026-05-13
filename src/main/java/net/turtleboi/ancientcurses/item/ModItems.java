@@ -14,6 +14,7 @@ import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.item.items.BoneFluteItem;
+import net.turtleboi.ancientcurses.item.items.FathomlessCauldronItem;
 import net.turtleboi.ancientcurses.item.items.CursedPearlItem;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.item.items.EchoStoneItem;
@@ -129,7 +130,7 @@ public class ModItems {
             () -> new VoodooDollItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
 
     public static final RegistryObject<Item> FATHOMLESS_CAULDRON = ITEMS.register("fathomless_cauldron",
-            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+            () -> new FathomlessCauldronItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
 
     public static final RegistryObject<Item> HOLLOW_LANTERN = ITEMS.register("hollow_lantern",
             () -> new HollowLanternItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));

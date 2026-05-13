@@ -12,6 +12,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.item.ModItems;
+import net.turtleboi.ancientcurses.item.items.FathomlessCauldronItem;
 import net.turtleboi.ancientcurses.item.items.GoldenFeatherItem;
 import net.turtleboi.ancientcurses.item.items.SoulCompassItem;
 
@@ -21,6 +22,10 @@ import java.util.Optional;
 @OnlyIn(Dist.CLIENT)
 public class ModItemProperties {
     public static void addCustomItemProperties() {
+            ItemProperties.register(ModItems.FATHOMLESS_CAULDRON.get(), new ResourceLocation(AncientCurses.MOD_ID, "has_contents"),
+                    (itemStack, clientLevel, livingEntity, i) ->
+                            FathomlessCauldronItem.hasContentsProperty(itemStack));
+
             ItemProperties.register(ModItems.GOLDEN_FEATHER.get(), new  ResourceLocation(AncientCurses.MOD_ID, "broken"),
                     (itemStack, clientLevel, livingEntity, i) ->
                             GoldenFeatherItem.canDash(itemStack) ? 0.0F : 1.0F);

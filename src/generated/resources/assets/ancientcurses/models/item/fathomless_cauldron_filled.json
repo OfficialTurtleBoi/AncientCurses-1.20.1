@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ancientcurses:item/fathomless_cauldron",
+    "layer1": "ancientcurses:item/fathomless_cauldron_fill"
+  }
+}

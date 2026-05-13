@@ -55,7 +55,7 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.CURSED_SOUL_SHARD);
         simpleItem(ModItems.ICE_SPARK);
         simpleItem(ModItems.VOODOO_DOLL);
-        simpleItem(ModItems.FATHOMLESS_CAULDRON);
+        tintedCauldronItem(ModItems.FATHOMLESS_CAULDRON);
         simpleItem(ModItems.HOLLOW_LANTERN);
         simpleItem(ModItems.BONE_FLUTE);
         simpleItem(ModItems.ECHO_STONE);
@@ -72,6 +72,23 @@ public class ModItemModelProvider extends ItemModelProvider {
         return withExistingParent(item.getId().getPath(),
                 new ResourceLocation("item/generated")).texture("layer0",
                 new ResourceLocation(AncientCurses.MOD_ID,"item/" + item.getId().getPath()));
+    }
+
+    private void tintedCauldronItem(RegistryObject<Item> item) {
+        String name = item.getId().getPath();
+
+        // Filled variant: layer0 = base cauldron, layer1 = tintable overlay
+        ItemModelBuilder filled = withExistingParent(name + "_filled", new ResourceLocation("item/generated"))
+                .texture("layer0", modLoc("item/" + name))
+                .texture("layer1", modLoc("item/" + name + "_fill"));
+
+        // Base model: no overlay; swaps to filled when has_contents >= 1
+        withExistingParent(name, new ResourceLocation("item/generated"))
+                .texture("layer0", modLoc("item/" + name))
+                .override()
+                    .predicate(new ResourceLocation(AncientCurses.MOD_ID, "has_contents"), 1.0f)
+                    .model(filled)
+                .end();
     }
 
     private ItemModelBuilder compassItem(RegistryObject<Item> item) {

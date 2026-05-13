@@ -51,6 +51,8 @@ import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
+import net.turtleboi.ancientcurses.network.packets.items.KeyStatePacketC2S;
+import org.lwjgl.glfw.GLFW;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
 import net.turtleboi.ancientcurses.util.ModItemProperties;
 import net.turtleboi.turtlecore.client.data.ScreenEffectsData;
@@ -64,6 +66,18 @@ public class ModClientEvents {
     private static final float VOODOO_SOUL_RED = 0.15F;
     private static final float VOODOO_SOUL_GREEN = 1.0F;
     private static final float VOODOO_SOUL_BLUE = 0.9F;
+
+    @SubscribeEvent
+    public static void onKeyInput(InputEvent.Key event) {
+        if (Minecraft.getInstance().player == null) {
+            return;
+        }
+        int key = event.getKey();
+        if (key == GLFW.GLFW_KEY_LEFT_CONTROL || key == GLFW.GLFW_KEY_RIGHT_CONTROL) {
+            boolean ctrlDown = event.getAction() != GLFW.GLFW_RELEASE;
+            ModNetworking.sendToServer(new KeyStatePacketC2S(ctrlDown));
+        }
+    }
     private static final float VOODOO_SOUL_ALPHA = 0.55F;
     private static boolean renderingVoodooSoul;
 
