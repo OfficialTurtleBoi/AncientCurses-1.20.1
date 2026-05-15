@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class BoneFluteItem extends Item {
+public class BoneFluteItem extends ArtifactItem {
     private static final String CHARM_OWNER_TAG = "AncientCursesBoneFluteOwner";
     private static final String CHARM_END_TICK_TAG = "AncientCursesBoneFluteEndTick";
     private static final double CHARM_RADIUS = 12.0D;

@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class GildedTomeItem extends Item {
+public class GildedTomeItem extends ArtifactItem {
     private static final String BANKED_XP_TAG = "BankedXp";
     private static final float BANKED_XP_FRACTION = 0.3F;
     private static final int ENRICHMENT_DURATION_TICKS = 2400;

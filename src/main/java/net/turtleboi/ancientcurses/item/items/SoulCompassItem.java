@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public class SoulCompassItem extends Item {
+public class SoulCompassItem extends ArtifactItem {
     private static final String TRACKED_MOB_TAG = "TrackedMob";
 
     public SoulCompassItem(Properties properties) {

@@ -16,6 +16,7 @@ import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.turtleboi.ancientcurses.item.tooltip.CauldronTooltip;
 import net.turtleboi.ancientcurses.item.tooltip.CauldronTooltipComponent;
@@ -25,6 +26,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.entity.ModBlockEntities;
 import net.turtleboi.ancientcurses.block.entity.renderer.CursedAltarRenderer;
+import net.turtleboi.ancientcurses.client.ModKeyMappings;
 import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.entity.model.AncientWraithModel;
 import net.turtleboi.ancientcurses.entity.model.CursedPortalModel;
@@ -110,6 +112,11 @@ public class ModClientBusEvents {
     @SubscribeEvent
     public static void registerTooltipFactories(RegisterClientTooltipComponentFactoriesEvent event) {
         event.register(CauldronTooltip.class, CauldronTooltipComponent::new);
+    }
+
+    @SubscribeEvent
+    public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
+        event.register(ModKeyMappings.ARTIFACT_ABILITY);
     }
 
     @SubscribeEvent

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class EchoStoneItem extends Item {
+public class EchoStoneItem extends ArtifactItem {
     private static final String SNAPSHOT_TAG = "EchoSnapshot";
     private static final String SNAPSHOT_DIMENSION_TAG = "Dimension";
     private static final String SNAPSHOT_X_TAG = "X";

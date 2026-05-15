@@ -23,7 +23,7 @@ import net.turtleboi.turtlecore.util.TargetingUtils;
 
 import java.util.List;
 
-public class FirstBeaconItem extends Item {
+public class FirstBeaconItem extends ArtifactItem {
     public static double range = 64.0F;
     public static int chargeRate = 80;
 

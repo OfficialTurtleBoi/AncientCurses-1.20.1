@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class GoldenFeatherItem extends Item {
+public class GoldenFeatherItem extends ArtifactItem {
     private static final String AIRBORNE_TAG = "GoldenFeatherAirborne";
     private static final String HEAT_TAG = "GoldenFeatherHeat";
     private static final String OVERHEAT_TAG = "GoldenFeatherOverheated";

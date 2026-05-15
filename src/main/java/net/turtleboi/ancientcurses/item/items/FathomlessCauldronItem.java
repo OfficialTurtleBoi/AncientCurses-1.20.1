@@ -1,7 +1,9 @@
 package net.turtleboi.ancientcurses.item.items;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -13,7 +15,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickAction;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
-import net.minecraft.world.item.*;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.PotionItem;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.Level;
 import net.turtleboi.ancientcurses.entity.entities.items.ThrownCauldronPotion;
@@ -25,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class FathomlessCauldronItem extends Item {
+public class FathomlessCauldronItem extends ArtifactItem {
     public static final int MAX_POTION_SLOTS = 4;
     public static final int USES_PER_POTION = 16;
     public static final int MAX_MODIFIER_COUNT = 64;
@@ -43,49 +51,22 @@ public class FathomlessCauldronItem extends Item {
 
     @Override
     public boolean overrideOtherStackedOnMe(ItemStack cauldron, ItemStack other, Slot slot,
-                                             ClickAction action, Player player, SlotAccess access) {
+                                            ClickAction action, Player player, SlotAccess access) {
         if (action != ClickAction.SECONDARY || other.isEmpty() || !slot.allowModification(player)) {
             return false;
         }
 
-        Item otherItem = other.getItem();
-
-        if (otherItem == Items.GUNPOWDER) {
-            if (getDragonsBreath(cauldron) > 0) {
-                return false;
-            }
-            int current = getGunpowder(cauldron);
-            if (current >= MAX_MODIFIER_COUNT) {
-                return false;
-            }
-            int amountToAdd = Math.min(other.getCount(), MAX_MODIFIER_COUNT - current);
-            setGunpowder(cauldron, current + amountToAdd);
-            other.shrink(amountToAdd);
+        Item item = other.getItem();
+        if (item == Items.GUNPOWDER) {
+            return addModifier(cauldron, other, true, player);
+        }
+        if (item == Items.DRAGON_BREATH) {
+            return addModifier(cauldron, other, false, player);
+        }
+        if (item instanceof PotionItem && insertPotion(cauldron, other)) {
+            other.shrink(1);
             playInsertSound(player);
             return true;
-        }
-
-        if (otherItem == Items.DRAGON_BREATH) {
-            if (getGunpowder(cauldron) > 0) {
-                return false;
-            }
-            int current = getDragonsBreath(cauldron);
-            if (current >= MAX_MODIFIER_COUNT) {
-                return false;
-            }
-            int amountToAdd = Math.min(other.getCount(), MAX_MODIFIER_COUNT - current);
-            setDragonsBreath(cauldron, current + amountToAdd);
-            other.shrink(amountToAdd);
-            playInsertSound(player);
-            return true;
-        }
-
-        if (otherItem instanceof PotionItem) {
-            if (tryInsertPotion(cauldron, other)) {
-                other.shrink(1);
-                playInsertSound(player);
-                return true;
-            }
         }
 
         return false;
@@ -98,89 +79,90 @@ public class FathomlessCauldronItem extends Item {
         }
 
         ItemStack slotStack = slot.getItem();
+        boolean bulk = isCtrlDown(player);
 
         if (!slotStack.isEmpty()) {
-            Item slotItem = slotStack.getItem();
-            boolean inserted = false;
-            if (slotItem instanceof PotionItem) {
-                inserted = tryInsertPotion(cauldron, slotStack.copyWithCount(1));
-            } else if (slotItem == Items.GUNPOWDER && getDragonsBreath(cauldron) == 0) {
-                int current = getGunpowder(cauldron);
-                if (current < MAX_MODIFIER_COUNT) {
-                    setGunpowder(cauldron, current + 1);
-                    inserted = true;
-                }
-            } else if (slotItem == Items.DRAGON_BREATH && getGunpowder(cauldron) == 0) {
-                int current = getDragonsBreath(cauldron);
-                if (current < MAX_MODIFIER_COUNT) {
-                    setDragonsBreath(cauldron, current + 1);
-                    inserted = true;
-                }
-            }
-            if (inserted) {
-                slotStack.shrink(1);
-                playInsertSound(player);
-                return true;
-            }
-            return false;
+            return insertFromSlot(cauldron, slotStack, player, bulk);
         }
 
-        boolean ctrlDown = PlayerKeyStateCache.isCtrlDown(player.getUUID());
-        if (ctrlDown && player.isShiftKeyDown()) {
-            return extractAllModifierIntoSlot(cauldron, slot, player);
-        }
-        if (ctrlDown) {
-            return extractModifierIntoSlot(cauldron, slot, player);
-        }
-
-        return extractPotionIntoSlot(cauldron, slot, player);
+        return bulk ? removeModifierStack(cauldron, slot, player) : removePotion(cauldron, slot, player);
     }
 
-    private static boolean extractPotionIntoSlot(ItemStack cauldron, Slot slot, Player player) {
-        ListTag potionSlots = getPotionsList(cauldron);
-        if (potionSlots == null || potionSlots.isEmpty()) {
+    private static boolean insertFromSlot(ItemStack cauldron, ItemStack slotStack, Player player, boolean bulk) {
+        Item item = slotStack.getItem();
+        int moved = 0;
+
+        if (item instanceof PotionItem) {
+            moved = insertPotion(cauldron, slotStack.copyWithCount(1)) ? 1 : 0;
+        } else if (item == Items.GUNPOWDER && getDragonsBreath(cauldron) == 0) {
+            moved = bulk
+                    ? Math.min(slotStack.getCount(), MAX_MODIFIER_COUNT - getGunpowder(cauldron))
+                    : Math.min(1, MAX_MODIFIER_COUNT - getGunpowder(cauldron));
+            if (moved > 0) {
+                setGunpowder(cauldron, getGunpowder(cauldron) + moved);
+            }
+        } else if (item == Items.DRAGON_BREATH && getGunpowder(cauldron) == 0) {
+            moved = bulk
+                    ? Math.min(slotStack.getCount(), MAX_MODIFIER_COUNT - getDragonsBreath(cauldron))
+                    : Math.min(1, MAX_MODIFIER_COUNT - getDragonsBreath(cauldron));
+            if (moved > 0) {
+                setDragonsBreath(cauldron, getDragonsBreath(cauldron) + moved);
+            }
+        }
+
+        if (moved <= 0) {
             return false;
         }
-        int lastIndex = potionSlots.size() - 1;
-        ItemStack potionStack = buildPotionStack(potionSlots.getCompound(lastIndex));
-        potionSlots.remove(lastIndex);
-        if (potionSlots.isEmpty()) {
+
+        slotStack.shrink(moved);
+        playInsertSound(player);
+        return true;
+    }
+
+    private static boolean addModifier(ItemStack cauldron, ItemStack stack, boolean gunpowder, Player player) {
+        if (gunpowder ? getDragonsBreath(cauldron) > 0 : getGunpowder(cauldron) > 0) {
+            return false;
+        }
+
+        int current = gunpowder ? getGunpowder(cauldron) : getDragonsBreath(cauldron);
+        if (current >= MAX_MODIFIER_COUNT) {
+            return false;
+        }
+
+        int added = Math.min(stack.getCount(), MAX_MODIFIER_COUNT - current);
+        if (gunpowder) {
+            setGunpowder(cauldron, current + added);
+        } else {
+            setDragonsBreath(cauldron, current + added);
+        }
+        stack.shrink(added);
+        playInsertSound(player);
+        return true;
+    }
+
+    private static boolean removePotion(ItemStack cauldron, Slot slot, Player player) {
+        ListTag slots = potionSlots(cauldron);
+        if (slots == null || slots.isEmpty()) {
+            return false;
+        }
+
+        int last = slots.size() - 1;
+        ItemStack potion = potionStack(slots.getCompound(last));
+        slots.remove(last);
+        if (slots.isEmpty()) {
             cauldron.getOrCreateTag().remove(POTIONS_TAG);
         }
-        ItemStack remainder = slot.safeInsert(potionStack);
+
+        ItemStack remainder = slot.safeInsert(potion);
         if (!remainder.isEmpty()) {
-            tryInsertPotion(cauldron, remainder);
+            insertPotion(cauldron, remainder);
         } else {
             playRemoveSound(player);
         }
         return true;
     }
 
-    private static boolean extractModifierIntoSlot(ItemStack cauldron, Slot slot, Player player) {
-        int gunpowder = getGunpowder(cauldron);
-        if (gunpowder > 0) {
-            ItemStack remainder = slot.safeInsert(new ItemStack(Items.GUNPOWDER, 1));
-            if (remainder.isEmpty()) {
-                setGunpowder(cauldron, gunpowder - 1);
-                playRemoveSound(player);
-                return true;
-            }
-            return false;
-        }
-        int dragonsBreath = getDragonsBreath(cauldron);
-        if (dragonsBreath > 0) {
-            ItemStack remainder = slot.safeInsert(new ItemStack(Items.DRAGON_BREATH, 1));
-            if (remainder.isEmpty()) {
-                setDragonsBreath(cauldron, dragonsBreath - 1);
-                playRemoveSound(player);
-                return true;
-            }
-            return false;
-        }
-        return false;
-    }
-
-    private static boolean extractAllModifierIntoSlot(ItemStack cauldron, Slot slot, Player player) {
+    private static boolean removeModifierStack(ItemStack cauldron, Slot slot, Player player) {
         int gunpowder = getGunpowder(cauldron);
         if (gunpowder > 0) {
             ItemStack remainder = slot.safeInsert(new ItemStack(Items.GUNPOWDER, gunpowder));
@@ -192,6 +174,7 @@ public class FathomlessCauldronItem extends Item {
             }
             return false;
         }
+
         int dragonsBreath = getDragonsBreath(cauldron);
         if (dragonsBreath > 0) {
             ItemStack remainder = slot.safeInsert(new ItemStack(Items.DRAGON_BREATH, dragonsBreath));
@@ -201,25 +184,24 @@ public class FathomlessCauldronItem extends Item {
                 playRemoveSound(player);
                 return true;
             }
-            return false;
         }
         return false;
     }
 
+    private static boolean isCtrlDown(Player player) {
+        return player.level().isClientSide()
+                ? PlayerKeyStateCache.getInventoryClickCtrl(player.getUUID())
+                : PlayerKeyStateCache.isCtrlDown(player.getUUID());
+    }
+
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        if (getGunpowder(stack) > 0 || getDragonsBreath(stack) > 0) {
-            return UseAnim.BOW;
-        }
-        return UseAnim.DRINK;
+        return getGunpowder(stack) > 0 || getDragonsBreath(stack) > 0 ? UseAnim.BOW : UseAnim.DRINK;
     }
 
     @Override
     public int getUseDuration(ItemStack stack) {
-        if (getGunpowder(stack) > 0 || getDragonsBreath(stack) > 0) {
-            return 72;
-        }
-        return 48;
+        return getGunpowder(stack) > 0 || getDragonsBreath(stack) > 0 ? 72 : 48;
     }
 
     @Override
@@ -234,11 +216,10 @@ public class FathomlessCauldronItem extends Item {
 
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
-        if (entity instanceof Player player && !level.isClientSide()) {
-            if (getGunpowder(stack) == 0 && getDragonsBreath(stack) == 0) {
-                drinkAll(level, player, stack);
-                consumeOneUseFromAll(stack);
-            }
+        if (entity instanceof Player player && !level.isClientSide()
+                && getGunpowder(stack) == 0 && getDragonsBreath(stack) == 0) {
+            drink(level, player, stack);
+            consumeUse(stack);
         }
         return stack;
     }
@@ -249,86 +230,79 @@ public class FathomlessCauldronItem extends Item {
             return;
         }
 
-        int ticksCharged = getUseDuration(stack) - timeLeft;
-        if (ticksCharged < 3) {
+        int charged = getUseDuration(stack) - timeLeft;
+        if (charged < 3) {
             return;
         }
 
-        float chargedPower = BowItem.getPowerForTime(ticksCharged);
-        float launchSpeed = 0.3F + chargedPower * 1.1F;
-
+        float power = BowItem.getPowerForTime(charged);
+        float speed = 0.3F + power * 1.1F;
         int gunpowder = getGunpowder(stack);
         int dragonsBreath = getDragonsBreath(stack);
 
         if (gunpowder > 0) {
-            throwCauldronPotion(level, player, stack, false, launchSpeed);
+            throwPotion(level, player, stack, false, speed);
             setGunpowder(stack, gunpowder - 1);
-            consumeOneUseFromAll(stack);
+            consumeUse(stack);
         } else if (dragonsBreath > 0) {
-            throwCauldronPotion(level, player, stack, true, launchSpeed);
+            throwPotion(level, player, stack, true, speed);
             setDragonsBreath(stack, dragonsBreath - 1);
-            consumeOneUseFromAll(stack);
+            consumeUse(stack);
         }
     }
 
     @Override
     public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
-        List<ItemStack> potionStacks = new ArrayList<>();
-        List<Integer> potionUses = new ArrayList<>();
+        List<ItemStack> potions = new ArrayList<>();
+        List<Integer> uses = new ArrayList<>();
+        ListTag slots = potionSlots(stack);
 
-        ListTag slots = getPotionsList(stack);
-        for (int slotIndex = 0; slotIndex < MAX_POTION_SLOTS; slotIndex++) {
-            if (slots != null && slotIndex < slots.size()) {
-                CompoundTag slotTag = slots.getCompound(slotIndex);
-                potionStacks.add(buildPotionStack(slotTag));
-                potionUses.add(slotTag.getInt(USES_TAG));
+        for (int i = 0; i < MAX_POTION_SLOTS; i++) {
+            if (slots != null && i < slots.size()) {
+                CompoundTag slot = slots.getCompound(i);
+                potions.add(potionStack(slot));
+                uses.add(slot.getInt(USES_TAG));
             } else {
-                potionStacks.add(ItemStack.EMPTY);
-                potionUses.add(0);
+                potions.add(ItemStack.EMPTY);
+                uses.add(0);
             }
         }
 
-        int gunpowder = getGunpowder(stack);
-        int dragonsBreath = getDragonsBreath(stack);
-        ItemStack modifierStack;
-        if (gunpowder > 0) {
-            modifierStack = new ItemStack(Items.GUNPOWDER, gunpowder);
-        } else if (dragonsBreath > 0) {
-            modifierStack = new ItemStack(Items.DRAGON_BREATH, dragonsBreath);
-        } else {
-            modifierStack = ItemStack.EMPTY;
-        }
+        return Optional.of(new CauldronTooltip(potions, uses, modifierStack(stack)));
+    }
 
-        return Optional.of(new CauldronTooltip(potionStacks, potionUses, modifierStack));
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+        tooltip.add(Component.translatable("item.ancientcurses.fathomless_cauldron.controls")
+                .withStyle(ChatFormatting.DARK_GRAY));
     }
 
     public static float hasContentsProperty(ItemStack stack) {
-        ListTag potions = getPotionsList(stack);
-        return (potions != null && !potions.isEmpty()) ? 1.0F : 0.0F;
+        ListTag potions = potionSlots(stack);
+        return potions != null && !potions.isEmpty() ? 1.0F : 0.0F;
     }
 
     public static int getFirstPotionColor(ItemStack stack) {
-        ListTag potions = getPotionsList(stack);
-        if (potions == null || potions.isEmpty()) {
+        ListTag slots = potionSlots(stack);
+        if (slots == null || slots.isEmpty()) {
             return 0xFFFFFF;
         }
-        List<MobEffectInstance> effects = PotionUtils.getMobEffects(buildPotionStack(potions.getCompound(0)));
+        List<MobEffectInstance> effects = PotionUtils.getMobEffects(potionStack(slots.getCompound(0)));
         return effects.isEmpty() ? 0x385DC6 : PotionUtils.getColor(effects);
     }
 
-    private static boolean tryInsertPotion(ItemStack cauldron, ItemStack potionStack) {
-        String potionId = getPotionIdFromStack(potionStack);
-        ListTag customEffects = getCustomEffectsFromStack(potionStack);
+    private static boolean insertPotion(ItemStack cauldron, ItemStack potion) {
+        String potionId = getPotionId(potion);
+        ListTag customEffects = getCustomEffects(potion);
 
         if (potionId.equals("minecraft:water") && (customEffects == null || customEffects.isEmpty())) {
             return false;
         }
 
-        ListTag slots = getOrCreatePotionsList(cauldron);
-
+        ListTag slots = potionSlotsOrCreate(cauldron);
         for (int i = 0; i < slots.size(); i++) {
             CompoundTag slot = slots.getCompound(i);
-            if (slotsMatch(slot, potionId, customEffects)) {
+            if (samePotion(slot, potionId, customEffects)) {
                 if (slot.getInt(USES_TAG) >= USES_PER_POTION) {
                     return false;
                 }
@@ -341,24 +315,25 @@ public class FathomlessCauldronItem extends Item {
             return false;
         }
 
-        CompoundTag newSlot = new CompoundTag();
-        newSlot.putString(POTION_ID_TAG, potionId);
+        CompoundTag slot = new CompoundTag();
+        slot.putString(POTION_ID_TAG, potionId);
         if (customEffects != null && !customEffects.isEmpty()) {
-            newSlot.put(CUSTOM_EFFECTS_TAG, customEffects);
+            slot.put(CUSTOM_EFFECTS_TAG, customEffects);
         }
-        newSlot.putInt(USES_TAG, USES_PER_POTION);
-        slots.add(newSlot);
+        slot.putInt(USES_TAG, USES_PER_POTION);
+        slots.add(slot);
         cauldron.getOrCreateTag().put(POTIONS_TAG, slots);
         return true;
     }
 
-    private static void drinkAll(Level level, Player player, ItemStack stack) {
-        ListTag slots = getPotionsList(stack);
+    private static void drink(Level level, Player player, ItemStack stack) {
+        ListTag slots = potionSlots(stack);
         if (slots == null) {
             return;
         }
+
         for (int i = 0; i < slots.size(); i++) {
-            for (MobEffectInstance effect : PotionUtils.getMobEffects(buildPotionStack(slots.getCompound(i)))) {
+            for (MobEffectInstance effect : PotionUtils.getMobEffects(potionStack(slots.getCompound(i)))) {
                 if (effect.getEffect().isInstantenous()) {
                     effect.getEffect().applyInstantenousEffect(player, player, player, effect.getAmplifier(), 1.0);
                 } else {
@@ -368,43 +343,45 @@ public class FathomlessCauldronItem extends Item {
                 }
             }
         }
+
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.GENERIC_DRINK, SoundSource.PLAYERS, 0.5F,
                 level.getRandom().nextFloat() * 0.1F + 0.9F);
     }
 
-    private static void throwCauldronPotion(Level level, Player player, ItemStack cauldron,
-                                             boolean lingering, float launchSpeed) {
+    private static void throwPotion(Level level, Player player, ItemStack cauldron, boolean lingering, float speed) {
         ThrownCauldronPotion thrown = ThrownCauldronPotion.create(level, player, cauldron, lingering);
-        float pitchRadians = (player.getXRot()) * ((float) Math.PI / 180F);
-        float yawRadians   = player.getYRot()          * ((float) Math.PI / 180F);
+        float pitch = player.getXRot() * ((float) Math.PI / 180F);
+        float yaw = player.getYRot() * ((float) Math.PI / 180F);
         thrown.setDeltaMovement(
-                -Math.sin(yawRadians) * Math.cos(pitchRadians) * launchSpeed,
-                -Math.sin(pitchRadians) * launchSpeed,
-                 Math.cos(yawRadians)  * Math.cos(pitchRadians) * launchSpeed);
+                -Math.sin(yaw) * Math.cos(pitch) * speed,
+                -Math.sin(pitch) * speed,
+                Math.cos(yaw) * Math.cos(pitch) * speed);
         level.addFreshEntity(thrown);
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.SPLASH_POTION_THROW, SoundSource.PLAYERS, 0.5F,
                 0.4F / (level.getRandom().nextFloat() * 0.4F + 0.8F));
     }
 
-    public static List<MobEffectInstance> getAllEffects(ItemStack cauldronStack) {
-        ListTag slots = getPotionsList(cauldronStack);
+    public static List<MobEffectInstance> getAllEffects(ItemStack cauldron) {
+        ListTag slots = potionSlots(cauldron);
         if (slots == null) {
             return List.of();
         }
-        List<MobEffectInstance> allEffects = new ArrayList<>();
+
+        List<MobEffectInstance> effects = new ArrayList<>();
         for (int i = 0; i < slots.size(); i++) {
-            allEffects.addAll(PotionUtils.getMobEffects(buildPotionStack(slots.getCompound(i))));
+            effects.addAll(PotionUtils.getMobEffects(potionStack(slots.getCompound(i))));
         }
-        return allEffects;
+        return effects;
     }
 
-    private static void consumeOneUseFromAll(ItemStack stack) {
-        ListTag slots = getPotionsList(stack);
+    private static void consumeUse(ItemStack stack) {
+        ListTag slots = potionSlots(stack);
         if (slots == null) {
             return;
         }
+
         ListTag remaining = new ListTag();
         for (int i = 0; i < slots.size(); i++) {
             CompoundTag slot = slots.getCompound(i).copy();
@@ -414,6 +391,7 @@ public class FathomlessCauldronItem extends Item {
                 remaining.add(slot);
             }
         }
+
         if (remaining.isEmpty()) {
             stack.getOrCreateTag().remove(POTIONS_TAG);
         } else {
@@ -422,7 +400,7 @@ public class FathomlessCauldronItem extends Item {
     }
 
     @Nullable
-    public static ListTag getPotionsList(ItemStack stack) {
+    public static ListTag potionSlots(ItemStack stack) {
         CompoundTag tag = stack.getTag();
         if (tag == null || !tag.contains(POTIONS_TAG)) {
             return null;
@@ -430,7 +408,7 @@ public class FathomlessCauldronItem extends Item {
         return tag.getList(POTIONS_TAG, CompoundTag.TAG_COMPOUND);
     }
 
-    private static ListTag getOrCreatePotionsList(ItemStack stack) {
+    private static ListTag potionSlotsOrCreate(ItemStack stack) {
         CompoundTag tag = stack.getOrCreateTag();
         if (!tag.contains(POTIONS_TAG)) {
             tag.put(POTIONS_TAG, new ListTag());
@@ -439,8 +417,8 @@ public class FathomlessCauldronItem extends Item {
     }
 
     public static int getPotionCount(ItemStack stack) {
-        ListTag list = getPotionsList(stack);
-        return list == null ? 0 : list.size();
+        ListTag slots = potionSlots(stack);
+        return slots == null ? 0 : slots.size();
     }
 
     public static int getGunpowder(ItemStack stack) {
@@ -475,13 +453,13 @@ public class FathomlessCauldronItem extends Item {
         }
     }
 
-    private static String getPotionIdFromStack(ItemStack stack) {
+    private static String getPotionId(ItemStack stack) {
         CompoundTag tag = stack.getTag();
-        return (tag != null && tag.contains("Potion")) ? tag.getString("Potion") : "minecraft:empty";
+        return tag != null && tag.contains("Potion") ? tag.getString("Potion") : "minecraft:empty";
     }
 
     @Nullable
-    private static ListTag getCustomEffectsFromStack(ItemStack stack) {
+    private static ListTag getCustomEffects(ItemStack stack) {
         CompoundTag tag = stack.getTag();
         if (tag == null || !tag.contains("CustomPotionEffects")) {
             return null;
@@ -489,30 +467,40 @@ public class FathomlessCauldronItem extends Item {
         return tag.getList("CustomPotionEffects", CompoundTag.TAG_COMPOUND);
     }
 
-    private static boolean slotsMatch(CompoundTag slot, String potionId, @Nullable ListTag customEffects) {
+    private static boolean samePotion(CompoundTag slot, String potionId, @Nullable ListTag customEffects) {
         if (!slot.getString(POTION_ID_TAG).equals(potionId)) {
             return false;
         }
+
         boolean slotHasCustom = slot.contains(CUSTOM_EFFECTS_TAG);
         boolean newHasCustom = customEffects != null && !customEffects.isEmpty();
         if (slotHasCustom != newHasCustom) {
             return false;
         }
-        if (slotHasCustom) {
-            return slot.getList(CUSTOM_EFFECTS_TAG, CompoundTag.TAG_COMPOUND).equals(customEffects);
-        }
-        return true;
+
+        return !slotHasCustom
+                || slot.getList(CUSTOM_EFFECTS_TAG, CompoundTag.TAG_COMPOUND).equals(customEffects);
     }
 
-    private static ItemStack buildPotionStack(CompoundTag slot) {
-        ItemStack fakePotion = new ItemStack(Items.POTION);
+    private static ItemStack potionStack(CompoundTag slot) {
+        ItemStack stack = new ItemStack(Items.POTION);
         CompoundTag tag = new CompoundTag();
         tag.putString("Potion", slot.getString(POTION_ID_TAG));
         if (slot.contains(CUSTOM_EFFECTS_TAG)) {
             tag.put("CustomPotionEffects", slot.getList(CUSTOM_EFFECTS_TAG, CompoundTag.TAG_COMPOUND));
         }
-        fakePotion.setTag(tag);
-        return fakePotion;
+        stack.setTag(tag);
+        return stack;
+    }
+
+    private static ItemStack modifierStack(ItemStack stack) {
+        int gunpowder = getGunpowder(stack);
+        if (gunpowder > 0) {
+            return new ItemStack(Items.GUNPOWDER, gunpowder);
+        }
+
+        int dragonsBreath = getDragonsBreath(stack);
+        return dragonsBreath > 0 ? new ItemStack(Items.DRAGON_BREATH, dragonsBreath) : ItemStack.EMPTY;
     }
 
     private static void playInsertSound(Player player) {

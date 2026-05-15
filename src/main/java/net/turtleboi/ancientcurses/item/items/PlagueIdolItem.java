@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PlagueIdolItem extends Item {
+public class PlagueIdolItem extends ArtifactItem {
     private static final int PLACE_COOLDOWN_TICKS = 20;
     private static final float MAX_DEPLOYED_HEALTH = 40.0F;
 

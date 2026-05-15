@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class VoodooDollItem extends Item {
+public class VoodooDollItem extends ArtifactItem {
     private static final int COOLDOWN_TICKS = 1 * 60;
 
     public VoodooDollItem(Properties properties) {

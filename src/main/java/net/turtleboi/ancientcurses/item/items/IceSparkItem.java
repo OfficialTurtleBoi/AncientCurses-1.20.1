@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.UUID;
 
-public class IceSparkItem extends Item {
+public class IceSparkItem extends ArtifactItem {
     private static final String DEPLOYED_UUID_TAG = "DeployedIceSpark";
     private static final int THROW_COOLDOWN_TICKS = 20;
     private static final int RECALL_COOLDOWN_TICKS = 10;

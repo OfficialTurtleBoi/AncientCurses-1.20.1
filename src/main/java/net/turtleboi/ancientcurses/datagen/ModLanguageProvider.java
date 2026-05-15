@@ -111,6 +111,9 @@ public class ModLanguageProvider extends CoreLanguageProvider {
         add("item.ancientcurses.fathomless_cauldron.gunpowder", "Gunpowder: %s");
         add("item.ancientcurses.fathomless_cauldron.dragons_breath", "Dragon's Breath: %s");
         add("item.ancientcurses.fathomless_cauldron.empty", "The cauldron is empty.");
+        add("item.ancientcurses.fathomless_cauldron.controls", "[Ctrl] Click to insert/extract catalysts");
+        add("key.categories.ancientcurses", "Ancient Curses");
+        add("key.ancientcurses.artifact_ability", "Artifact Ability");
         add("item.ancientcurses.ice_spark.tooltip", "Right-click to throw. Right-click again to recall the deployed spark.");
         add("item.ancientcurses.ice_spark.deployed", "Deployed");
         add("item.ancientcurses.plague_idol.tooltip", "Place to spread harmful effects between nearby mobs.");

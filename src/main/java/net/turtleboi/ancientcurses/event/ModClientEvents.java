@@ -7,6 +7,7 @@ import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -40,6 +41,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.client.ModRenderTypes;
+import net.turtleboi.ancientcurses.client.ModKeyMappings;
 import net.turtleboi.ancientcurses.client.PlayerClientData;
 import net.turtleboi.ancientcurses.client.RiteEventBar;
 import net.turtleboi.ancientcurses.client.VoodooSoulClientData;
@@ -50,7 +52,9 @@ import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
 import net.turtleboi.ancientcurses.network.ModNetworking;
+import net.turtleboi.ancientcurses.network.PlayerKeyStateCache;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
+import net.turtleboi.ancientcurses.network.packets.items.ArtifactAbilityPacketC2S;
 import net.turtleboi.ancientcurses.network.packets.items.KeyStatePacketC2S;
 import org.lwjgl.glfw.GLFW;
 import net.turtleboi.ancientcurses.util.ItemValueMap;
@@ -66,6 +70,8 @@ public class ModClientEvents {
     private static final float VOODOO_SOUL_RED = 0.15F;
     private static final float VOODOO_SOUL_GREEN = 1.0F;
     private static final float VOODOO_SOUL_BLUE = 0.9F;
+    private static boolean ctrlStateInitialized;
+    private static boolean lastCtrlDownState;
 
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
@@ -74,8 +80,17 @@ public class ModClientEvents {
         }
         int key = event.getKey();
         if (key == GLFW.GLFW_KEY_LEFT_CONTROL || key == GLFW.GLFW_KEY_RIGHT_CONTROL) {
-            boolean ctrlDown = event.getAction() != GLFW.GLFW_RELEASE;
-            ModNetworking.sendToServer(new KeyStatePacketC2S(ctrlDown));
+            syncCtrlState();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onScreenMouseButtonPressed(ScreenEvent.MouseButtonPressed.Pre event) {
+        if (event.getButton() == GLFW.GLFW_MOUSE_BUTTON_RIGHT && Minecraft.getInstance().player != null) {
+            Minecraft minecraft = Minecraft.getInstance();
+            boolean ctrlDown = Screen.hasControlDown();
+            PlayerKeyStateCache.setInventoryClickCtrl(minecraft.player.getUUID(), ctrlDown);
+            syncCtrlState();
         }
     }
     private static final float VOODOO_SOUL_ALPHA = 0.55F;
@@ -123,6 +138,18 @@ public class ModClientEvents {
             return;
         }
 
+        if (player == null) {
+            ctrlStateInitialized = false;
+            lastCtrlDownState = false;
+            return;
+        }
+
+        syncCtrlState();
+
+        while (ModKeyMappings.ARTIFACT_ABILITY.consumeClick()) {
+            ModNetworking.sendToServer(new ArtifactAbilityPacketC2S());
+        }
+
         if (PlayerClientData.getDowsingRodUsed() && player != null && !(player.getMainHandItem().getItem() instanceof DowsingRod)) {
             PlayerClientData.setDowsingRodUsed(false);
             PlayerClientData.setDowsingRodUsedTime(-1);
@@ -146,6 +173,23 @@ public class ModClientEvents {
         }
 
         RiteMusicController.tick();
+    }
+
+    private static void syncCtrlState() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            ctrlStateInitialized = false;
+            lastCtrlDownState = false;
+            return;
+        }
+
+        boolean ctrlDown = Screen.hasControlDown();
+        if (!ctrlStateInitialized || ctrlDown != lastCtrlDownState) {
+            PlayerKeyStateCache.setCtrlDown(minecraft.player.getUUID(), ctrlDown);
+            ModNetworking.sendToServer(new KeyStatePacketC2S(ctrlDown));
+            lastCtrlDownState = ctrlDown;
+            ctrlStateInitialized = true;
+        }
     }
 
     @SubscribeEvent

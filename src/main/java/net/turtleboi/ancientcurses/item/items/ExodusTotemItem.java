@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class ExodusTotemItem extends Item {
+public class ExodusTotemItem extends ArtifactItem {
     private static final String DESTINATION_TAG = "ExodusDestination";
     private static final String DESTINATION_DIMENSION_TAG = "Dimension";
     private static final String DESTINATION_X_TAG = "X";

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class HollowLanternItem extends Item {
+public class HollowLanternItem extends ArtifactItem {
     private static final double REVEAL_RADIUS = 20.0D;
     private static final int GLOWING_DURATION_TICKS = 100;
     private static final int COOLDOWN_TICKS = 600;

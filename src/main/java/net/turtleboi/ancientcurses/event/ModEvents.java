@@ -76,6 +76,7 @@ import net.turtleboi.ancientcurses.item.items.GildedTomeItem;
 import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.SoulCompassItem;
 import net.turtleboi.ancientcurses.item.items.SoulShardItem;
+import net.turtleboi.ancientcurses.item.items.ThornCrownItem;
 import net.turtleboi.ancientcurses.item.items.util.GemBonusUtil;
 import net.turtleboi.ancientcurses.entity.entities.VoodooSoulEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
@@ -669,6 +670,7 @@ public class ModEvents {
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onEntityHurt(LivingDamageEvent event) {
         Entity attacker = event.getSource().getEntity();
+        Entity directAttacker = event.getSource().getDirectEntity();
         Entity target = event.getEntity();
 
         if (!target.level().isClientSide() && target instanceof LivingEntity livingTarget
@@ -868,6 +870,16 @@ public class ModEvents {
                         }
                     }
                 }
+            }
+
+            if (attacker instanceof LivingEntity livingAttacker
+                    && directAttacker == attacker
+                    && attacker != player
+                    && ThornCrownItem.isWearing(player)
+                    && event.getAmount() > 0.0F) {
+                float reflectDamage = ThornCrownItem.getReflectDamage(event.getAmount());
+                livingAttacker.hurt(player.damageSources().thorns(player), reflectDamage);
+                ThornCrownItem.addReflectedDamage(player, reflectDamage);
             }
         }
     }
@@ -1473,7 +1485,7 @@ public class ModEvents {
         AtomicReference<ItemStack> activeAmulet = new AtomicReference<>(ItemStack.EMPTY);
 
         if (!level.isClientSide && event.phase == TickEvent.Phase.END) {
-
+            ThornCrownItem.tickBurst(player);
 
             if (ModList.get().isLoaded("curios")) {
                 CuriosApi.getCuriosInventory(player).ifPresent(curiosInventory -> {

@@ -30,6 +30,7 @@ import net.turtleboi.ancientcurses.item.items.PreciousGemItem;
 import net.turtleboi.ancientcurses.item.items.PreciousGemType;
 import net.turtleboi.ancientcurses.item.items.SoulCompassItem;
 import net.turtleboi.ancientcurses.item.items.SoulShardItem;
+import net.turtleboi.ancientcurses.item.items.ThornCrownItem;
 import net.turtleboi.ancientcurses.item.items.VoodooDollItem;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.turtlecore.item.CoreItems;
@@ -157,7 +158,7 @@ public class ModItems {
             () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
 
     public static final RegistryObject<Item> THORN_CROWN = ITEMS.register("thorn_crown",
-            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+            () -> new ThornCrownItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
 
     public static final RegistryObject<Item> RUINATION_BRAND = ITEMS.register("ruination_brand",
             () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));

@@ -8,6 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.network.packets.*;
+import net.turtleboi.ancientcurses.network.packets.items.ArtifactAbilityPacketC2S;
 import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketC2S;
 import net.turtleboi.ancientcurses.network.packets.items.BeaconInfoPacketS2C;
 import net.turtleboi.ancientcurses.network.packets.items.DowsingRodInfoPacketS2C;
@@ -89,6 +90,12 @@ public class ModNetworking {
                 .decoder(KeyStatePacketC2S::new)
                 .encoder(KeyStatePacketC2S::toBytes)
                 .consumerMainThread(KeyStatePacketC2S::handle)
+                .add();
+
+        net.messageBuilder(ArtifactAbilityPacketC2S.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(ArtifactAbilityPacketC2S::new)
+                .encoder(ArtifactAbilityPacketC2S::toBytes)
+                .consumerMainThread(ArtifactAbilityPacketC2S::handle)
                 .add();
     }
 
