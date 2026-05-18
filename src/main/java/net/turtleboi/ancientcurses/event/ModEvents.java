@@ -68,6 +68,7 @@ import net.turtleboi.ancientcurses.capabilities.rites.PlayerRiteProvider;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.effect.effects.*;
 import net.turtleboi.ancientcurses.item.items.BoneFluteItem;
+import net.turtleboi.ancientcurses.item.items.BloodpriceSigilItem;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.item.items.ExodusTotemItem;
@@ -77,6 +78,7 @@ import net.turtleboi.ancientcurses.item.items.GoldenAmuletItem;
 import net.turtleboi.ancientcurses.item.items.SoulCompassItem;
 import net.turtleboi.ancientcurses.item.items.SoulShardItem;
 import net.turtleboi.ancientcurses.item.items.ThornCrownItem;
+import net.turtleboi.ancientcurses.item.items.RuinationBrandItem;
 import net.turtleboi.ancientcurses.item.items.util.GemBonusUtil;
 import net.turtleboi.ancientcurses.entity.entities.VoodooSoulEntity;
 import net.turtleboi.ancientcurses.network.ModNetworking;
@@ -253,6 +255,7 @@ public class ModEvents {
         VoodooSoulEntity.tickArmorFracture(entity);
         VoodooSoulEntity.tickLinkedBody(entity);
         VoodooSoulEntity.tickSoulClone(entity);
+        RuinationBrandItem.tickBrand(entity);
 
         if (entity instanceof Mob mob && !level.isClientSide) {
             BoneFluteItem.tickCharmedMob(mob);
@@ -748,6 +751,10 @@ public class ModEvents {
                 }
             }
 
+            if (!event.isCanceled() && event.getAmount() > 0.0F && BloodpriceSigilItem.absorbDamage(player, event.getAmount())) {
+                event.setAmount(0.0F);
+            }
+
             if (attacker instanceof Mob mob) {
                 Level level = mob.level();
                 if (!level.isClientSide) {
@@ -832,6 +839,10 @@ public class ModEvents {
                 ExodusTotemItem.cancelChannel(player);
             }
         } else if (attacker instanceof Player player){
+            if (player instanceof ServerPlayer serverPlayer && target instanceof LivingEntity livingTarget && event.getAmount() > 0.0F) {
+                event.setAmount(event.getAmount() + RuinationBrandItem.getBonusDamage(serverPlayer, livingTarget));
+            }
+
             ItemStack amulet = getActiveAmulet(player);
 
             if (!amulet.isEmpty()) {
@@ -880,6 +891,10 @@ public class ModEvents {
                 float reflectDamage = ThornCrownItem.getReflectDamage(event.getAmount());
                 livingAttacker.hurt(player.damageSources().thorns(player), reflectDamage);
                 ThornCrownItem.addReflectedDamage(player, reflectDamage);
+            }
+
+            if (player instanceof ServerPlayer serverPlayer && target instanceof LivingEntity livingTarget && event.getAmount() > 0.0F) {
+                RuinationBrandItem.onOwnerDamagedTarget(serverPlayer, livingTarget);
             }
         }
     }
@@ -971,6 +986,8 @@ public class ModEvents {
         if (source instanceof ServerPlayer player) {
             chargeOffhandSoulShard(player, entity);
             attuneOffhandSoulCompass(player, entity);
+            BloodpriceSigilItem.reduceDebtFromKill(player, entity);
+            RuinationBrandItem.onOwnerKilledTarget(player, entity);
 
             player.getCapability(PlayerRiteProvider.PLAYER_RITE_DATA).ifPresent(riteData -> {
                 if (riteData.isPlayerCursed()) {
@@ -1486,6 +1503,7 @@ public class ModEvents {
 
         if (!level.isClientSide && event.phase == TickEvent.Phase.END) {
             ThornCrownItem.tickBurst(player);
+            BloodpriceSigilItem.tick(player);
 
             if (ModList.get().isLoaded("curios")) {
                 CuriosApi.getCuriosInventory(player).ifPresent(curiosInventory -> {

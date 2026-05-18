@@ -77,6 +77,12 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> ENRICHMENT = MOB_EFFECTS.register("enrichment",
             () -> new EnrichmentEffect(MobEffectCategory.BENEFICIAL, 16765763));
 
+    public static final RegistryObject<MobEffect> BLOOD_DEBT = MOB_EFFECTS.register("blood_debt",
+            () -> new BloodDebtEffect(MobEffectCategory.BENEFICIAL, 12852516));
+
+    public static final RegistryObject<MobEffect> RUINATION_MARK = MOB_EFFECTS.register("ruination_mark",
+            () -> new RuinationMarkEffect(MobEffectCategory.HARMFUL, 8519755));
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

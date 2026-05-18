@@ -30,11 +30,13 @@ import net.turtleboi.ancientcurses.client.ModKeyMappings;
 import net.turtleboi.ancientcurses.entity.ModEntities;
 import net.turtleboi.ancientcurses.entity.model.AncientWraithModel;
 import net.turtleboi.ancientcurses.entity.model.CursedPortalModel;
+import net.turtleboi.ancientcurses.entity.model.ThornProjectileModel;
 import net.turtleboi.ancientcurses.entity.renderer.AncientWraithRenderer;
 import net.turtleboi.ancientcurses.entity.renderer.CursedNodeRenderer;
 import net.turtleboi.ancientcurses.entity.renderer.CursedPortalRenderer;
 import net.turtleboi.ancientcurses.entity.renderer.IceSparkRenderer;
 import net.turtleboi.ancientcurses.entity.renderer.PlagueIdolRenderer;
+import net.turtleboi.ancientcurses.entity.renderer.ThornProjectileRenderer;
 import net.turtleboi.ancientcurses.entity.renderer.VoodooSoulRenderer;
 import net.turtleboi.ancientcurses.item.ModItems;
 import net.turtleboi.ancientcurses.item.items.FathomlessCauldronItem;
@@ -66,6 +68,7 @@ public class ModClientBusEvents {
                 BoltEntityRenderer::new);
         EntityRenderers.register(ModEntities.CURSED_PEARL.get(), ThrownItemRenderer::new);
         EntityRenderers.register(ModEntities.ICE_SPARK.get(), IceSparkRenderer::new);
+        EntityRenderers.register(ModEntities.THORN_PROJECTILE.get(), ThornProjectileRenderer::new);
         EntityRenderers.register(ModEntities.PLAGUE_IDOL.get(), PlagueIdolRenderer::new);
         EntityRenderers.register(ModEntities.VOODOO_SOUL.get(), VoodooSoulRenderer::new);
         EntityRenderers.register(ModEntities.LINGERING_CAULDRON_CLOUD.get(), NoopRenderer::new);
@@ -90,6 +93,7 @@ public class ModClientBusEvents {
         event.registerLayerDefinition(CursedPortalModel.CURSED_PORTAL_LAYER, CursedPortalModel::createBodyLayer);
         event.registerLayerDefinition(CursedNodeRenderer.CURSED_NODE_LAYER, CursedNodeRenderer::createBodyLayer);
         event.registerLayerDefinition(AncientWraithModel.ANCIENT_WRAITH_LAYER, AncientWraithModel::createBodyLayer);
+        event.registerLayerDefinition(ThornProjectileModel.THORN_PROJECTILE_LAYER, ThornProjectileModel::createBodyLayer);
     }
 
     @SubscribeEvent

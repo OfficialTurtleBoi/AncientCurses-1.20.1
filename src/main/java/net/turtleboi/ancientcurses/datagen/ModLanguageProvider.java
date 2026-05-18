@@ -40,6 +40,8 @@ public class ModLanguageProvider extends CoreLanguageProvider {
         addSimpleNameEffect(ModEffects.FRENZIED_BLOWS);
         addSimpleNameEffect(ModEffects.LIFEBLOOM);
         addSimpleNameEffect(ModEffects.ENRICHMENT);
+        add(ModEffects.BLOOD_DEBT.get(), "Blood Debt");
+        addSimpleNameEffect(ModEffects.RUINATION_MARK);
 
         addSimpleNameEnchant(ModEnchantments.SOARING);
         addSimpleNameEnchant(ModEnchantments.TAILWIND);
@@ -128,6 +130,11 @@ public class ModLanguageProvider extends CoreLanguageProvider {
         add("item.ancientcurses.gilded_tome.banked", "Banked XP: %s");
         add("item.ancientcurses.gilded_tome.enriched", "The gilded pages brighten.");
         add("item.ancientcurses.gilded_tome.empty", "The tome is empty.");
+        add("item.ancientcurses.bloodprice_sigil.tooltip", "Right-click in hand, or press Artifact Ability while worn as a Curio, to defer incoming damage for a short time.");
+        add("item.ancientcurses.bloodprice_sigil.debt", "Blood Debt: %s");
+        add("item.ancientcurses.bloodprice_sigil.active", "The sigil is hungry.");
+        add("item.ancientcurses.bloodprice_sigil.pending", "The price comes due.");
+        add("item.ancientcurses.ruination_brand.tooltip", "Brand foes while equipped in your offhand or a Curios charm slot. Stacked brands amplify your damage and detonate into healing.");
         add("item.ancientcurses.soul_compass.tracking", "Tracking: %s");
         add("item.ancientcurses.soul_compass.unattuned", "Unattuned");
         add("item.ancientcurses.exodus_totem.unbound", "Unbound");

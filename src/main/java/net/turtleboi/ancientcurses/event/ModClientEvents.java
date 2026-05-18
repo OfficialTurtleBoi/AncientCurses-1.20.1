@@ -24,6 +24,7 @@ import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
@@ -51,6 +52,7 @@ import net.turtleboi.ancientcurses.client.sound.RiteMusicController;
 import net.turtleboi.ancientcurses.effect.ModEffects;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
 import net.turtleboi.ancientcurses.item.items.FirstBeaconItem;
+import net.turtleboi.ancientcurses.item.items.RuinationBrandItem;
 import net.turtleboi.ancientcurses.network.ModNetworking;
 import net.turtleboi.ancientcurses.network.PlayerKeyStateCache;
 import net.turtleboi.ancientcurses.network.packets.PortalOverlayPacketC2S;
@@ -62,6 +64,7 @@ import net.turtleboi.ancientcurses.util.ModItemProperties;
 import net.turtleboi.turtlecore.client.data.ScreenEffectsData;
 import net.turtleboi.turtlecore.client.util.TintingVertexConsumer;
 import org.joml.Matrix4f;
+import org.joml.Matrix3f;
 
 import java.util.Random;
 
@@ -70,6 +73,8 @@ public class ModClientEvents {
     private static final float VOODOO_SOUL_RED = 0.15F;
     private static final float VOODOO_SOUL_GREEN = 1.0F;
     private static final float VOODOO_SOUL_BLUE = 0.9F;
+    private static final ResourceLocation RUINATION_BRAND_TEXTURE =
+            new ResourceLocation(AncientCurses.MOD_ID, "textures/item/ruination_brand.png");
     private static boolean ctrlStateInitialized;
     private static boolean lastCtrlDownState;
 
@@ -332,6 +337,17 @@ public class ModClientEvents {
         event.setCanceled(true);
     }
 
+    @SubscribeEvent
+    public static void onRenderLivingPost(RenderLivingEvent.Post<?, ?> event) {
+        LivingEntity entity = event.getEntity();
+        if (!entity.hasEffect(ModEffects.RUINATION_MARK.get())) {
+            return;
+        }
+
+        int stacks = entity.getEffect(ModEffects.RUINATION_MARK.get()).getAmplifier() + 1;
+        renderRuinationArc(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), entity, stacks, event.getPartialTick());
+    }
+
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static void renderVoodooSoul(RenderLivingEvent.Pre event) {
         renderingVoodooSoul = true;
@@ -368,6 +384,58 @@ public class ModClientEvents {
                     VOODOO_SOUL_BLUE,
                     VOODOO_SOUL_ALPHA);
         }
+    }
+
+    private static void renderRuinationArc(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight,
+                                           LivingEntity entity, int stacks, float partialTick) {
+        poseStack.pushPose();
+        poseStack.translate(0.0D, entity.getBbHeight() + 0.45D + Mth.sin((entity.tickCount + partialTick) * 0.15F) * 0.05F, 0.0D);
+        poseStack.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        float scale = 0.18F;
+        poseStack.scale(scale, scale, scale);
+
+        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucentCull(RUINATION_BRAND_TEXTURE));
+        PoseStack.Pose pose = poseStack.last();
+        Matrix4f matrix = pose.pose();
+        Matrix3f normal = pose.normal();
+        int alpha = 210;
+
+        if (stacks <= 1) {
+            renderBrandGlyph(consumer, matrix, normal, 0.0F, 0.0F, packedLight, alpha);
+        } else {
+            float maxAngle = 70.0F;
+            for (int i = 0; i < stacks; i++) {
+                float progress = stacks == 1 ? 0.5F : i / (float) (stacks - 1);
+                float angle = Mth.lerp(progress, -maxAngle, maxAngle);
+                float radians = angle * Mth.DEG_TO_RAD;
+                float x = Mth.sin(radians) * 2.6F;
+                float y = -Mth.cos(radians) * 0.9F;
+                renderBrandGlyph(consumer, matrix, normal, x, y, packedLight, alpha);
+            }
+        }
+
+        poseStack.popPose();
+    }
+
+    private static void renderBrandGlyph(VertexConsumer consumer, Matrix4f matrix, Matrix3f normal, float centerX,
+                                         float centerY, int packedLight, int alpha) {
+        float half = 2.0F;
+        addBrandVertex(consumer, matrix, normal, centerX - half, centerY - half, 0.0F, 0.0F, packedLight, alpha);
+        addBrandVertex(consumer, matrix, normal, centerX + half, centerY - half, 1.0F, 0.0F, packedLight, alpha);
+        addBrandVertex(consumer, matrix, normal, centerX + half, centerY + half, 1.0F, 1.0F, packedLight, alpha);
+        addBrandVertex(consumer, matrix, normal, centerX - half, centerY + half, 0.0F, 1.0F, packedLight, alpha);
+    }
+
+    private static void addBrandVertex(VertexConsumer consumer, Matrix4f matrix, Matrix3f normal,
+                                       float x, float y, float u, float v, int packedLight, int alpha) {
+        consumer.vertex(matrix, x, y, 0.0F)
+                .color(255, 255, 255, alpha)
+                .uv(u, v)
+                .overlayCoords(0, 10)
+                .uv2(packedLight)
+                .normal(normal, 0.0F, 0.0F, 1.0F)
+                .endVertex();
     }
 
     @SubscribeEvent

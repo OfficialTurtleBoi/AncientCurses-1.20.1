@@ -13,6 +13,7 @@ import net.turtleboi.ancientcurses.entity.entities.CursedPortalEntity;
 import net.turtleboi.ancientcurses.entity.entities.PlagueIdolEntity;
 import net.turtleboi.ancientcurses.entity.entities.VoodooSoulEntity;
 import net.turtleboi.ancientcurses.entity.entities.items.LingeringCauldronCloud;
+import net.turtleboi.ancientcurses.entity.entities.items.ThornProjectileEntity;
 import net.turtleboi.ancientcurses.entity.entities.items.ThrownCauldronPotion;
 import net.turtleboi.ancientcurses.entity.entities.items.ThrownCursedPearl;
 import net.turtleboi.ancientcurses.entity.entities.items.ThrownIceSpark;
@@ -50,6 +51,13 @@ public class ModEntities {
                     .clientTrackingRange(10)
                     .updateInterval(2)
                     .build("ice_spark"));
+
+    public static final RegistryObject<EntityType<ThornProjectileEntity>> THORN_PROJECTILE =
+            ENTITY_TYPES.register("thorn_projectile", () -> EntityType.Builder.<ThornProjectileEntity>of(ThornProjectileEntity::new, MobCategory.MISC)
+                    .sized(0.35F, 0.35F)
+                    .clientTrackingRange(10)
+                    .updateInterval(2)
+                    .build("thorn_projectile"));
 
     public static final RegistryObject<EntityType<PlagueIdolEntity>> PLAGUE_IDOL =
             ENTITY_TYPES.register("plague_idol" , () -> EntityType.Builder.<PlagueIdolEntity>of(PlagueIdolEntity::new, MobCategory.MISC)

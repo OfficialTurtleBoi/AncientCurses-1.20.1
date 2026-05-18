@@ -14,6 +14,7 @@ import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.ancientcurses.AncientCurses;
 import net.turtleboi.ancientcurses.block.ModBlocks;
 import net.turtleboi.ancientcurses.item.items.BoneFluteItem;
+import net.turtleboi.ancientcurses.item.items.BloodpriceSigilItem;
 import net.turtleboi.ancientcurses.item.items.FathomlessCauldronItem;
 import net.turtleboi.ancientcurses.item.items.CursedPearlItem;
 import net.turtleboi.ancientcurses.item.items.DowsingRod;
@@ -31,6 +32,7 @@ import net.turtleboi.ancientcurses.item.items.PreciousGemType;
 import net.turtleboi.ancientcurses.item.items.SoulCompassItem;
 import net.turtleboi.ancientcurses.item.items.SoulShardItem;
 import net.turtleboi.ancientcurses.item.items.ThornCrownItem;
+import net.turtleboi.ancientcurses.item.items.RuinationBrandItem;
 import net.turtleboi.ancientcurses.item.items.VoodooDollItem;
 import net.turtleboi.ancientcurses.sound.ModSounds;
 import net.turtleboi.turtlecore.item.CoreItems;
@@ -155,13 +157,13 @@ public class ModItems {
             () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
 
     public static final RegistryObject<Item> BLOODPRICE_SIGIL = ITEMS.register("bloodprice_sigil",
-            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+            () -> new BloodpriceSigilItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
 
     public static final RegistryObject<Item> THORN_CROWN = ITEMS.register("thorn_crown",
             () -> new ThornCrownItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
 
     public static final RegistryObject<Item> RUINATION_BRAND = ITEMS.register("ruination_brand",
-            () -> new Item(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
+            () -> new RuinationBrandItem(new Item.Properties().rarity(CoreItems.LEGENDARY).stacksTo(1)));
 
     private static RegistryObject<Item> registerGem(PreciousGemType gemType, Rarity rarity) {
         return ITEMS.register(gemType.getItemName(),

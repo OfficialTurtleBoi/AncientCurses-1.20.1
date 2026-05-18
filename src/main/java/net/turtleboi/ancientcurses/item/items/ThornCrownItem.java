@@ -4,6 +4,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
@@ -12,12 +13,11 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.turtleboi.ancientcurses.entity.entities.items.ThornProjectileEntity;
 import net.minecraftforge.fml.ModList;
 import org.jetbrains.annotations.Nullable;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -40,9 +40,9 @@ public class ThornCrownItem extends ArtifactItem {
     private static final int THORNS_PER_BURST = 7;
     private static final float REFLECT_DAMAGE_PER_CHARGE = 7.0F;
     private static final int BURST_INTERVAL_TICKS = 2;
-    private static final double THORN_ARROW_DAMAGE = 3.5D;
-    private static final float THORN_ARROW_SPEED = 2.4F;
-    private static final float THORN_ARROW_INACCURACY = 0.45F;
+    private static final float THORN_PROJECTILE_DAMAGE = 3.5F;
+    private static final float THORN_PROJECTILE_SPEED = 2.4F;
+    private static final float THORN_PROJECTILE_INACCURACY = 0.45F;
 
     public ThornCrownItem(Properties properties) {
         super(properties);
@@ -224,20 +224,17 @@ public class ThornCrownItem extends ArtifactItem {
     }
 
     private static void fireThorn(ServerLevel level, Player player, boolean circle, int burstIndex) {
-        Arrow arrow = new Arrow(level, player);
-        arrow.setBaseDamage(THORN_ARROW_DAMAGE);
-        arrow.setCritArrow(false);
-        arrow.pickup = AbstractArrow.Pickup.DISALLOWED;
+        ThornProjectileEntity thorn = new ThornProjectileEntity(level, player, THORN_PROJECTILE_DAMAGE);
 
         if (circle) {
             float yaw = player.getYRot() + (360.0F / THORNS_PER_BURST) * burstIndex;
-            arrow.shootFromRotation(player, 0.0F, yaw, 0.0F, THORN_ARROW_SPEED, 0.0F);
+            thorn.shootFromRotation(player, 0.0F, yaw, 0.0F, THORN_PROJECTILE_SPEED, 0.0F);
         } else {
-            arrow.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F,
-                    THORN_ARROW_SPEED, THORN_ARROW_INACCURACY);
+            thorn.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F,
+                    THORN_PROJECTILE_SPEED, THORN_PROJECTILE_INACCURACY);
         }
 
-        level.addFreshEntity(arrow);
+        level.addFreshEntity(thorn);
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 0.5F,
                 1.1F + level.getRandom().nextFloat() * 0.2F);
